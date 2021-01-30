@@ -1320,7 +1320,7 @@
                 }
                 requestURL = 'https://www.odorik.cz/api/v1/callback';
 
-                /*$.ajax({
+                $.ajax({
                     url: requestURL,
                     type: 'POST',
                     data: properties,
@@ -1331,7 +1331,7 @@
                             dim(false, "Došlo k chybě. Zkontrolujte zadané číslo.");
                         }
                     }
-                });*/
+                });
             }
         }).modal('show');
     }
