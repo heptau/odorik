@@ -1795,7 +1795,7 @@
                 }
                 outstring += '><td>';
                 
-                if($.inArray(result[i].id, redirectedCalls) != -1){
+                if($.inArray(result[i].id.toString(), redirectedCalls) != -1){
                     outstring += '<a onclick="redirectionsModal('+"'"+result[i].id+"'"+','+"'"+result[i].date+"'"+');" class="ui teal ribbon label"><i class="forward mail icon"></i></a>';
                 }
 
