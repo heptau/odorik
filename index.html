@@ -547,7 +547,7 @@
                     <label>Volané číslo</label>
                     <input type="text" name="call-target" disabled>
                 </div>
-                <div class="field">
+                <div class="field required">
                     <label>Vaše číslo</label>
                     <div class="ui input">
                         <input type="text" name="call-number" placeholder="Číslo, na kterém chcete přijmout callback: číslo vaší linky (s hvězdičkou), rychlá volba, veřejné tel. číslo">
@@ -566,7 +566,7 @@
             <div class="ui black deny button">
                 Zrušit
             </div>
-            <div class="ui positive right labeled icon button">
+            <div class="ui positive right labeled icon button submit">
                 Volat
                 <i class="checkmark icon"></i>
             </div>
@@ -1309,31 +1309,52 @@
             duration: setDuration,
             blurring: true,
             onApprove: function() {
-                var properties = {
-                    user: APIuser,
-                    password: APIpass,
-                    caller: $('input[name="call-number"]').val(),
-                    recipient: number,
-                };
-                if($('select[name="call-line"]').val() != "none") {
-                    properties.line = $('select[name="call-line"]').val();
-                }
-                requestURL = 'https://www.odorik.cz/api/v1/callback';
-
-                $.ajax({
-                    url: requestURL,
-                    type: 'POST',
-                    data: properties,
-                    success: function(result) {
-                        if (result.indexOf("error") != 0) {
-                            dim(true, "Callback objednán");
-                        } else {
-                            dim(false, "Došlo k chybě. Zkontrolujte zadané číslo.");
-                        }
-                    }
-                });
+				$('#callModal form').submit();
+				//Return false as to not close modal dialog
+				return false; 
             }
         }).modal('show');
+        
+        //form validation and submit
+		$('#callModal form').form({
+		  fields: {
+		    callNumber: {
+		      identifier: 'call-number',
+		      rules: [{
+				type   : 'regExp[/^((\\*[0-9]{6})|([0-9]{2,3})|([0-9]{9,16}))$/]'
+		      }]
+		    }
+		  },
+		  onSuccess : function() {
+			var properties = {
+                user: APIuser,
+                password: APIpass,
+                caller: $('input[name="call-number"]').val(),
+                recipient: number,
+            };
+            if($('select[name="call-line"]').val() != "none") {
+              properties.line = $('select[name="call-line"]').val();
+            }
+            requestURL = 'https://www.odorik.cz/api/v1/callback';
+
+            $.ajax({
+                url: requestURL,
+                type: 'POST',
+                data: properties,
+                success: function(result) {
+                    if (result.indexOf("error") != 0) {
+                        dim(true, "Callback objednán");
+                    } else {
+                        dim(false, "Došlo k chybě. Zkontrolujte zadané číslo.");
+                    }
+                }
+            });
+			
+			//Hides modal on validation success
+			$('#callModal').modal('hide');
+			return false;
+		  }
+		});
     }
 
     // Quick Callback input box
