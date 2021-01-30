@@ -1708,7 +1708,8 @@
                 user: APIuser,
                 password: APIpass,
                 from: fromDate,
-                to: toDate
+                to: toDate,
+                page_size: 5000
             };
             if($("select[name=line-filter]").val() != "all"){
                 dataSet.line = $("select[name=line-filter]").val();
