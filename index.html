@@ -1353,6 +1353,7 @@
 			
 			//Hides modal on validation success
 			$('#callModal').modal('hide');
+			$('#callModal form').unbind(); // Jinak se pri dalsim pouziti formulare zaroven vykona i predchozi onSuccess s drivejsim callbackem!
 			return false;
 		  }
 		});
