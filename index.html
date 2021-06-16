@@ -1834,7 +1834,7 @@
                 var callLength = ~~(result[i].length / 60) + " min " + (result[i].length % 60) + " s";
                 if(result[i].length < 60)
                     callLength = (result[i].length % 60) + " s";
-                outstring += '</td><td>' + moment(result[i].date).utcOffset(1).format("DD.MM.YYYY H:mm:ss") + '</td><td>'
+                outstring += '</td><td>' + moment(result[i].date).format("DD.MM.YYYY H:mm:ss") + '</td><td>'
                     + getSpeedDialName(result[i].source_number) +'</td><td><span class="hasPopup" data-html="<b>Podrobnosti:</b> '
                     + result[i].destination_name +'">'
                     + getSpeedDialName(result[i].destination_number)+'</span></td><td><span class="hasPopup" data-html="<b>Délka vyzvánění:</b> '
@@ -1882,7 +1882,7 @@
                         outstring += "error";
                     }
                     outstring += '">';
-                    outstring += '<td>'+moment(result[i].date).utcOffset(1).format("DD.MM.YYYY H:mm:ss")+'</td><td>'+getSpeedDialName(result[i].source_number)+'</td><td><span class="hasPopup" data-html="<b>Podrobnosti:</b> '+result[i].destination_name+'">'+getSpeedDialName(result[i].destination_number)+'</span></td><td><span class="hasPopup" data-html="<b>Délka vyzvánění:</b> '+result[i].ringing_length+' s">'+result[i].length+' s</span></td><td><span class="hasPopup" data-html="<b>Minutová sazba:</b> '+result[i].price_per_minute+' Kč<br><b>Zbylý kredit:</b> '+result[i].balance_after+' Kč">'+result[i].price+' Kč</span></td><td>'+result[i].line+'</td></tr>';
+                    outstring += '<td>'+moment(result[i].date).format("DD.MM.YYYY H:mm:ss")+'</td><td>'+getSpeedDialName(result[i].source_number)+'</td><td><span class="hasPopup" data-html="<b>Podrobnosti:</b> '+result[i].destination_name+'">'+getSpeedDialName(result[i].destination_number)+'</span></td><td><span class="hasPopup" data-html="<b>Délka vyzvánění:</b> '+result[i].ringing_length+' s">'+result[i].length+' s</span></td><td><span class="hasPopup" data-html="<b>Minutová sazba:</b> '+result[i].price_per_minute+' Kč<br><b>Zbylý kredit:</b> '+result[i].balance_after+' Kč">'+result[i].price+' Kč</span></td><td>'+result[i].line+'</td></tr>';
                 }
             }
 
