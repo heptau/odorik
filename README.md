@@ -14,7 +14,7 @@ API uživatelské jméno a heslo - automatické přihlášení
 
     var APIuser = "1234560";
     var APIpass = "abc9de99";
-  
+
 Povolit sekci rychlé kontakty
 
     var enableSpeedDials = false; // zakáže sekci rychlých kontaktů
@@ -36,7 +36,7 @@ Zamknutá čísla - čárkou oddělený seznam zkratek (klapek), které nejde ed
 Skrytí zamknutých čísel - nezobrazovat vůbec, nebo zobrazit, ale zakázat úpravy
 
     var hideLockedNumbers = true; // nezobrazí je vůbec 
-    
+
 Povolit přidávání nových čísel
 
     var enableAdding = false; // zakáže přidávání
@@ -76,11 +76,7 @@ Povolit animace
 Přednastavené číslo pro callback
 
     var defaultCallbackNumber = "0085023815827"; // nastaví výchozí číslo pro callback na 0085023815827
-    
+
 Počet položek na stránku
 
     var pageLength = 24; // nastaví počet položek na stránku na 24
-
-Povolit tmavé téma
-
-    var darkTheme = true; // povolí tmavé téma

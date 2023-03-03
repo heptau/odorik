@@ -1,5 +1,5 @@
-<!DOCTYPE html5>
-<html>
+<!doctype html>
+<html lang="cs">
   <head>
     <script>
     // NASTAVENÍ //
@@ -27,7 +27,7 @@
     var lockedNumbers = "";
 
     // Skrytí zamknutých čísel :: true = nezobrazovat vůbec, false = zobrazit, ale zakázat úpravy //
-    // př. var hideLockedNumbers = true // nezobrazí vůbec 
+    // př. var hideLockedNumbers = true // nezobrazí vůbec
     var hideLockedNumbers = true;
 
     // Povolené linky :: čárkou oddělený seznam linek, které jsou uživateli dostupné //
@@ -86,19 +86,19 @@
 
     // Počet položek na stránku  //
     // př. var pageLength = 24; // nastaví počet položek na stránku na 24
-    var pageLength = 24;
-
-    // Povolit tmavé téma :: true = povolit, false = zakázat //
-    // Vhodné pro osoby se zrakovými problémy //
-    // př. var darkTheme = true // povolí tmavé téma
-    var darkTheme = false;
+    var pageLength = 100;
 
     // KONEC NASTAVENÍ //
     // Pokud chcete upravit nějaké názvy, můžete v HTML kódu níže.
     </script>
+
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, shrink-to-fit=no">
     <title>Odorik: Webová aplikace</title>
+    <meta name="apple-mobile-web-app-title" content="Odorik">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon" href="odorik-icon.png">
     <link href="data:image/x-icon;base64,R0lGODlhIwAeAKEBAOM7O////////////yH5BAEKAAIALAAAAAAjAB4AAAJMjI+pywoPQZssWknp3Tg7vnkfGIoGCZonWppsK76XGsAcbS1wPO20Pvs1bsKKr1gjIhHKZfL4QzlZU2mVdE1lobjmFuJMBMPiB1lUAAA7" rel="icon" type="image/x-icon" />
     <!-- Import of CSS libraries (Semantic UI) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.1.4/components/button.min.css">
@@ -139,6 +139,28 @@
               padding: 0.8em 1.2em;
           }
         }
+
+        html,body {
+            user-select: none;
+            -webkit-user-select: none;
+            font: -apple-system-body;
+        }
+        thead tr {
+            position: sticky;
+            top: 0;
+        }
+        table .center {text-align: center !important;}
+        table .right {text-align: right !important;}
+        hr {
+            border: 0;
+            height: 1px;
+            width: 85%;
+            background-color: #ddd;
+        }
+        @media (prefers-color-scheme: dark) {
+          body {background: #333;}
+          h1, h3, #credit {color: #fff !important;}
+        }
     </style>
   </head>
   <body>
@@ -154,7 +176,7 @@
         <!-- TITLE -->
         <h1 class="ui header">
             <br>Odorik.cz<div class="ui grey label">v1.9</div>
-            <span style="float: right; color: #333" class="sub header" id="credit"></span>
+            <span style="float: right;" class="sub header" id="credit"></span>
         </h1>
         <!-- MENU -->
         <div class="ui secondary stackable menu">
@@ -172,6 +194,9 @@
                             }
                             if(enableStatistics){
                                 document.write('<div class="item" data-value="statistics"><i class="bar chart icon"></i> Statistiky volání</div>');
+                            }
+                            if(enableLogout) {
+                                document.write('<hr /><div class="item" data-value="logout" style="font-weight: normal !important;"><i class="sign out icon"></i> Odhlásit</div>');
                             }
                         </script>
                     </div>
@@ -194,11 +219,8 @@
             if (enableImportExport) {
                 document.write('<div class="item fitted speedDialsContent"><button class="ui button" onclick="importExportModal();"><i class="file archive outline icon"></i> Import/Export</button></div>');
             }
-            if (enableLogout) {
-                document.write('<div class="item fitted"><button class="ui button" onclick="logoutModal();"><i class="sign out icon"></i> Odhlásit</button></div>');
-            }
             if (enableQuickCallback) {
-                document.write('<div class="right item fitted"><div class="ui action input"><input type="text" name="quick-input" placeholder="Volané číslo"><button id="quick-button" class="ui icon button"><i class="call icon"></i></button></div></div>');
+                document.write('<div class="right item fitted"><div class="ui action input"><input type="tel" name="quick-input" placeholder="Volané číslo"><button id="quick-button" class="ui icon button"><i class="call icon"></i></button></div></div>');
             }
             </script>
         </div>
@@ -208,7 +230,7 @@
             <table class="ui celled compact table">
                 <thead>
                     <tr>
-                        <th>Zkratka</th>
+                        <th class="center">Zkratka</th>
                         <th>Název</th>
                         <th>Číslo</th>
                         <th class="one wide"></th>
@@ -228,9 +250,9 @@
                         <th>Datum</th>
                         <th>Odkud</th>
                         <th>Kam</th>
-                        <th>Délka</th>
-                        <th>Cena</th>
-                        <th>Linka</th>
+                        <th class="center">Délka</th>
+                        <th class="center">Cena</th>
+                        <th class="center">Linka</th>
                     </tr>
                 </thead>
                 <tbody id="tableCalls">
@@ -371,10 +393,10 @@
                     <thead>
                         <tr>
                             <th>Destinace</th>
-                            <th>Počet</th>
-                            <th>Délka</th>
-                            <th>Cena</th>
-                            <th>Za minutu</th>
+                            <th class="center">Počet</th>
+                            <th class="center">Délka</th>
+                            <th class="center">Cena</th>
+                            <th class="center">Za minutu</th>
                             <th>Směr</th>
                         </tr>
                     </thead>
@@ -430,7 +452,7 @@
             <form class="ui form">
                 <div class="field">
                     <label>Zkratka</label>
-                    <input type="text" name="edit-shortcut">
+                    <input type="number" name="edit-shortcut" placeholder="Zkratka" pattern="\d*" min="1" max="999" required>
                 </div>
                 <div class="field">
                     <label>Název</label>
@@ -438,7 +460,7 @@
                 </div>
                 <div class="field">
                     <label>Číslo</label>
-                    <input type="text" name="edit-number">
+                    <input type="tel" name="edit-number" required>
                 </div>
             </form>
             <p><b>TIP: </b>Lze editovat i dvojklikem na hlavní stránce.</p>
@@ -463,7 +485,7 @@
             <form class="ui form">
                 <div class="field">
                     <label>Zkratka</label>
-                    <input type="text" name="add-shortcut" placeholder="Zkratka">
+                    <input type="number" name="add-shortcut" placeholder="Zkratka" pattern="\d*" min="1" max="999" required>
                 </div>
                 <div class="field">
                     <label>Název</label>
@@ -471,7 +493,7 @@
                 </div>
                 <div class="field">
                     <label>Číslo</label>
-                    <input type="text" name="add-number" placeholder="Číslo">
+                    <input type="tel" name="add-number" placeholder="Číslo" required>
                 </div>
             </form>
         </div>
@@ -517,17 +539,17 @@
             <form class="ui form">
                 <div class="field">
                     <label>API jméno</label>
-                    <input type="text" name="login-name">
+                    <input type="text" name="login-name" autocomplete="username" autocapitalize="none">
                 </div>
                 <div class="field">
                     <label>API heslo</label>
-                    <input type="password" name="login-pass">
+                    <input type="password" name="login-pass" autocomplete="current-password">
                 </div>
             </form>
             <div class="ui negative message" id="badLogin" style="display: none;">
                 <div class="header">Nesprávné uživatelské jméno nebo heslo.</div>
-            </div>              
-            <a href="https://github.com/phavel/odorik/blob/master/index.html">Zdrojový kód</a> této "single page" aplikace je k dispozici <a href="https://github.com/phavel/odorik/">včetně dokumentace</a>. Můžete si jej sami nechat upravit a integrovat  např. do vlastních webových stránek.
+            </div>
+            <a href="https://github.com/heptau/odorik/blob/master/index.html">Zdrojový kód</a> této "single page" aplikace je k dispozici <a href="https://github.com/heptau/odorik/">včetně dokumentace</a>. Můžete si jej sami nechat upravit a integrovat  např. do vlastních webových stránek.
         </div>
         <div class="actions">
             <div class="ui positive right labeled icon button">
@@ -546,12 +568,12 @@
             <form class="ui form">
                 <div class="field">
                     <label>Volané číslo</label>
-                    <input type="text" name="call-target" disabled>
+                    <input type="tel" name="call-target" disabled>
                 </div>
                 <div class="field required">
                     <label>Vaše číslo</label>
                     <div class="ui input">
-                        <input type="text" name="call-number" placeholder="Číslo, na kterém chcete přijmout callback: číslo vaší linky (s hvězdičkou), rychlá volba, veřejné tel. číslo">
+                        <input type="tel" name="call-number" placeholder="Číslo, na kterém chcete přijmout callback: číslo vaší linky (s hvězdičkou), rychlá volba, veřejné tel. číslo">
                         <!--<div class="ui button" onclick=""><i class="user icon"></i>Kontakty</div>-->
                     </div>
                 </div>
@@ -768,11 +790,6 @@
     // Initialize helper variables
     var number;
     var array;
-    
-    if(darkTheme){
-        $("body").css("background", "#333");
-        $(".header").css("color", "#fff");
-    }
 
     if (enableAnimations) {
         var setDuration = 300;
@@ -796,7 +813,7 @@
 
     var preload = false;
 
-    // Detect if user is logged in 
+    // Detect if user is logged in
     function loggedIn() {
         // Is the data in localStorage?
         if (localStorage.getItem('username') !== null && localStorage.getItem('password') !== null || (APIuser != "" && APIpass != "")) {
@@ -939,8 +956,25 @@
         $('#categorySelector').dropdown({
             onChange: function(value, text, $selectedItem) {
                 if(!firstRun){
-                    localStorage.setItem("prevCategory", value);
-                    $('#categorySelector').addClass("loading");
+
+                    if(value == "logout"){
+                        logoutModal();
+
+                        if((enableContacts && !enableCallHisory && !enableStatistics) || localStorage.prevCategory == "speedDials") {
+                            $(".ui.dropdown").dropdown("set selected", "speedDials");
+                        }
+                        else if((enableStatistics && !enableCallHisory) || localStorage.prevCategory == "statistics") {
+                            $(".ui.dropdown").dropdown("set selected", "statistics");
+                        }
+                       else {
+                            $(".ui.dropdown").dropdown("set selected", "callHistory");
+                       }
+
+
+                    } else {
+                        localStorage.setItem("prevCategory", value);
+                        $('#categorySelector').addClass("loading");
+                    }
                     if(value == "speedDials"){
                         reloadContacts();
                     }
@@ -981,15 +1015,15 @@
     // Initialization
     function init() {
         $("#loadingDimmer").dimmer("show");
-        $.ajax({ 
+        $.ajax({
             url: 'https://www.odorik.cz/api/v1/balance',
             type: 'GET',
             data: {
                 user: APIuser,
                 password: APIpass
-            } 
-        }).done(function (data, textStatus, xhr) { 
-            $("#credit").html("<b>Kredit: </b>"+ data +" Kč");
+            }
+        }).done(function (data, textStatus, xhr) {
+            $("#credit").html("<b>Kredit: </b>"+ data +"&nbsp;Kč");
         });
 
         updateLines();
@@ -1071,7 +1105,7 @@
                     allShortcuts.push(result[i].shortcut);
                     allNames.push(result[i].name);
                     if (editableLine("main", result[i].shortcut)) {
-                        outstring += '<tr><td class="table-short-'+result[i].shortcut+'">' + result[i].shortcut + '</td>' + '<td class="table-name-'+result[i].shortcut+'">' + result[i].name + '</td><td class="table-num-'+result[i].shortcut+'">' + result[i].number + '</td><td>';
+                        outstring += '<tr><td class="center table-short-'+result[i].shortcut+'">' + result[i].shortcut + '</td>' + '<td class="table-name-'+result[i].shortcut+'">' + result[i].name + '</td><td class="table-num-'+result[i].shortcut+'">' + result[i].number + '</td><td>';
 
                         if (enableEditing || enableRemoving || enableCallback)
                             outstring += '<div class="ui icon buttons">';
@@ -1091,7 +1125,7 @@
                         outstring += '</td></tr>';
                     } else {
                         if (hideLockedNumbers == false) {
-                            outstring += '<tr><td class="table-short-'+result[i].shortcut+'">' + result[i].shortcut + '</td>' + '<td class="table-name-'+result[i].shortcut+'">' + result[i].name + '</td><td class="table-num-'+result[i].shortcut+'">' + result[i].number + '</td><td>';
+                            outstring += '<tr><td class="center table-short-'+result[i].shortcut+'">' + result[i].shortcut + '</td>' + '<td class="table-name-'+result[i].shortcut+'">' + result[i].name + '</td><td class="table-num-'+result[i].shortcut+'">' + result[i].number + '</td><td>';
                             outstring += '<div class="ui icon buttons">' + '<button class="ui red button" disabled><i class="delete icon"></i></button>' + '<button class="ui blue button" disabled><i class="edit icon"></i></button>' + '<button class="ui green button" disabled><i class="call icon"></i></button></div>';
                             outstring += '</td></tr>';
                         }
@@ -1310,23 +1344,23 @@
             duration: setDuration,
             blurring: true,
             onApprove: function() {
-				$('#callModal form').submit();
-				//Return false as to not close modal dialog
-				return false; 
+                $('#callModal form').submit();
+                //Return false as to not close modal dialog
+                return false;
             }
         }).modal('show');
-        
+
         //form validation and submit
-		$('#callModal form').form({
-		  fields: {
-		    callNumber: {
-		      identifier: 'call-number',
-		      rules: [{
-				type   : 'regExp[/^((\\*[0-9]{6})|([0-9]{2,3})|([0-9]{9,16}))$/]'
-		      }]
-		    }
-		  }
-		})
+      $('#callModal form').form({
+        fields: {
+          callNumber: {
+            identifier: 'call-number',
+            rules: [{
+            type   : 'regExp[/^((\\*[0-9]{6})|([0-9]{2,3})|([0-9]{9,16}))$/]'
+            }]
+          }
+        }
+      })
     .api({
         url: 'https://www.odorik.cz/api/v1/callback',
         method: 'POST',
@@ -1388,7 +1422,7 @@
             },
             success: function(result) {
                 array = result;
-                outstring = "";
+                outstring = '\ufeff'; // EF BB BF = BOM
                 for (var i = 0; i < result.length; i++) {
                     outstring += "BEGIN:VCARD\r\n";
                     outstring += "VERSION:3.0\r\n";
@@ -1717,7 +1751,7 @@
 
     function loadCalls(){
         callHistory = [];
-        callsAmount(function (data, textStatus, xhr) { 
+        callsAmount(function (data, textStatus, xhr) {
             totalCalls = xhr.getResponseHeader('Odorik-Pages');
             var dataSet = {
                 user: APIuser,
@@ -1746,7 +1780,7 @@
                 }
             }
 
-            $.ajax({ 
+            $.ajax({
                 url: 'https://www.odorik.cz/api/v1/calls.json',
                 type: 'GET',
                 data: dataSet
@@ -1793,7 +1827,7 @@
 
                 reloadCalls();
             });
-        }); 
+        });
     }
 
     function populateCallsTable(result){
@@ -1809,7 +1843,7 @@
                     outstring += ' data-redirection-id="'+ result[i].redirection_parent_id +'"';
                 }
                 outstring += '><td>';
-                
+
                 if($.inArray(result[i].id.toString(), redirectedCalls) != -1){
                     outstring += '<a onclick="redirectionsModal('+"'"+result[i].id+"'"+','+"'"+result[i].date+"'"+');" class="ui teal ribbon label"><i class="forward mail icon"></i></a>';
                 }
@@ -1828,25 +1862,25 @@
                 if(result[i].status == "missed"){
                     outstring += " nepřijatý";
                 }
-                
+
                 outstring += '</span> ';
                 var price = result[i].price.toString().substr(0, result[i].price.toString().indexOf(".") + 3);
-                var callLength = ~~(result[i].length / 60) + " min " + (result[i].length % 60) + " s";
+                var callLength = ~~(result[i].length / 60) + "&nbsp;min " + (result[i].length % 60) + "&nbsp;s";
                 if(result[i].length < 60)
-                    callLength = (result[i].length % 60) + " s";
+                    callLength = (result[i].length % 60) + "&nbsp;s";
                 outstring += '</td><td>' + moment(result[i].date).format("DD.MM.YYYY H:mm:ss") + '</td><td>'
                     + getSpeedDialName(result[i].source_number) +'</td><td><span class="hasPopup" data-html="<b>Podrobnosti:</b> '
                     + result[i].destination_name +'">'
-                    + getSpeedDialName(result[i].destination_number)+'</span></td><td><span class="hasPopup" data-html="<b>Délka vyzvánění:</b> '
-                    + result[i].ringing_length +' s">'
-                    + callLength +'</span></td><td><span class="hasPopup" data-html="<b>Minutová sazba:</b> '
-                    + result[i].price_per_minute +' Kč<br><b>Zbylý kredit:</b> '
-                    + result[i].balance_after +' Kč">'
-                    + price +' Kč</span></td><td>' + result[i].line +'</td></tr>';
+                    + getSpeedDialName(result[i].destination_number)+'</span></td><td class="right"><span class="hasPopup" data-html="<b>Délka vyzvánění:</b> '
+                    + result[i].ringing_length +'&nbsp;s">'
+                    + callLength +'</span></td><td class="right"><span class="hasPopup" data-html="<b>Minutová sazba:</b> '
+                    + result[i].price_per_minute +'&nbsp;Kč<br><b>Zbylý kredit:</b> '
+                    + result[i].balance_after +'&nbsp;Kč">'
+                    + price +'&nbsp;Kč</span></td><td class="center">' + result[i].line +'</td></tr>';
         }
         $("#tableCalls").html(outstring);
-        $(".hasClickPopup").popup({ on: "click" }); 
-        $(".hasPopup").popup(); 
+        $(".hasClickPopup").popup({ on: "click" });
+        $(".hasPopup").popup();
         $("#pageNumber").text(page + " z " + Math.ceil(callHistory.length / pageLength));
     }
 
@@ -1862,7 +1896,7 @@
 
     // Redirections dialog
     function redirectionsModal(id, time){
-        $.ajax({ 
+        $.ajax({
             url: 'https://www.odorik.cz/api/v1/calls.json',
             type: 'GET',
             data: {
@@ -1882,12 +1916,12 @@
                         outstring += "error";
                     }
                     outstring += '">';
-                    outstring += '<td>'+moment(result[i].date).format("DD.MM.YYYY H:mm:ss")+'</td><td>'+getSpeedDialName(result[i].source_number)+'</td><td><span class="hasPopup" data-html="<b>Podrobnosti:</b> '+result[i].destination_name+'">'+getSpeedDialName(result[i].destination_number)+'</span></td><td><span class="hasPopup" data-html="<b>Délka vyzvánění:</b> '+result[i].ringing_length+' s">'+result[i].length+' s</span></td><td><span class="hasPopup" data-html="<b>Minutová sazba:</b> '+result[i].price_per_minute+' Kč<br><b>Zbylý kredit:</b> '+result[i].balance_after+' Kč">'+result[i].price+' Kč</span></td><td>'+result[i].line+'</td></tr>';
+                    outstring += '<td>'+moment(result[i].date).format("DD.MM.YYYY H:mm:ss")+'</td><td>'+getSpeedDialName(result[i].source_number)+'</td><td><span class="hasPopup" data-html="<b>Podrobnosti:</b> '+result[i].destination_name+'">'+getSpeedDialName(result[i].destination_number)+'</span></td><td class="right"><span class="hasPopup" data-html="<b>Délka vyzvánění:</b> '+result[i].ringing_length+'&nbsp;s">'+result[i].length+'&nbsp;s</span></td><td class="right"><span class="hasPopup" data-html="<b>Minutová sazba:</b> '+result[i].price_per_minute+'&nbsp;Kč<br><b>Zbylý kredit:</b> '+result[i].balance_after+'&nbsp;Kč">'+result[i].price+'&nbsp;Kč</span></td><td class="center">'+result[i].line+'</td></tr>';
                 }
             }
 
             $("#tableRedirects").html(outstring);
-            $(".hasPopup").popup(); 
+            $(".hasPopup").popup();
             $("#redirectionsModal").modal({
                 duration: setDuration,
                 blurring: true
@@ -1950,7 +1984,7 @@
         if($("select[name=direction-filter]").val() != "all"){
             dataSet.direction = $("select[name=direction-filter]").val();
         }
-        $.ajax({ 
+        $.ajax({
             url: 'https://www.odorik.cz/api/v1/calls.json',
             type: 'GET',
             data: dataSet
@@ -1988,7 +2022,7 @@
       if(statsLine != -10) {
         dataSet.line = statsLine;
       }
-      $.ajax({ 
+      $.ajax({
         url: 'https://www.odorik.cz/api/v1/call_statistics.json',
         type: 'GET',
         data: dataSet
@@ -2006,7 +2040,7 @@
         $("#redirectedPrice").text(formatPrice(data.redirected.price));
       });
 
-      $.ajax({ 
+      $.ajax({
         url: 'https://www.odorik.cz/api/v1/call_statistics/by_destination.json',
         type: 'GET',
         data: dataSet
@@ -2021,12 +2055,12 @@
           else if(data[i].direction == "in") {
             direction = "Příchozí";
           }
-          outString += "<tr><td>" + data[i].destination + "</td><td>" + data[i].count + "</td><td>" + formatLength(data[i].length) + " min</td><td>" + formatPrice(data[i].price) + " Kč</td><td>" + data[i].price_per_minute + " Kč</td><td>" + direction + "</td></tr>";
+          outString += "<tr><td>" + data[i].destination + "</td><td class='center'>" + data[i].count + "</td><td class='right'>" + formatLength(data[i].length) + "&nbsp;min</td><td class='right'>" + formatPrice(data[i].price) + "&nbsp;Kč</td><td class='right'>" + data[i].price_per_minute + "&nbsp;Kč</td><td>" + direction + "</td></tr>";
         }
         $("#destinationStatistics").html(outString);
       });
 
-      $.ajax({ 
+      $.ajax({
         url: 'https://www.odorik.cz/api/v1/call_statistics/missed_calls.json',
         type: 'GET',
         data: dataSet
