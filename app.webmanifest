@@ -1,0 +1,22 @@
+{
+	"name": "Odorik",
+	"icons": [{
+		"src": "odorik-icon.png",
+		"type": "image/png",
+		"sizes": "512x512",
+		"density": 4,
+		"purpose": "maskable"
+	},
+	{
+		"src": "odorik-icon_144.png",
+		"type": "image/png",
+		"sizes": "144x144"
+	}],
+	"scope": ".",
+	"display": "standalone",
+	"start_url": ".",
+	"short_name": "Odorik",
+	"orientation": "portrait",
+	"theme_color": "#333",
+	"background_color": "#fff"
+}

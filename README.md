@@ -1,16 +1,13 @@
 # Odorik
-Je to tzv. single page application a využívá jen JavaScript, HTML a CSS a API . Pokud si ji tedy stáhnete (např. dáte "uložit jako ..." ), můžete je pouštět i lokálně nebo z jiných webových stránek, na které jej umístíte.
-Pro přihlášení se zadává API přihlašovací jméno a API heslo, které najdete po přihlášení v Nastavení účtu -> Api heslo.
-Hlavní výhoda je v tom, že osobě, která danou aplikaci používá, nemusíte prozrazovat běžné přihlašovací údaje. API jméno a heslo je uloženo pomocí cookies lokálně na prohlížeči a můžete je tak uložit při prvním použití osobně.
+Jde o single page application, která používá pouze HTML, CSS, JavaScript a [Odorik API](http://www.odorik.cz/w/api). Můžete si ji tedy stáhnout, a následně ji spouštět lokálně nebo ji umístit na své webové stránky. Bezpečně ji můžete používat ale i spuštěním přímo na stránce [heptau.github.io/odorik/](https://heptau.github.io/odorik/), kde navíc bude vždy nejnovější verze.
 
-V hlavičce najdete nastavení, ve kterém si můžete veškeré funkce přispůsobit.
+Pro přihlášení můžete použít bud SIP jmého a SIP heslo, kdy máte přístup jen k údajům konkrétního čísla a nebo můžete použít API jméno a API heslo, které najdete po přihlášení v [Nastavení účtu -> Api heslo](https://www.odorik.cz/ucet/nastaveni_uctu) a potom máte přístup ke všem linkám. Po zobrazení aplikace ve webovém prohlížeči si ji také můžete přidat do aplikací (na plochu), protože jde o 
+Progresive Web Application (PWA).
 
-Podle zájmu můžeme přidat možnost nastavovat další volby obdobným způsobem. Tento web lze snadno integrovat se zbytkem firemního webu a jeho uživatel nebude zmaten spoustou jiných voleb, které Odorik.cz sice umožňuje, ale koncový uživatel linky je nikdy nevyužije. Podobným způsobem můžeme dovolit i přístup k historii hovorů, pokud by byl zájem.
-
-Dokumentaci API najdete na: http://www.odorik.cz/w/api
+V hlavičce web stránky najdete nastavení, díky kterému si můžete funkčnost upravit. Pokud ovšem zakážete nebo omezíte nějak funkčnost této aplikace, uživatel bude moci stále použít neomezenou verzi aplikace a zobrazovat, nastavovat nebo měnit i údaje, které na svém webu zakážete.
 
 ## Nastavení v hlavičce
-API uživatelské jméno a heslo - automatické přihlášení
+API uživatelské jméno a heslo - automatické přihlášení. Toto uložení jména a hesla není bezpečné - kdokoli, kdo má ke stránce přistup, si může zobrazit zdrojový kód a jméno i heslo si přečíst.
 
     var APIuser = "1234560";
     var APIpass = "abc9de99";

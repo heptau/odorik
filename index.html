@@ -1,6 +1,7 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="cs">
   <head>
+    <meta charset="UTF-8">
     <script>
     // NASTAVENÍ //
 
@@ -92,14 +93,20 @@
     // Pokud chcete upravit nějaké názvy, můžete v HTML kódu níže.
     </script>
 
-    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, shrink-to-fit=no">
     <title>Odorik: Webová aplikace</title>
+    <meta name="description" content="Aplikace pro správu rychlých kontaktů, vytváření hovorů a zobrazení výpisů pro zákazníky operátora Odorik.cz">
     <meta name="apple-mobile-web-app-title" content="Odorik">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="theme-color" content="#333333"/>
+    <link rel="manifest" href="app.webmanifest">
     <link rel="apple-touch-icon" href="odorik-icon.png">
     <link href="data:image/x-icon;base64,R0lGODlhIwAeAKEBAOM7O////////////yH5BAEKAAIALAAAAAAjAB4AAAJMjI+pywoPQZssWknp3Tg7vnkfGIoGCZonWppsK76XGsAcbS1wPO20Pvs1bsKKr1gjIhHKZfL4QzlZU2mVdE1lobjmFuJMBMPiB1lUAAA7" rel="icon" type="image/x-icon" />
+    <link rel="preconnect" href="https://www.odorik.cz">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="http://object.center">
     <!-- Import of CSS libraries (Semantic UI) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/button.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/card.min.css">
@@ -123,8 +130,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/statistic.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/table.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/transition.min.css">
-    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
-    <link href='https://fonts.googleapis.com/css?family=Lato&subset=latin,latin-ext' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css">
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Lato&subset=latin,latin-ext">
     <style>
         /* Some small improvements */
         .daterangepicker td, .daterangepicker th {
@@ -205,11 +212,11 @@
             <!-- REST OF THE ITEMS (DYNAMICALLY LOADED) -->
             <script>
             if (enableAdding) {
-                document.write('<div class="item fitted speedDialsContent"><button class="ui green button" onclick="addContact();"><i class="plus icon"></i> Přidat</button></div>');
+                document.write('<div class="item fitted speedDialsContent"><button aria-label="přidat" class="ui green button" onclick="addContact();"><i class="plus icon"></i> Přidat</button></div>');
             }
 
             if(enableFilters) {
-                document.write('<div class="item fitted callHistoryContent"><button class="ui green button" onclick="filterModal();"><i class="filter icon"></i> Filtrovat</button></div>');
+                document.write('<div class="item fitted callHistoryContent"><button aria-label="filtrovat" class="ui green button" onclick="filterModal();"><i class="filter icon"></i> Filtrovat</button></div>');
             }
 
             document.write('<div class="item fitted statisticsContent callHistoryContent"><div id="reportrange" class="ui button"><i class="calendar icon"></i><span></span> <i class="dropdown icon" style="margin:0"></i></div></div>')
@@ -217,10 +224,10 @@
             document.write('<div class="item fitted statisticsContent"><div class="ui floating button dropdown" id="statistics-line"><i class="phone icon"></i><div class="text">Všechny</div><i class="dropdown icon"></i><div class="menu"><div class="item" data-value="all">Všechny</div></div></div></div>')
 
             if (enableImportExport) {
-                document.write('<div class="item fitted speedDialsContent"><button class="ui button" onclick="importExportModal();"><i class="file archive outline icon"></i> Import/Export</button></div>');
+                document.write('<div class="item fitted speedDialsContent"><button aria-label="import/export" class="ui button" onclick="importExportModal();"><i class="file archive outline icon"></i> Import/Export</button></div>');
             }
             if (enableQuickCallback) {
-                document.write('<div class="right item fitted"><div class="ui action input"><input type="tel" name="quick-input" placeholder="Volané číslo"><button id="quick-button" class="ui icon button"><i class="call icon"></i></button></div></div>');
+                document.write('<div class="right item fitted"><div class="ui action input"><input type="tel" name="quick-input" placeholder="Volané číslo"><button aria-label="volat" id="quick-button" class="ui icon button"><i class="call icon"></i></button></div></div>');
             }
             </script>
         </div>
@@ -771,9 +778,9 @@
         <div class="ui loader"></div>
     </div>
     <!-- SCRIPTS -->
-    <script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.1.4/semantic.min.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.10.6/moment.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/semantic.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
     <script>
     // Disable caching of AJAX responses (so the data is properly updated)
@@ -1111,13 +1118,13 @@
                             outstring += '<div class="ui icon buttons">';
 
                         if (enableRemoving)
-                            outstring += '<button class="ui red button" onclick="removeContact(\'main\', \'' + result[i].shortcut + '\')"><i class="delete icon"></i></button>';
+                            outstring += '<button aria-label="smazat" class="ui red button" onclick="removeContact(\'main\', \'' + result[i].shortcut + '\')"><i class="delete icon"></i></button>';
 
                         if (enableEditing)
-                            outstring += '<button class="ui blue button" onclick="editContact(\'main\', \'' + result[i].shortcut + '\',\'' + result[i].name + '\',\'' + result[i].number + '\')"><i class="edit icon"></i></button>';
+                            outstring += '<button aria-label="upravit" class="ui blue button" onclick="editContact(\'main\', \'' + result[i].shortcut + '\',\'' + result[i].name + '\',\'' + result[i].number + '\')"><i class="edit icon"></i></button>';
 
                         if (enableCallback)
-                            outstring += '<button class="ui green button" onclick="callBack(\'' + result[i].number + '\',\'' + result[i].shortcut + '\',\'' + result[i].name + '\')"><i class="call icon"></i></button>';
+                            outstring += '<button aria-label="zavolat" class="ui green button" onclick="callBack(\'' + result[i].number + '\',\'' + result[i].shortcut + '\',\'' + result[i].name + '\')"><i class="call icon"></i></button>';
 
                         if (enableEditing || enableRemoving || enableCallback)
                             outstring += '</div>'
@@ -1126,7 +1133,7 @@
                     } else {
                         if (hideLockedNumbers == false) {
                             outstring += '<tr><td class="center table-short-'+result[i].shortcut+'">' + result[i].shortcut + '</td>' + '<td class="table-name-'+result[i].shortcut+'">' + result[i].name + '</td><td class="table-num-'+result[i].shortcut+'">' + result[i].number + '</td><td>';
-                            outstring += '<div class="ui icon buttons">' + '<button class="ui red button" disabled><i class="delete icon"></i></button>' + '<button class="ui blue button" disabled><i class="edit icon"></i></button>' + '<button class="ui green button" disabled><i class="call icon"></i></button></div>';
+                            outstring += '<div class="ui icon buttons">' + '<button aria-label="smazat" class="ui red button" disabled><i class="delete icon"></i></button>' + '<button aria-label="upravit" class="ui blue button" disabled><i class="edit icon"></i></button>' + '<button aria-label="zavolat" class="ui green button" disabled><i class="call icon"></i></button></div>';
                             outstring += '</td></tr>';
                         }
                     }
@@ -2085,5 +2092,17 @@
     }
     </script>
     <br>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('service-worker.js').then(function(registration) {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                }, function(err) {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+            });
+        };
+    </script>
   </body>
 </html>
