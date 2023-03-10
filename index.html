@@ -14,8 +14,8 @@
     var enableContacts = true;
 
     // Povolit historii volání :: true = povolit, false = zakázat //
-    // př. var enableCallHisory = false; // zakáže sekci historie volání
-    var enableCallHisory = true;
+    // př. var enableCallHistory = false; // zakáže sekci historie volání
+    var enableCallHistory = true;
 
     // Povolit statistiky volání :: true = povolit, false = zakázat //
     // př. var enableStatistics = false; // zakáže sekci statistiky volání
@@ -196,7 +196,7 @@
                             if(enableContacts){
                                 document.write('<div class="item" data-value="speedDials"><i class="user icon"></i> Rychlé kontakty</div>');
                             }
-                            if(enableCallHisory){
+                            if(enableCallHistory){
                                 document.write('<div class="item" data-value="callHistory"><i class="history icon"></i> Výpis volání</div>');
                             }
                             if(enableStatistics){
@@ -967,10 +967,10 @@
                     if(value == "logout"){
                         logoutModal();
 
-                        if((enableContacts && !enableCallHisory && !enableStatistics) || localStorage.prevCategory == "speedDials") {
+                        if((enableContacts && !enableCallHistory && !enableStatistics) || localStorage.prevCategory == "speedDials") {
                             $(".ui.dropdown").dropdown("set selected", "speedDials");
                         }
-                        else if((enableStatistics && !enableCallHisory) || localStorage.prevCategory == "statistics") {
+                        else if((enableStatistics && !enableCallHistory) || localStorage.prevCategory == "statistics") {
                             $(".ui.dropdown").dropdown("set selected", "statistics");
                         }
                        else {
@@ -1045,14 +1045,14 @@
         preload = true;
         reloadContacts();
 
-        if((enableContacts && !enableCallHisory && !enableStatistics) || localStorage.prevCategory == "speedDials") {
+        if((enableContacts && !enableCallHistory && !enableStatistics) || localStorage.prevCategory == "speedDials") {
             $(".ui.dropdown").dropdown("set selected", "speedDials");
             $(".callHistoryContent").hide();
             $(".statisticsContent").hide();
             $(".speedDialsContent").show();
             reloadContacts();
         }
-        else if((enableStatistics && !enableCallHisory) || localStorage.prevCategory == "statistics") {
+        else if((enableStatistics && !enableCallHistory) || localStorage.prevCategory == "statistics") {
             $(".ui.dropdown").dropdown("set selected", "statistics");
             $(".callHistoryContent").hide();
             $(".speedDialsContent").hide();

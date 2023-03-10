@@ -1,7 +1,7 @@
 # Odorik
 Jde o single page application, která používá pouze HTML, CSS, JavaScript a [Odorik API](http://www.odorik.cz/w/api). Můžete si ji tedy stáhnout, a následně ji spouštět lokálně nebo ji umístit na své webové stránky. Bezpečně ji můžete používat ale i spuštěním přímo na stránce [heptau.github.io/odorik/](https://heptau.github.io/odorik/), kde navíc bude vždy nejnovější verze.
 
-Pro přihlášení můžete použít bud SIP jmého a SIP heslo, kdy máte přístup jen k údajům konkrétního čísla a nebo můžete použít API jméno a API heslo, které najdete po přihlášení v [Nastavení účtu -> Api heslo](https://www.odorik.cz/ucet/nastaveni_uctu) a potom máte přístup ke všem linkám. Po zobrazení aplikace ve webovém prohlížeči si ji také můžete přidat do aplikací (na plochu), protože jde o 
+Pro přihlášení můžete použít bud SIP jmého a SIP heslo, kdy máte přístup jen k údajům konkrétního čísla a nebo můžete použít API jméno a API heslo, které najdete po přihlášení v [Nastavení účtu -> Api heslo](https://www.odorik.cz/ucet/nastaveni_uctu) a potom máte přístup ke všem linkám. Po zobrazení aplikace ve webovém prohlížeči si ji také můžete přidat do aplikací (na plochu), protože jde o
 Progresive Web Application (PWA).
 
 V hlavičce web stránky najdete nastavení, díky kterému si můžete funkčnost upravit. Pokud ovšem zakážete nebo omezíte nějak funkčnost této aplikace, uživatel bude moci stále použít neomezenou verzi aplikace a zobrazovat, nastavovat nebo měnit i údaje, které na svém webu zakážete.
@@ -18,7 +18,7 @@ Povolit sekci rychlé kontakty
 
 Povolit sekci historie volání
 
-    var enableCallHisory = false; // zakáže sekci historie volání
+    var enableCallHistory = false; // zakáže sekci historie volání
 
 Povolit sekci statistik volání
 
@@ -32,7 +32,7 @@ Zamknutá čísla - čárkou oddělený seznam zkratek (klapek), které nejde ed
 
 Skrytí zamknutých čísel - nezobrazovat vůbec, nebo zobrazit, ale zakázat úpravy
 
-    var hideLockedNumbers = true; // nezobrazí je vůbec 
+    var hideLockedNumbers = true; // nezobrazí je vůbec
 
 Povolit přidávání nových čísel
 
