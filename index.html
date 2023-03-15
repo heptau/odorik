@@ -94,7 +94,7 @@
     </script>
 
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, shrink-to-fit=no">
-    <title>Odorik: Webová aplikace</title>
+    <title>Odorik</title>
     <meta name="description" content="Aplikace pro správu rychlých kontaktů, vytváření hovorů a zobrazení výpisů pro zákazníky operátora Odorik.cz">
     <meta name="apple-mobile-web-app-title" content="Odorik">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1894,10 +1894,10 @@
     // Get name of the contact
     function getSpeedDialName(number){
         if($.inArray(number, allNumbers) != -1){
-            return allNames[$.inArray(number, allNumbers)] + " (" + number + ")";
+            return allNames[$.inArray(number, allNumbers)] + " (" + number.replace(/^00/, "+") + ")";
         }
         else {
-            return number;
+            return number.replace(/^00/, "+");
         }
     }
 
@@ -1954,19 +1954,19 @@
             $("select[name=line-filter]").parent().addClass("disabled");
         }
         $.ajax({
-            url: 'https://www.odorik.cz/api/v1/lines',
+            url: 'https://www.odorik.cz/api/v1/lines.json',
             type: 'GET',
             data: {
                 user: APIuser,
                 password: APIpass,
             },
             success: function(result) {
-                var data = result.split(",");
-                for(var i = 0; i < data.length; i++){
-                    $("select[name=line-filter]").append('<option value="'+data[i]+'">'+data[i]+'</option>');
-                    $("select[name=call-line]").append('<option value="'+data[i]+'">'+data[i]+'</option>');
+                array = result;
+                for (var i = 0; i < result.length; i++) {
+                    $("select[name=line-filter]").append('<option value="'+result[i].id+'">'+result[i].name+' ['+result[i].id+']</option>');
+                    $("select[name=call-line]").append('<option value="'+result[i].id+'">'+result[i].name+' ['+result[i].id+']</option>');
                     // TODO here
-                    $("#statistics-line .menu").append('<div class="item" data-value="'+data[i]+'">'+data[i]+'</div>');
+                    $("#statistics-line .menu").append('<div class="item" data-value="'+result[i].id+'">'+result[i].name+' ['+result[i].id+']</div>');
                 }
             }
         });
