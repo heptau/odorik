@@ -69,7 +69,7 @@
     // př. var enableInlineEditing = false // zakáže úpravy přímo v tabulce
     var enableInlineEditing = true;
 
-    // Povolit pokročilé filrování  :: true = povolit, false = zakázat //
+    // Povolit pokročilé filrování :: true = povolit, false = zakázat //
     // př. var enableFilters = false; // zakáže filtry
     var enableFilters = true;
 
@@ -85,7 +85,7 @@
     // př. var defaultCallbackLine = "623400"; // nastaví výchozí linku pro callback na 623400
     var defaultCallbackLine = "";
 
-    // Počet položek na stránku  //
+    // Počet položek na stránku //
     // př. var pageLength = 24; // nastaví počet položek na stránku na 24
     var pageLength = 100;
 
@@ -541,7 +541,7 @@
           Odorik.cz - webová aplikace
         </div>
         <div class="content">
-            <p>API jméno a heslo pro celý účet najdete po přihlášení v menu  <a href="https://www.odorik.cz/ucet/nastaveni_uctu.html?ucet_podmenu=api_heslo" target="_blank">Nastavení účtu <i class="ui angle right icon"></i>API heslo.</a></p>
+            <p>API jméno a heslo pro celý účet najdete po přihlášení v menu <a href="https://www.odorik.cz/ucet/nastaveni_uctu.html?ucet_podmenu=api_heslo" target="_blank">Nastavení účtu <i class="ui angle right icon"></i>API heslo.</a></p>
             <p>Případně je možné zadat SIP jméno (šestimístné číslo linky) a SIP heslo, pak lze zobrazovat jen hovory na oné lince. </p>
             <form class="ui form">
                 <div class="field">
@@ -556,7 +556,7 @@
             <div class="ui negative message" id="badLogin" style="display: none;">
                 <div class="header">Nesprávné uživatelské jméno nebo heslo.</div>
             </div>
-            <a href="https://github.com/heptau/odorik/blob/master/index.html">Zdrojový kód</a> této "single page" aplikace je k dispozici <a href="https://github.com/heptau/odorik/">včetně dokumentace</a>. Můžete si jej sami nechat upravit a integrovat  např. do vlastních webových stránek.
+            <a href="https://github.com/heptau/odorik/blob/master/index.html">Zdrojový kód</a> této "single page" aplikace je k dispozici <a href="https://github.com/heptau/odorik/">včetně dokumentace</a>. Můžete si jej sami nechat upravit a integrovat např. do vlastních webových stránek.
         </div>
         <div class="actions">
             <div class="ui positive right labeled icon button">
@@ -618,7 +618,7 @@
                   <li>V následujicím okně vyberte formát exportu <b>vCard</b> a stáhněte a uložte soubor s kontakty kliknutím na tlačítko <b>Exportovat</b>.</li>
                   <li>Níže v tomto okně klikněte na tlačítko <b>Importovat</b> a vyberte připravený soubor s kontakty.</li>
                   <li>Jako čísla zkratek budou navrženy následující volné pozice, případně budou použita čísla uložená v poli <b>poznámka</b> u jednotlivých kontaktů.
-                      Před uložením dostanete  možnost si vše prohlédnout a ručně upravit, případně import zrušit.
+                      Před uložením dostanete možnost si vše prohlédnout a ručně upravit, případně import zrušit.
          </li>
                 </ol>
                 <input id="fileinput" type="file" name="fileinput" style="display: none;" />
@@ -1112,7 +1112,7 @@
                     allShortcuts.push(result[i].shortcut);
                     allNames.push(result[i].name);
                     if (editableLine("main", result[i].shortcut)) {
-                        outstring += '<tr><td class="center table-short-'+result[i].shortcut+'">' + result[i].shortcut + '</td>' + '<td class="table-name-'+result[i].shortcut+'">' + result[i].name + '</td><td class="table-num-'+result[i].shortcut+'">' + result[i].number + '</td><td>';
+                        outstring += '<tr><td class="center table-short-'+result[i].shortcut+'">' + result[i].shortcut + '</td>' + '<td class="table-name-'+result[i].shortcut+'">' + result[i].name + '</td><td class="table-num-'+result[i].shortcut+'">' + result[i].number.replace(/^00/, "+") + '</td><td>';
 
                         if (enableEditing || enableRemoving || enableCallback)
                             outstring += '<div class="ui icon buttons">';
@@ -1132,7 +1132,7 @@
                         outstring += '</td></tr>';
                     } else {
                         if (hideLockedNumbers == false) {
-                            outstring += '<tr><td class="center table-short-'+result[i].shortcut+'">' + result[i].shortcut + '</td>' + '<td class="table-name-'+result[i].shortcut+'">' + result[i].name + '</td><td class="table-num-'+result[i].shortcut+'">' + result[i].number + '</td><td>';
+                            outstring += '<tr><td class="center table-short-'+result[i].shortcut+'">' + result[i].shortcut + '</td>' + '<td class="table-name-'+result[i].shortcut+'">' + result[i].name + '</td><td class="table-num-'+result[i].shortcut+'">' + result[i].number.replace(/^00/, "+") + '</td><td>';
                             outstring += '<div class="ui icon buttons">' + '<button aria-label="smazat" class="ui red button" disabled><i class="delete icon"></i></button>' + '<button aria-label="upravit" class="ui blue button" disabled><i class="edit icon"></i></button>' + '<button aria-label="zavolat" class="ui green button" disabled><i class="call icon"></i></button></div>';
                             outstring += '</td></tr>';
                         }
@@ -1363,7 +1363,7 @@
           callNumber: {
             identifier: 'call-number',
             rules: [{
-            type   : 'regExp[/^((\\*[0-9]{6})|([0-9]{2,3})|([0-9]{9,16}))$/]'
+            type : 'regExp[/^((\\*[0-9]{6})|([0-9]{2,3})|([0-9]{9,16}))$/]'
             }]
           }
         }
