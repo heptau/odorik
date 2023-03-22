@@ -17,6 +17,10 @@
     // př. var enableCallHistory = false; // zakáže sekci historie volání
     var enableCallHistory = true;
 
+    // Povolit historii SMS :: true = povolit, false = zakázat //
+    // př. var enableSmsHistory = false; // zakáže sekci historie SMS
+    var enableSmsHistory = true;
+
     // Povolit statistiky volání :: true = povolit, false = zakázat //
     // př. var enableStatistics = false; // zakáže sekci statistiky volání
     var enableStatistics = true;
@@ -199,6 +203,9 @@
                             if(enableCallHistory){
                                 document.write('<div class="item" data-value="callHistory"><i class="history icon"></i> Výpis volání</div>');
                             }
+                            if(enableSmsHistory){
+                                document.write('<div class="item" data-value="smsHistory"><i class="history icon"></i> Výpis SMS</div>');
+                            }
                             if(enableStatistics){
                                 document.write('<div class="item" data-value="statistics"><i class="bar chart icon"></i> Statistiky volání</div>');
                             }
@@ -216,12 +223,12 @@
             }
 
             if(enableFilters) {
-                document.write('<div class="item fitted callHistoryContent"><button aria-label="filtrovat" class="ui green button" onclick="filterModal();"><i class="filter icon"></i> Filtrovat</button></div>');
+                document.write('<div class="item fitted callHistoryContent smsHistoryContent"><button aria-label="filtrovat" class="ui green button" onclick="filterModal();"><i class="filter icon"></i> Filtrovat</button></div>');
             }
 
-            document.write('<div class="item fitted statisticsContent callHistoryContent"><div id="reportrange" class="ui button"><i class="calendar icon"></i><span></span> <i class="dropdown icon" style="margin:0"></i></div></div>')
+            document.write('<div class="item fitted statisticsContent"><div class="ui green floating button dropdown" id="statistics-line"><i class="phone icon"></i><div class="text">Všechny</div><i class="dropdown icon"></i><div class="menu"><div class="item" data-value="all">Všechny</div></div></div></div>')
 
-            document.write('<div class="item fitted statisticsContent"><div class="ui floating button dropdown" id="statistics-line"><i class="phone icon"></i><div class="text">Všechny</div><i class="dropdown icon"></i><div class="menu"><div class="item" data-value="all">Všechny</div></div></div></div>')
+            document.write('<div class="item fitted statisticsContent callHistoryContent smsHistoryContent"><div id="reportrange" class="ui button"><i class="calendar icon"></i><span></span> <i class="dropdown icon" style="margin:0"></i></div></div>')
 
             if (enableImportExport) {
                 document.write('<div class="item fitted speedDialsContent"><button aria-label="import/export" class="ui button" onclick="importExportModal();"><i class="file archive outline icon"></i> Import/Export</button></div>');
@@ -272,6 +279,38 @@
                         </a>
                         <a class="item" id="pageNumber"></a>
                         <a class="icon disabled item" id="nextPage" onclick="if(!$(this).hasClass('disabled')){page+=1;reloadCalls();}">
+                          <i class="right chevron icon"></i>
+                        </a>
+                      </div>
+                    </th>
+                  </tr>
+                </tfoot>
+            </table>
+        </div>
+        <!-- SMS HISTORY CONTENT -->
+        <div class="smsHistoryContent">
+            <!-- TABLE -->
+            <table class="ui celled table">
+                <thead>
+                    <tr>
+                        <th>Druh</th>
+                        <th>Datum</th>
+                        <th>Odkud</th>
+                        <th>Kam</th>
+                        <th class="center">Cena</th>
+                        <th class="center">Linka</th>
+                    </tr>
+                </thead>
+                <tbody id="tableSms">
+                </tbody>
+                <tfoot>
+                    <tr><th colspan="7">
+                      <div class="ui right floated pagination menu">
+                        <a class="icon disabled item" id="prevSmsPage" onclick="if(!$(this).hasClass('disabled')){page-=1;reloadSms();}">
+                          <i class="left chevron icon"></i>
+                        </a>
+                        <a class="item" id="pageSmsNumber"></a>
+                        <a class="icon disabled item" id="nextSmsPage" onclick="if(!$(this).hasClass('disabled')){page+=1;reloadSms();}">
                           <i class="right chevron icon"></i>
                         </a>
                       </div>
@@ -814,6 +853,7 @@
     var fromDate;
     var toDate;
     var callHistory = [];
+    var smsHistory = [];
     var redirectedCalls = [];
 
     var statsLine = -10;
@@ -973,10 +1013,12 @@
                         else if((enableStatistics && !enableCallHistory) || localStorage.prevCategory == "statistics") {
                             $(".ui.dropdown").dropdown("set selected", "statistics");
                         }
+                        else if((enableSmsHistory && !enableCallHistory) || localStorage.prevCategory == "smsHistory") {
+                            $(".ui.dropdown").dropdown("set selected", "smsHistory");
+                        }
                        else {
                             $(".ui.dropdown").dropdown("set selected", "callHistory");
                        }
-
 
                     } else {
                         localStorage.setItem("prevCategory", value);
@@ -987,6 +1029,9 @@
                     }
                     if(value == "callHistory"){
                         loadCalls();
+                    }
+                    if(value == "smsHistory"){
+                        loadSms();
                     }
                     if(value == "statistics"){
                         loadStatistics();
@@ -1048,6 +1093,7 @@
         if((enableContacts && !enableCallHistory && !enableStatistics) || localStorage.prevCategory == "speedDials") {
             $(".ui.dropdown").dropdown("set selected", "speedDials");
             $(".callHistoryContent").hide();
+            $(".smsHistoryContent").hide();
             $(".statisticsContent").hide();
             $(".speedDialsContent").show();
             reloadContacts();
@@ -1055,12 +1101,22 @@
         else if((enableStatistics && !enableCallHistory) || localStorage.prevCategory == "statistics") {
             $(".ui.dropdown").dropdown("set selected", "statistics");
             $(".callHistoryContent").hide();
+            $(".smsHistoryContent").hide();
             $(".speedDialsContent").hide();
             $(".statisticsContent").show();
             loadStatistics();
         }
+        else if((enableSmsHistory && !enableCallHistory) || localStorage.prevCategory == "smsHistory") {
+            $(".ui.dropdown").dropdown("set selected", "smsHistory");
+            $(".callHistoryContent").hide();
+            $(".speedDialsContent").hide();
+            $(".statisticsContent").hide();
+            $(".smsHistoryContent").show();
+            loadSms();
+        }
         else {
             $(".ui.dropdown").dropdown("set selected", "callHistory");
+            $(".smsHistoryContent").hide();
             $(".speedDialsContent").hide();
             $(".statisticsContent").hide();
             $(".callHistoryContent").show();
@@ -1153,6 +1209,7 @@
 
                   $(".statisticsContent").hide();
                   $(".callHistoryContent").hide();
+                  $(".smsHistoryContent").hide();
                   $(".speedDialsContent").show();
                 }
                 else {
@@ -1680,6 +1737,9 @@
         if(localStorage.prevCategory == "statistics") {
           loadStatistics();
         }
+        else if(localStorage.prevCategory == "smsHistory") {
+          loadSms();
+        }
         else {
           loadCalls();
         }
@@ -1830,6 +1890,7 @@
 
                 $(".speedDialsContent").hide();
                 $(".statisticsContent").hide();
+                $(".smsHistoryContent").hide();
                 $(".callHistoryContent").show();
 
                 reloadCalls();
@@ -1943,7 +2004,14 @@
             blurring: true,
             onApprove: function(){
                 localStorage.setItem("order", $("select[name=call-order]").val());
-                loadCalls();
+
+                if(localStorage.prevCategory == "smsHistory") {
+                    loadSms();
+                }
+                else {
+                    loadCalls();
+                }
+
             }
         }).modal('show');
     }
@@ -1996,6 +2064,169 @@
             type: 'GET',
             data: dataSet
         }).done(finishedFunction);
+    }
+
+    /*
+      SMS HISTORY
+    */
+
+    // Reload Sms
+    function reloadSms(){
+        if(page < 1) {
+            page = 1;
+        }
+
+        var startRange = Number((page-1)*pageLength);
+        var endRange = page*pageLength;
+        var data = smsHistory.slice(startRange, endRange);
+
+        if(data.length == pageLength){
+            $("#nextSmsPage").removeClass("disabled");
+        }
+        else {
+            $("#nextSmsPage").addClass("disabled");
+        }
+        if(page > 1){
+            $("#prevSmsPage").removeClass("disabled");
+        }
+        else {
+            $("#prevSmsPage").addClass("disabled");
+        }
+
+        populateSmsTable(data);
+    }
+
+    function loadSms(){
+        smsHistory = [];
+        callsAmount(function (data, textStatus, xhr) {
+            totalCalls = xhr.getResponseHeader('Odorik-Pages');
+            var dataSet = {
+                user: APIuser,
+                password: APIpass,
+                from: fromDate,
+                to: toDate,
+                page_size: 5000
+            };
+            if($("select[name=line-filter]").val() != "all"){
+                dataSet.line = $("select[name=line-filter]").val();
+            }
+            if($("select[name=state-filter]").val() != "all"){
+                dataSet.status = $("select[name=state-filter]").val();
+            }
+            if($("select[name=direction-filter]").val() != "all"){
+                dataSet.direction = $("select[name=direction-filter]").val();
+            }
+            if($("select[name=price-filter]").val() != "all"){
+                if($("select[name=price-filter]").val() == "free"){
+                    dataSet.min_price = "0";
+                    dataSet.max_price = "0";
+                }
+                else {
+                    dataSet.min_price = "0";
+                    dataSet.max_price = "1000";
+                }
+            }
+
+            $.ajax({
+                url: 'https://www.odorik.cz/api/v1/sms.json',
+                type: 'GET',
+                data: dataSet
+            }).done(function (data, textStatus, xhr) {
+                if($("select[name=call-order]").val() == "newest"){
+                    try {
+                        data = data.reverse();
+                    }
+                    catch(err) {
+                        // data jsou nulová - neobrátíme je
+                    }
+                }
+
+                var finalData = [];
+
+                for(var i = 0; i < data.length;i++){
+                    if($.inArray(data[i].line + "", allowedLines.split(",")) != -1 || allowedLines == ""){
+                        if(data[i].direction != "redirected") {
+                            finalData.push(data[i]);
+                        }
+                        else {
+                            if($.inArray(data[i].redirection_parent_id, redirectedCalls) == -1) {
+                                redirectedCalls.push(data[i].redirection_parent_id);
+                            }
+                        }
+                    }
+                }
+
+                data = finalData;
+
+                smsHistory = smsHistory.concat(data);
+
+                if ($(".ui.container").css("display") == "none") {
+                    $("#loadingDimmer").dimmer("hide");
+                    $("#loadingDimmer").remove();
+                    $(".ui.container").transition("fade", setDuration + "ms");
+                }
+
+                $('#categorySelector').removeClass("loading");
+
+                $(".speedDialsContent").hide();
+                $(".statisticsContent").hide();
+                $(".callHistoryContent").hide();
+                $(".smsHistoryContent").show();
+
+                reloadSms();
+            });
+        });
+    }
+
+    function populateSmsTable(result){
+        outstring = "";
+        for (var i = 0; i < result.length; i++) {
+                outstring += '<tr class="';
+                if(result[i].status == "missed"){
+                    outstring += "error";
+                }
+                outstring += '"';
+                outstring += ' data-id="'+ result[i]. id +'" ';
+                if(result[i].redirection_parent_id != "" && typeof result[i].redirection_parent_id != "undefined"){
+                    outstring += ' data-redirection-id="'+ result[i].redirection_parent_id +'"';
+                }
+                outstring += '><td>';
+
+                if($.inArray(result[i].id.toString(), redirectedCalls) != -1){
+                    outstring += '<a onclick="redirectionsModal('+"'"+result[i].id+"'"+','+"'"+result[i].date+"'"+');" class="ui teal ribbon label"><i class="forward mail icon"></i></a>';
+                }
+
+                outstring += '<span class="hasClickPopup" data-html="<b>ID:</b> '+result[i].id+'">';
+
+                if(result[i].direction == "redirected"){
+                    outstring += '<i class="forward mail icon"></i> Přesměrovaný';
+                }
+                if(result[i].direction == "in"){
+                    outstring += '<i class="right arrow icon"></i> Příchozí';
+                }
+                if(result[i].direction == "out"){
+                   outstring += '<i class="left arrow icon"></i> Odchozí';
+                }
+                if(result[i].status == "missed"){
+                    outstring += " nepřijatý";
+                }
+
+                outstring += '</span> ';
+                var price = result[i].price.toString().substr(0, result[i].price.toString().indexOf(".") + 3);
+                var callLength = ~~(result[i].length / 60) + "&nbsp;min " + (result[i].length % 60) + "&nbsp;s";
+                if(result[i].length < 60)
+                    callLength = (result[i].length % 60) + "&nbsp;s";
+                outstring += '</td><td>' + moment(result[i].date).format("DD.MM.YYYY H:mm:ss") + '</td><td>'
+                    + getSpeedDialName(result[i].source_number) +'</td><td>'
+                    + getSpeedDialName(result[i].destination_number)+'</span></td><td class="right"><span class="hasPopup" data-html="'
+                    + '<b>Zbylý kredit:</b> '
+                    + result[i].balance_after +'&nbsp;Kč">'
+                    + price +'&nbsp;Kč</span></td><td class="center">' + result[i].line +'</td></tr>';
+        }
+        $("#tableSms").html(outstring);
+        $(".hasClickPopup").popup({ on: "click" });
+        $(".hasPopup").popup();
+        $("#pageSmsNumber").text(page + " z " + Math.ceil(smsHistory.length / pageLength));
     }
 
     /*
@@ -2088,6 +2319,7 @@
       $('#categorySelector').removeClass("loading");
       $(".speedDialsContent").hide();
       $(".callHistoryContent").hide();
+      $(".smsHistoryContent").hide();
       $(".statisticsContent").show();
     }
     </script>
