@@ -132,7 +132,7 @@
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/segment.min.css">
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/site.min.css">
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/statistic.min.css">
-		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/table.min.css">
+		<!--link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/table.min.css"-->
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/transition.min.css">
 		<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css">
 		<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Lato&subset=latin,latin-ext">
@@ -169,15 +169,120 @@
 				background-color: #ddd;
 			}
 			@media (prefers-color-scheme: dark) {
-				body {background: #333;}
+				body {background: #222;}
 				h1, h3, #credit {color: #fff !important;}
 			}
+
+:root {color-scheme: light dark;}
+
+:root {
+	color-scheme: light dark;
+	--f: #fff;
+	--e: #eee;
+	--d: #ddd;
+	--c: #ccc;
+	--b: #bbb;
+	--a: #aaa;
+	--6: #666;
+	--0: #000;
+	--hover: #def;
+	--error: #f22;
+}
+
+@media (prefers-color-scheme: dark) {
+:root {
+	--f: #111;
+	--e: #333;
+	--d: #444;
+	--c: #555;
+	--b: #666;
+	--a: #777;
+	--6: #999;
+	--0: #fff;
+	--hover: #235;
+	--error: #f66;
+}
+}
+
+html,body {
+	font-family: helvetica;
+	font: -apple-system-short-body;
+	color: #000; /*var(--0)*/;
+	background-color: var(--f);
+	user-select: none;
+	-webkit-user-select: none; /* Safari */
+}
+table.table {
+	border-collapse: collapse;
+	border-spacing: 0;
+	border: 1px solid var(--c);
+	border-top:none;
+	table-layout: fixed;
+	width: 100%;
+	margin: 0;
+	cursor: default !important;
+	color: var(--0);
+}
+tr {height:38px;}
+td {
+	border: 1px solid var(--c);
+	border-width: 0 1px;
+	padding: 0 4px;
+	margin: 0;
+	overflow: hidden;
+	white-space: nowrap;
+	min-width: 20px;
+}
+.res {
+	resize: horizontal;
+	overflow: hidden;
+	width: auto;
+}
+.fix1 {width: 2em;}
+.fix3 {width: 2.5em;}
+.date {width: 5.5em;}
+.num {width: 6.9em;}
+.table thead tr {position: sticky; top: 0; background-color: var(--c);}
+.table tbody tr:nth-child(even) {background-color: var(--e);}
+.table tbody tr:hover {background-color: var(--hover);}
+.r {text-align: right;}
+
+.l {text-align: left;}
+.c {text-align: center; padding: 0;}
+.t {color: var(--6);}
+.state-z {color: var(--6); text-decoration: line-through;}
+.type-z {color: #080;}
+
+input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+#spinner {text-align:center; display:none}
+
+.error {color: var(--error)}
+
+	.kind-call{min-width:2em; max-width:11em; width:10em}
+	.kind-sms{min-width:2em; max-width:7em; width:6em}
+	.shortcut{width:6em}
+
+	@media only screen and (max-width: 750px) {
+		.kind-call{width:6em}
+		.kind-sms{width:6em}
+	}
+
+	@media only screen and (max-width: 535px) {
+		.kind-call{width:2em}
+		.kind-sms{width:2em}
+		.shortcut{width:2em}
+	}
+
 		</style>
 	</head>
 	<body>
 		<!-- IE WARNING -->
 		<!--[if IE]>
-		<div id="warningIE" style="padding-top: 10%; background: white; width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 10; 	padding: 15px; text-align: center">
+		<div id="warningIE" style="padding-top:10%; background:white; width:100%; height:100%; position:absolute; top:0; left:0; z-index:10; padding:15px; text-align:center">
 			<p>Používáte zastaralý prohlížeč. Nainstalujte si Google Chrome nebo Mozillu Firefox.<br>Pokud používáte jeden z těchto prohlížečů, zkuste znovu načíst stránku klávesou F5.</p>
 		</div>
 		<!--<![endif]-->
@@ -186,7 +291,7 @@
 		<div class="ui container" style="display: none;">
 			<!-- TITLE -->
 			<h1 class="ui header">
-				<br>Odorik.cz<div class="ui grey label">v1.10</div>
+				<br>Odorik.cz<div class="ui grey label">v1.10.1</div>
 				<span style="float: right;" class="sub header" id="credit"></span>
 			</h1>
 			<!-- MENU -->
@@ -245,10 +350,10 @@
 				<table class="ui celled compact table">
 					<thead>
 						<tr>
-							<th class="center">Zkratka</th>
-							<th>Název</th>
-							<th>Číslo</th>
-							<th class="one wide"></th>
+							<th class="center shortcut">Zkratka</th>
+							<th class="res" style="width:calc(6em+50%)">Název</th>
+							<th class="res" style="width:calc(6em+50%)">Číslo</th>
+							<th class="center" style="width:9em">Nástroje</th>
 						</tr>
 					</thead>
 					<tbody id="tableContacts">
@@ -261,13 +366,13 @@
 				<table class="ui celled table">
 					<thead>
 						<tr>
-							<th>Druh</th>
-							<th>Datum</th>
-							<th>Odkud</th>
-							<th>Kam</th>
-							<th class="center">Délka</th>
-							<th class="center">Cena</th>
-							<th class="center">Linka</th>
+							<th class="res kind-call">Druh</th>
+							<th class="res" style="min-width:4em; max-width:10em; width:calc(4em+30%)">Datum</th>
+							<th class="res" style="min-width:5em; width:calc(5em+35%)">Odkud</th>
+							<th class="res" style="min-width:5em; width:calc(5em+35%)">Kam</th>
+							<th class="res center" style="min-width:5em; max-width:8em; width:7em">Délka</th>
+							<th class="res center" style="min-width:4em; max-width:6em; width:5em">Cena</th>
+							<th class="res center" style="min-width:4em; max-width:6em; width:5em">Linka</th>
 						</tr>
 					</thead>
 					<tbody id="tableCalls">
@@ -293,18 +398,18 @@
 				<table class="ui celled table">
 					<thead>
 						<tr>
-							<th>Druh</th>
-							<th>Datum</th>
-							<th>Odkud</th>
-							<th>Kam</th>
-							<th class="center">Cena</th>
-							<th class="center">Linka</th>
+							<th class="res kind-sms">Druh</th>
+							<th class="res" style="min-width:4em; max-width:10em; width:calc(4em+30%)">Datum</th>
+							<th class="res" style="min-width:5em; width:calc(5em+35%)">Odkud</th>
+							<th class="res" style="min-width:5em; width:calc(5em+35%)">Kam</th>
+							<th class="res center" style="min-width:3em; max-width:5em; width:4em">Cena</th>
+							<th class="res center" style="min-width:4em; max-width:6em; width:5em">Linka</th>
 						</tr>
 					</thead>
 					<tbody id="tableSms">
 					</tbody>
 					<tfoot>
-						<tr><th colspan="7">
+						<tr><th colspan="6">
 							<div class="ui right floated pagination menu">
 								<a class="icon disabled item" id="prevSmsPage" onclick="if(!$(this).hasClass('disabled')){page-=1;reloadSms();}">
 									<i class="left chevron icon"></i>
@@ -348,7 +453,7 @@
 						<div class="column">
 							<div class="ui fluid card">
 								<div class="content">
-									<div class="header"><i class="left arrow icon"></i> &#xF5BC; Odchozí hovory</div>
+									<div class="header"><i class="left arrow icon"></i> Odchozí hovory</div>
 								</div>
 								<div class="content">
 									<div class="ui horizontal statistics">
@@ -401,12 +506,12 @@
 							<table class="ui black celled table">
 								<thead>
 									<tr>
-										<th>Destinace</th>
-										<th class="center">Počet</th>
-										<th class="center">Délka</th>
-										<th class="center">Cena</th>
-										<th class="center">Za minutu</th>
-										<th>Směr</th>
+										<th class="res" style="width:calc(8em+80%)">Destinace</th>
+										<th class="center" style="width:calc(1em+4%)">Počet</th>
+										<th class="center" style="width:calc(4em+4%)">Délka</th>
+										<th class="center" style="width:calc(5em+4%)">Cena</th>
+										<th class="center" style="width:calc(4em+4%)">Za minutu</th>
+										<th class="center" style="width:calc(4em+4%)">Směr</th>
 									</tr>
 								</thead>
 								<tbody id="destinationStatistics">
@@ -441,7 +546,7 @@
 			</div>
 			<div class="actions">
 				<div class="ui black deny button"> Ne </div>
-				<div class="ui positive right labeled icon button"> Smazat <i class="trash icon"></i> </div>
+				<div class="ui negative right labeled icon button"> Smazat <i class="trash icon"></i> </div>
 			</div>
 		</div>
 		<!-- EDIT MODAL -->
@@ -595,7 +700,7 @@
 			<div class="content">
 				<p>Čísla zkratek i texty k číslům si můžete libovolně upravit. Pokud chcete kontakt vynechat, nastavte jeho zkratku na nulu.</p>
 				<p><b>Pozor:</b> Pokud navržená čísla zkratek změníte, může se stát, že si následným uložením přepíšete existující záznamy pod stejným číslem.
-					 Budete na to upozorněni zčervenáním čísla zkratky po opuštění editačního pole.</p>
+					Budete na to upozorněni zčervenáním čísla zkratky po opuštění editačního pole.</p>
 				<table class="ui celled compact table">
 					<thead>
 						<tr>
@@ -1923,10 +2028,9 @@
 				success: function(result) {
 					array = result;
 					for (var i = 0; i < result.length; i++) {
-						$("select[name=line-filter]").append('<option value="'+result[i].id+'">'+result[i].name+' ['+result[i].id+']</option>');
-						$("select[name=call-line]").append('<option value="'+result[i].id+'">'+result[i].name+' ['+result[i].id+']</option>');
-						// TODO here
-						$("#statistics-line .menu").append('<div class="item" data-value="'+result[i].id+'">'+result[i].name+' ['+result[i].id+']</div>');
+						$("select[name=line-filter]").append('<option value="'+result[i].id+'">'+result[i].id+': '+result[i].name+'</option>');
+						$("select[name=call-line]").append('<option value="'+result[i].id+'">'+result[i].id+': '+result[i].name+'</option>');
+						$("#statistics-line .menu").append('<div class="item" data-value="'+result[i].id+'">'+result[i].id+': '+result[i].name+'</div>');
 					}
 				}
 			});
@@ -2183,7 +2287,7 @@
 					else if(data[i].direction == "in") {
 						direction = "Příchozí";
 					}
-					outString += "<tr><td>" + data[i].destination + "</td><td class='center'>" + data[i].count + "</td><td class='right'>" + formatLength(data[i].length) + "&nbsp;min</td><td class='right'>" + formatPrice(data[i].price) + "&nbsp;Kč</td><td class='right'>" + data[i].price_per_minute + "&nbsp;Kč</td><td>" + direction + "</td></tr>";
+					outString += "<tr><td>" + data[i].destination + "</td><td class='center'>" + data[i].count + "</td><td class='right'>" + formatLength(data[i].length) + "&nbsp;min</td><td class='right'>" + formatPrice(data[i].price) + "&nbsp;Kč</td><td class='right'>" + data[i].price_per_minute + "&nbsp;Kč</td><td class='center'>" + direction + "</td></tr>";
 				}
 				$("#destinationStatistics").html(outString);
 			});
