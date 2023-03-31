@@ -1,0 +1,244 @@
+/* Some small improvements */
+.daterangepicker td,
+.daterangepicker th {
+	font-size: 10pt;
+}
+
+.popup {
+	-webkit-filter: none !important;
+	filter: none !important;
+}
+
+@media only screen and (max-width: 767px) {
+	.ui.menu .fitted.item {
+		padding: 0.8em 1.2em;
+	}
+}
+
+html,
+body {
+	user-select: none;
+	-webkit-user-select: none;
+	font: -apple-system-body;
+}
+
+thead tr {
+	position: sticky;
+	top: 0;
+}
+
+table .center {
+	text-align: center !important;
+}
+
+table .right {
+	text-align: right !important;
+}
+
+hr {
+	border: 0;
+	height: 1px;
+	width: 85%;
+	background-color: #ddd;
+}
+
+@media (prefers-color-scheme: dark) {
+	body {
+		background: #222;
+	}
+
+	h1,
+	h3,
+	#credit {
+		color: #fff !important;
+	}
+}
+
+:root {
+	color-scheme: light dark;
+}
+
+:root {
+	color-scheme: light dark;
+	--f: #fff;
+	--e: #eee;
+	--d: #ddd;
+	--c: #ccc;
+	--b: #bbb;
+	--a: #aaa;
+	--6: #666;
+	--0: #000;
+	--hover: #def;
+	--error: #f22;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		--f: #111;
+		--e: #333;
+		--d: #444;
+		--c: #555;
+		--b: #666;
+		--a: #777;
+		--6: #999;
+		--0: #fff;
+		--hover: #235;
+		--error: #f66;
+	}
+}
+
+html,
+body {
+	font-family: helvetica;
+	font: -apple-system-short-body;
+	color: #000;
+	/*var(--0)*/
+	;
+	background-color: var(--f);
+	user-select: none;
+	-webkit-user-select: none;
+	/* Safari */
+}
+
+table.table {
+	border-collapse: collapse;
+	border-spacing: 0;
+	border: 1px solid var(--c);
+	border-top: none;
+	table-layout: fixed;
+	width: 100%;
+	margin: 0;
+	cursor: default !important;
+	color: var(--0);
+}
+
+tr {
+	height: 38px;
+}
+
+td {
+	border: 1px solid var(--c);
+	border-width: 0 1px;
+	padding: 0 4px;
+	margin: 0;
+	overflow: hidden;
+	white-space: nowrap;
+	min-width: 20px;
+}
+
+.res {
+	resize: horizontal;
+	overflow: hidden;
+	width: auto;
+}
+
+.fix1 {
+	width: 2em;
+}
+
+.fix3 {
+	width: 2.5em;
+}
+
+.date {
+	width: 5.5em;
+}
+
+.num {
+	width: 6.9em;
+}
+
+.table thead tr {
+	position: sticky;
+	top: 0;
+	background-color: var(--c);
+}
+
+.table tbody tr:nth-child(even) {
+	background-color: var(--e);
+}
+
+.table tbody tr:hover {
+	background-color: var(--hover);
+}
+
+.r {
+	text-align: right;
+}
+
+.l {
+	text-align: left;
+}
+
+.c {
+	text-align: center;
+	padding: 0;
+}
+
+.t {
+	color: var(--6);
+}
+
+.state-z {
+	color: var(--6);
+	text-decoration: line-through;
+}
+
+.type-z {
+	color: #080;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+
+#spinner {
+	text-align: center;
+	display: none
+}
+
+.error {
+	color: var(--error)
+}
+
+.kind-call {
+	min-width: 2em;
+	max-width: 11em;
+	width: 10em
+}
+
+.kind-sms {
+	min-width: 2em;
+	max-width: 7em;
+	width: 6em
+}
+
+.shortcut {
+	width: 6em
+}
+
+@media only screen and (max-width: 750px) {
+	.kind-call {
+		width: 6em
+	}
+
+	.kind-sms {
+		width: 6em
+	}
+}
+
+@media only screen and (max-width: 535px) {
+	.kind-call {
+		width: 2em
+	}
+
+	.kind-sms {
+		width: 2em
+	}
+
+	.shortcut {
+		width: 2em
+	}
+}
