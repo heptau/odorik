@@ -21,7 +21,7 @@ let coreAssets = [
    'https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/segment.min.css',
    'https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/site.min.css',
    'https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/statistic.min.css',
-   'https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/table.min.css',
+   //'https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/table.min.css',
    'https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/transition.min.css',
    'https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css',
    'https://fonts.googleapis.com/css?family=Lato&subset=latin,latin-ext',

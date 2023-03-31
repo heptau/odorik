@@ -5,7 +5,7 @@
 		<script>
 			// NASTAVENÍ //
 
-			// API uživatelské jméno a heslo :: automatické přihlášení //
+			// API uživatelské jméno a heslo :: automatické přihlášení. Toto uložení jména a hesla není bezpečné - kdokoli, kdo má ke stránce přistup, si může zobrazit zdrojový kód a jméno i heslo si přečíst. //
 			var APIuser = "";
 			var APIpass = "";
 
@@ -291,7 +291,7 @@ input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-o
 		<div class="ui container" style="display: none;">
 			<!-- TITLE -->
 			<h1 class="ui header">
-				<br>Odorik.cz<div class="ui grey label">v1.10.1</div>
+				<br>Odorik.cz<div class="ui grey label">v1.10.2</div>
 				<span style="float: right;" class="sub header" id="credit"></span>
 			</h1>
 			<!-- MENU -->
@@ -935,7 +935,7 @@ input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-o
 								init();
 
 								localStorage.setItem('username', APIuser);
-								localStorage.setItem('password', APIpass);
+								//localStorage.setItem('password', APIpass);  // TODO Save password is not secure
 							}
 						}
 					});
@@ -1221,7 +1221,12 @@ input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-o
 							$(".edited").removeClass("edited");
 							$(this).addClass("edited");
 
-							$(this).html("<div class='ui icon fluid input'><input type='text' data-original='"+$(this).text()+"' id='inlineInput' value='"+$(this).text()+"'><i id='inlineSubmit' class='link checkmark icon'></i></div>");
+							var currData = $(this).text();
+
+							$(this).html("<div class='ui icon fluid input'><input type='text' data-original='' id='inlineInput' value=''><i id='inlineSubmit' class='link checkmark icon'></i></div>");
+
+							$("#inlineInput").attr("value", currData);
+							$("#inlineInput").attr("data-original", currData);
 
 							var id = $(this).attr("class").replace(" edited", "").split("-")[2];
 
