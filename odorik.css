@@ -43,9 +43,6 @@ hr {
 }
 
 @media (prefers-color-scheme: dark) {
-	body {
-		background: #222;
-	}
 
 	h1,
 	h3,
@@ -221,24 +218,20 @@ input[type="number"]::-webkit-outer-spin-button {
 
 @media only screen and (max-width: 750px) {
 	.kind-call {
-		width: 6em
+		width: 2em
 	}
 
 	.kind-sms {
-		width: 6em
+		width: 2em
 	}
 }
 
 @media only screen and (max-width: 535px) {
-	.kind-call {
-		width: 2em
-	}
-
-	.kind-sms {
-		width: 2em
-	}
-
 	.shortcut {
 		width: 2em
 	}
+}
+
+* {
+	box-sizing: border-box !important
 }

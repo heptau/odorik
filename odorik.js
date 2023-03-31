@@ -319,7 +319,7 @@ function dim(status, text) {
 }
 
 
-/* CONTACTS SECTION */
+// CONTACTS SECTION
 
 // Reload list
 function reloadContacts() {
@@ -900,7 +900,7 @@ $("#loginModal input").keypress(function (e) {
 });
 
 
-/* CALL HISTORY SECTION */
+// CALL HISTORY SECTION
 
 var cb = function (start, end, label) {
 	fromDate = start.toISOString();
@@ -1098,13 +1098,13 @@ function populateCallsTable(result) {
 		outstring += '<span class="hasClickPopup" data-html="<b>ID:</b> ' + result[i].id + '">';
 
 		if (result[i].direction == "redirected") {
-			outstring += '<i class="forward mail icon"></i> Přesměrovaný';
+			outstring += '<i class="forward mail icon"></i>Přesměrovaný';
 		}
-		if (result[i].direction == "in") {
-			outstring += '<i class="right arrow icon"></i> Příchozí';
+		else if (result[i].direction == "in") {
+			outstring += '<i class="right arrow icon"></i>Příchozí';
 		}
-		if (result[i].direction == "out") {
-			outstring += '<i class="left arrow icon"></i> Odchozí';
+		else if (result[i].direction == "out") {
+			outstring += '<i class="left arrow icon"></i>Odchozí';
 		}
 		if (result[i].status == "missed") {
 			outstring += " nepřijatý";
@@ -1115,15 +1115,16 @@ function populateCallsTable(result) {
 		var callLength = ~~(result[i].length / 60) + "&nbsp;min " + (result[i].length % 60) + "&nbsp;s";
 		if (result[i].length < 60)
 			callLength = (result[i].length % 60) + "&nbsp;s";
-		outstring += '</td><td>' + moment(result[i].date).format("DD.MM.YYYY H:mm:ss") + '</td><td>'
-			+ getSpeedDialName(result[i].source_number) + '</td><td><span class="hasPopup" data-html="<b>Podrobnosti:</b> '
+		outstring += '</td><td class="hasClickPopup" data-html="' + moment(result[i].date).format("DD.MM.YYYY H:mm:ss") + '">'
+			+ moment(result[i].date).format("DD.MM.YYYY H:mm:ss") + '</td><td>'
+			+ getSpeedDialName(result[i].source_number) + '</td><td class="hasPopup" data-html="<b>Podrobnosti:</b> '
 			+ result[i].destination_name + '">'
-			+ getSpeedDialName(result[i].destination_number) + '</span></td><td class="right"><span class="hasPopup" data-html="<b>Délka vyzvánění:</b> '
+			+ getSpeedDialName(result[i].destination_number) + '</td><td class="right hasPopup" data-html="<b>Délka vyzvánění:</b> '
 			+ result[i].ringing_length + '&nbsp;s">'
-			+ callLength + '</span></td><td class="right"><span class="hasPopup" data-html="<b>Minutová sazba:</b> '
+			+ callLength + '</td><td class="right hasPopup" data-html="<b>Minutová sazba:</b> '
 			+ result[i].price_per_minute + '&nbsp;Kč<br><b>Zbylý kredit:</b> '
 			+ result[i].balance_after + '&nbsp;Kč">'
-			+ price + '&nbsp;Kč</span></td><td class="center">' + result[i].line + '</td></tr>';
+			+ price + '&nbsp;Kč</td><td class="center">' + result[i].line + '</td></tr>';
 	}
 	$("#tableCalls").html(outstring);
 	$(".hasClickPopup").popup({ on: "click" });
@@ -1163,7 +1164,7 @@ function redirectionsModal(id, time) {
 					outstring += "error";
 				}
 				outstring += '">';
-				outstring += '<td>' + moment(result[i].date).format("DD.MM.YYYY H:mm:ss") + '</td><td>' + getSpeedDialName(result[i].source_number) + '</td><td><span class="hasPopup" data-html="<b>Podrobnosti:</b> ' + result[i].destination_name + '">' + getSpeedDialName(result[i].destination_number) + '</span></td><td class="right"><span class="hasPopup" data-html="<b>Délka vyzvánění:</b> ' + result[i].ringing_length + '&nbsp;s">' + result[i].length + '&nbsp;s</span></td><td class="right"><span class="hasPopup" data-html="<b>Minutová sazba:</b> ' + result[i].price_per_minute + '&nbsp;Kč<br><b>Zbylý kredit:</b> ' + result[i].balance_after + '&nbsp;Kč">' + result[i].price + '&nbsp;Kč</span></td><td class="center">' + result[i].line + '</td></tr>';
+				outstring += '<td class="hasPopup" data-html="' + moment(result[i].date).format("DD.MM.YYYY H:mm:ss") + '">' + moment(result[i].date).format("DD.MM.YYYY H:mm:ss") + '</td><td>' + getSpeedDialName(result[i].source_number) + '</td><td class="hasPopup" data-html="<b>Podrobnosti:</b> ' + result[i].destination_name + '">' + getSpeedDialName(result[i].destination_number) + '</td><td class="right hasPopup" data-html="<b>Délka vyzvánění:</b> ' + result[i].ringing_length + '&nbsp;s">' + result[i].length + '&nbsp;s</td><td class="right hasPopup" data-html="<b>Minutová sazba:</b> ' + result[i].price_per_minute + '&nbsp;Kč<br><b>Zbylý kredit:</b> ' + result[i].balance_after + '&nbsp;Kč">' + result[i].price + '&nbsp;Kč</td><td class="center">' + result[i].line + '</td></tr>';
 			}
 		}
 
@@ -1245,7 +1246,7 @@ function callsAmount(finishedFunction) {
 }
 
 
-/* SMS HISTORY */
+// SMS HISTORY
 
 // Reload SMS
 function reloadSms() {
@@ -1358,12 +1359,7 @@ function loadSms() {
 function populateSmsTable(result) {
 	outstring = "";
 	for (var i = 0; i < result.length; i++) {
-		outstring += '<tr class="';
-		if (result[i].status == "missed") {
-			outstring += "error";
-		}
-		outstring += '"';
-		outstring += ' data-id="' + result[i].id + '" ';
+		outstring += '<tr data-id="' + result[i].id + '" ';
 		if (result[i].redirection_parent_id != "" && typeof result[i].redirection_parent_id != "undefined") {
 			outstring += ' data-redirection-id="' + result[i].redirection_parent_id + '"';
 		}
@@ -1376,29 +1372,27 @@ function populateSmsTable(result) {
 		outstring += '<span class="hasClickPopup" data-html="<b>ID:</b> ' + result[i].id + '">';
 
 		if (result[i].direction == "redirected") {
-			outstring += '<i class="forward mail icon"></i> Přesměrovaný';
+			outstring += '<i class="forward mail icon"></i>Přesměrovaný';
 		}
-		if (result[i].direction == "in") {
-			outstring += '<i class="right arrow icon"></i> Příchozí';
+		else if (result[i].direction == "in") {
+			outstring += '<i class="right arrow icon"></i>Příchozí';
 		}
-		if (result[i].direction == "out") {
-			outstring += '<i class="left arrow icon"></i> Odchozí';
+		else if (result[i].direction == "out") {
+			outstring += '<i class="left arrow icon"></i>Odchozí';
 		}
-		if (result[i].status == "missed") {
-			outstring += " nepřijatý";
-		}
+
 
 		outstring += '</span> ';
 		var price = result[i].price.toString().substr(0, result[i].price.toString().indexOf(".") + 3);
 		var callLength = ~~(result[i].length / 60) + "&nbsp;min " + (result[i].length % 60) + "&nbsp;s";
 		if (result[i].length < 60)
 			callLength = (result[i].length % 60) + "&nbsp;s";
-		outstring += '</td><td>' + moment(result[i].date).format("DD.MM.YYYY H:mm:ss") + '</td><td>'
+		outstring += '</td><td class="hasClickPopup" data-html="' + moment(result[i].date).format("DD.MM.YYYY H:mm:ss") + '">' + moment(result[i].date).format("DD.MM.YYYY H:mm:ss") + '</td><td>'
 			+ getSpeedDialName(result[i].source_number) + '</td><td>'
-			+ getSpeedDialName(result[i].destination_number) + '</span></td><td class="right"><span class="hasPopup" data-html="'
+			+ getSpeedDialName(result[i].destination_number) + '</span></td><td class="right hasPopup" data-html="'
 			+ '<b>Zbylý kredit:</b> '
 			+ result[i].balance_after + '&nbsp;Kč">'
-			+ price + '&nbsp;Kč</span></td><td class="center">' + result[i].line + '</td></tr>';
+			+ price + '&nbsp;Kč</td><td class="center">' + result[i].line + '</td></tr>';
 	}
 	$("#tableSms").html(outstring);
 	$(".hasClickPopup").popup({ on: "click" });
@@ -1407,7 +1401,7 @@ function populateSmsTable(result) {
 }
 
 
-/* STATISTICS SECTION */
+// STATISTICS SECTION
 
 function loadStatistics() {
 	var formatPrice = function (input) {

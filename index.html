@@ -105,7 +105,7 @@
 	<meta name="apple-mobile-web-app-title" content="Odorik">
 	<meta name="apple-mobile-web-app-capable" content="yes">
 	<meta name="apple-mobile-web-app-status-bar-style" content="black">
-	<meta name="theme-color" content="#222222">
+	<meta name="theme-color" content="#111111">
 	<link rel="manifest" href="app.webmanifest">
 	<link rel="apple-touch-icon" href="odorik-icon.png">
 	<link
@@ -155,11 +155,11 @@
 		<!--<![endif]-->
 
 	<!-- CONTAINER -->
-	<div class="ui container" style="display: none;">
+	<div class="ui container" style="display:none; width:calc(100% - 10px) !important;  margin:0 !important; padding:0 !important">
 		<!-- TITLE -->
 		<h1 class="ui header">
 			<br>Odorik.cz<div class="ui grey label">v1.10.2</div>
-			<span style="float: right;" class="sub header" id="credit"></span>
+			<span style="float:right" class="sub header" id="credit"></span>
 		</h1>
 		<!-- MENU -->
 		<div class="ui secondary stackable menu">
@@ -170,19 +170,19 @@
 					<div class="menu">
 						<script>
 							if (enableContacts) {
-								document.write('<div class="item" data-value="speedDials"><i class="user icon"></i> Rychlé kontakty</div>');
+								document.write('<div class="item" data-value="speedDials"><i class="user icon"></i>Rychlé kontakty</div>');
 							}
 							if (enableCallHistory) {
-								document.write('<div class="item" data-value="callHistory"><i class="history icon"></i> Výpis volání</div>');
+								document.write('<div class="item" data-value="callHistory"><i class="history icon"></i>Výpis volání</div>');
 							}
 							if (enableSmsHistory) {
-								document.write('<div class="item" data-value="smsHistory"><i class="history icon"></i> Výpis SMS</div>');
+								document.write('<div class="item" data-value="smsHistory"><i class="history icon"></i>Výpis SMS</div>');
 							}
 							if (enableStatistics) {
-								document.write('<div class="item" data-value="statistics"><i class="bar chart icon"></i> Statistiky volání</div>');
+								document.write('<div class="item" data-value="statistics"><i class="bar chart icon"></i>Statistiky volání</div>');
 							}
 							if (enableLogout) {
-								document.write('<hr /><div class="item" data-value="logout" style="font-weight: normal !important;"><i class="sign out icon"></i> Odhlásit</div>');
+								document.write('<hr /><div class="item" data-value="logout" style="font-weight:normal !important"><i class="sign out icon"></i>Odhlásit</div>');
 							}
 						</script>
 					</div>
@@ -191,19 +191,19 @@
 			<!-- REST OF THE ITEMS (DYNAMICALLY LOADED) -->
 			<script>
 				if (enableAdding) {
-					document.write('<div class="item fitted speedDialsContent"><button aria-label="přidat" class="ui green button" onclick="addContact();"><i class="plus icon"></i> Přidat</button></div>');
+					document.write('<div class="item fitted speedDialsContent"><button aria-label="přidat" class="ui green button" onclick="addContact();"><i class="plus icon"></i>Přidat</button></div>');
 				}
 
 				if (enableFilters) {
-					document.write('<div class="item fitted callHistoryContent smsHistoryContent"><button aria-label="filtrovat" class="ui green button" onclick="filterModal();"><i class="filter icon"></i> Filtrovat</button></div>');
+					document.write('<div class="item fitted callHistoryContent smsHistoryContent"><button aria-label="filtrovat" class="ui green button" onclick="filterModal();"><i class="filter icon"></i>Filtrovat</button></div>');
 				}
 
-				document.write('<div class="item fitted statisticsContent"><div class="ui green floating button dropdown" id="statistics-line"><i class="phone icon"></i><div class="text">Všechny</div><i class="dropdown icon"></i><div class="menu"><div class="item" data-value="all">Všechny</div></div></div></div>')
+				document.write('<div class="item fitted statisticsContent"><div class="ui green floating button dropdown" id="statistics-line"><i class="phone icon"></i><div class="text" style="white-space:nowrap; overflow:hidden">Všechny</div><i class="dropdown icon"></i><div class="menu"><div class="item" data-value="all">Všechny</div></div></div></div>')
 
-				document.write('<div class="item fitted statisticsContent callHistoryContent smsHistoryContent"><div id="reportrange" class="ui button"><i class="calendar icon"></i><span></span> <i class="dropdown icon" style="margin:0"></i></div></div>')
+				document.write('<div class="item fitted statisticsContent callHistoryContent smsHistoryContent"><div id="reportrange" class="ui button" style="white-space:nowrap; overflow:hidden"><i class="calendar icon"></i><span></span><i class="dropdown icon" style="margin:0"></i></div></div>')
 
 				if (enableImportExport) {
-					document.write('<div class="item fitted speedDialsContent"><button aria-label="import/export" class="ui button" onclick="importExportModal();"><i class="file archive outline icon"></i> Import/Export</button></div>');
+					document.write('<div class="item fitted speedDialsContent"><button aria-label="import/export" class="ui button" onclick="importExportModal();"><i class="file archive outline icon"></i>Import/Export</button></div>');
 				}
 
 				if (enableQuickCallback) {
@@ -234,12 +234,12 @@
 				<thead>
 					<tr>
 						<th class="res kind-call">Druh</th>
-						<th class="res" style="min-width:4em; max-width:10em; width:calc(4em+30%)">Datum</th>
+						<th class="res" style="min-width:4em; max-width:10em; width:calc(4em+30%)">Čas</th>
 						<th class="res" style="min-width:5em; width:calc(5em+35%)">Odkud</th>
 						<th class="res" style="min-width:5em; width:calc(5em+35%)">Kam</th>
-						<th class="res center" style="min-width:5em; max-width:8em; width:7em">Délka</th>
-						<th class="res center" style="min-width:4em; max-width:6em; width:5em">Cena</th>
-						<th class="res center" style="min-width:4em; max-width:6em; width:5em">Linka</th>
+						<th class="res center" style="min-width:5em; max-width:8em; width:5em">Délka</th>
+						<th class="res center" style="min-width:4em; max-width:6em; width:4em">Cena</th>
+						<th class="res center" style="min-width:4em; max-width:6em; width:4em">Linka</th>
 					</tr>
 				</thead>
 				<tbody id="tableCalls">
@@ -270,7 +270,7 @@
 				<thead>
 					<tr>
 						<th class="res kind-sms">Druh</th>
-						<th class="res" style="min-width:4em; max-width:10em; width:calc(4em+30%)">Datum</th>
+						<th class="res" style="min-width:4em; max-width:10em; width:calc(4em+30%)">Čas</th>
 						<th class="res" style="min-width:5em; width:calc(5em+35%)">Odkud</th>
 						<th class="res" style="min-width:5em; width:calc(5em+35%)">Kam</th>
 						<th class="res center" style="min-width:3em; max-width:5em; width:4em">Cena</th>
@@ -305,21 +305,21 @@
 					<div class="column">
 						<div class="ui fluid card">
 							<div class="content">
-								<div class="header"><i class="right arrow icon"></i> Příchozí hovory</div>
+								<div class="header"><i class="right arrow icon"></i>Příchozí hovory</div>
 							</div>
 							<div class="content">
 								<div class="ui horizontal statistics">
 									<div class="statistic">
-										<div class="value" id="incomingCount"> 0 </div>
-										<div class="label"> Hovorů </div>
+										<div class="value" id="incomingCount">0</div>
+										<div class="label">Hovorů</div>
 									</div>
 									<div class="statistic">
-										<div class="value" id="incomingLength"> 0 </div>
-										<div class="label"> Minut </div>
+										<div class="value" id="incomingLength">0</div>
+										<div class="label">Minut</div>
 									</div>
 									<div class="statistic">
-										<div class="value" id="incomingPrice"> 0 </div>
-										<div class="label"> Kč </div>
+										<div class="value" id="incomingPrice">0</div>
+										<div class="label">Kč</div>
 									</div>
 								</div>
 							</div>
@@ -328,21 +328,21 @@
 					<div class="column">
 						<div class="ui fluid card">
 							<div class="content">
-								<div class="header"><i class="left arrow icon"></i> Odchozí hovory</div>
+								<div class="header"><i class="left arrow icon"></i>Odchozí hovory</div>
 							</div>
 							<div class="content">
 								<div class="ui horizontal statistics">
 									<div class="statistic">
-										<div class="value" id="outgoingCount"> 0 </div>
-										<div class="label"> Hovorů </div>
+										<div class="value" id="outgoingCount">0</div>
+										<div class="label">Hovorů</div>
 									</div>
 									<div class="statistic">
-										<div class="value" id="outgoingLength"> 0 </div>
-										<div class="label"> Minut </div>
+										<div class="value" id="outgoingLength">0</div>
+										<div class="label">Minut</div>
 									</div>
 									<div class="statistic">
-										<div class="value" id="outgoingPrice"> 0 </div>
-										<div class="label"> Kč </div>
+										<div class="value" id="outgoingPrice">0</div>
+										<div class="label">Kč</div>
 									</div>
 								</div>
 							</div>
@@ -351,21 +351,21 @@
 					<div class="column">
 						<div class="ui fluid card">
 							<div class="content">
-								<div class="header"><i class="forward mail arrow icon"></i> Přesměrované hovory</div>
+								<div class="header"><i class="forward mail arrow icon"></i>Přesměrované hovory</div>
 							</div>
 							<div class="content">
 								<div class="ui horizontal statistics">
 									<div class="statistic">
-										<div class="value" id="redirectedCount"> 0 </div>
-										<div class="label"> Hovorů </div>
+										<div class="value" id="redirectedCount">0</div>
+										<div class="label">Hovorů</div>
 									</div>
 									<div class="statistic">
-										<div class="value" id="redirectedLength"> 0 </div>
-										<div class="label"> Minut </div>
+										<div class="value" id="redirectedLength">0</div>
+										<div class="label">Minut</div>
 									</div>
 									<div class="statistic">
-										<div class="value" id="redirectedPrice"> 0 </div>
-										<div class="label"> Kč </div>
+										<div class="value" id="redirectedPrice">0</div>
+										<div class="label">Kč</div>
 									</div>
 								</div>
 							</div>
@@ -413,21 +413,21 @@
 	<!-- DELETE MODAL -->
 	<div class="ui modal" id="deleteModal">
 		<i class="close icon"></i>
-		<div class="header"> Smazat kontakt </div>
+		<div class="header">Smazat kontakt</div>
 		<div class="content">
 			<div class="description">
 				<p>Opravdu chcete smazat tento rychlý kontakt?</p>
 			</div>
 		</div>
 		<div class="actions">
-			<div class="ui black deny button"> Ne </div>
-			<div class="ui negative right labeled icon button"> Smazat <i class="trash icon"></i> </div>
+			<div class="ui black deny button">Ne</div>
+			<div class="ui negative right labeled icon button">Smazat<i class="trash icon"></i></div>
 		</div>
 	</div>
 	<!-- EDIT MODAL -->
 	<div class="ui modal" id="editModal">
 		<i class="close icon"></i>
-		<div class="header"> Upravit kontakt </div>
+		<div class="header">Upravit kontakt</div>
 		<div class="content">
 			<form class="ui form">
 				<div class="field">
@@ -437,24 +437,24 @@
 				</div>
 				<div class="field">
 					<label>Název</label>
-					<input type="text" name="edit-name">
+					<input type="text" name="edit-name" autocapitalize="words">
 				</div>
 				<div class="field">
 					<label>Číslo</label>
 					<input type="tel" name="edit-number" required>
 				</div>
 			</form>
-			<p><b>TIP: </b>Lze editovat i dvojklikem na hlavní stránce.</p>
+			<p><b>TIP:</b> Lze editovat i dvojklikem na hlavní stránce.</p>
 		</div>
 		<div class="actions">
-			<div class="ui black deny button"> Zrušit </div>
-			<div class="ui positive right labeled icon button"> Upravit <i class="checkmark icon"></i> </div>
+			<div class="ui black deny button">Zpět</div>
+			<div class="ui positive right labeled icon button">Upravit<i class="checkmark icon"></i></div>
 		</div>
 	</div>
 	<!-- ADD MODAL -->
 	<div class="ui modal" id="addModal">
 		<i class="close icon"></i>
-		<div class="header"> Přidat kontakt </div>
+		<div class="header">Přidat kontakt</div>
 		<div class="content">
 			<form class="ui form">
 				<div class="field">
@@ -464,7 +464,7 @@
 				</div>
 				<div class="field">
 					<label>Název</label>
-					<input type="text" name="add-name" placeholder="Název">
+					<input type="text" name="add-name" placeholder="Název" autocapitalize="words">
 				</div>
 				<div class="field">
 					<label>Číslo</label>
@@ -473,33 +473,33 @@
 			</form>
 		</div>
 		<div class="actions">
-			<div class="ui black deny button"> Zrušit </div>
-			<div class="ui positive right labeled icon button"> Přidat <i class="checkmark icon"></i> </div>
+			<div class="ui black deny button">Zpět</div>
+			<div class="ui positive right labeled icon button">Přidat<i class="checkmark icon"></i></div>
 		</div>
 	</div>
 	<!-- LOGOUT MODAL -->
 	<div class="ui modal" id="logoutModal">
 		<i class="close icon"></i>
-		<div class="header"> Odhlášení </div>
+		<div class="header">Odhlášení</div>
 		<div class="content">
 			<div class="description">
 				<p>Opravdu se chcete odhlásit? Budete muset znovu zadat API jméno a heslo.</p>
 			</div>
 		</div>
 		<div class="actions">
-			<div class="ui black deny button"> Zrušit </div>
-			<div class="ui positive right labeled icon button"> Odhlásit <i class="sign out icon"></i> </div>
+			<div class="ui black deny button">Ne</div>
+			<div class="ui positive right labeled icon button">Odhlásit<i class="sign out icon"></i></div>
 		</div>
 	</div>
 	<!-- LOGIN MODAL -->
 	<div class="ui small modal" id="loginModal">
-		<div class="header"> Odorik.cz - webová aplikace </div>
+		<div class="header">Odorik.cz</div>
 		<div class="content">
 			<p>API jméno a heslo pro celý účet najdete po přihlášení v menu <a
 					href="https://www.odorik.cz/ucet/nastaveni_uctu.html?ucet_podmenu=api_heslo"
 					target="_blank">Nastavení účtu <i class="ui angle right icon"></i>API heslo.</a></p>
 			<p>Případně je možné zadat SIP jméno (šestimístné číslo linky) a SIP heslo, pak lze zobrazovat jen hovory na
-				oné lince. </p>
+				oné lince.</p>
 			<form class="ui form">
 				<div class="field">
 					<label>API jméno</label>
@@ -510,7 +510,7 @@
 					<input type="password" name="login-pass" autocomplete="current-password">
 				</div>
 			</form>
-			<div class="ui negative message" id="badLogin" style="display: none;">
+			<div class="ui negative message" id="badLogin" style="display:none">
 				<div class="header">Nesprávné uživatelské jméno nebo heslo.</div>
 			</div>
 			<a href="https://github.com/heptau/odorik/blob/master/index.html">Zdrojový kód</a> této "single page"
@@ -518,13 +518,13 @@
 			sami nechat upravit a integrovat např. do vlastních webových stránek.
 		</div>
 		<div class="actions">
-			<div class="ui positive right labeled icon button"> Přihlásit se <i class="sign in icon"></i> </div>
+			<div class="ui positive right labeled icon button">Přihlásit se<i class="sign in icon"></i></div>
 		</div>
 	</div>
 	<!-- CALL MODAL -->
 	<div class="ui modal" id="callModal">
 		<i class="close icon"></i>
-		<div class="header"> Objednat callback </div>
+		<div class="header">Objednat callback</div>
 		<div class="content">
 			<form class="ui form">
 				<div class="field">
@@ -547,14 +547,14 @@
 			</form>
 		</div>
 		<div class="actions">
-			<div class="ui black deny button"> Zrušit </div>
-			<div class="ui positive right labeled icon button submit"> Volat <i class="checkmark icon"></i> </div>
+			<div class="ui black deny button">Zpět</div>
+			<div class="ui positive right labeled icon button submit">Volat<i class="checkmark icon"></i></div>
 		</div>
 	</div>
 	<!-- IMPORT/EXPORT MODAL -->
 	<div class="ui modal" id="importExportModal">
 		<i class="close icon"></i>
-		<div class="header"> Import/Export </div>
+		<div class="header">Import/Export</div>
 		<div class="content">
 			<div class="description">
 				<p>Tato aplikace umožňuje import a export kontaktů ve formátu <b>vCard</b>.</p>
@@ -571,21 +571,21 @@
 						v poli <b>poznámka</b> u jednotlivých kontaktů.
 						Před uložením dostanete možnost si vše prohlédnout a ručně upravit, případně import zrušit.</li>
 				</ol>
-				<input id="fileinput" type="file" name="fileinput" style="display: none;" />
+				<input id="fileinput" type="file" name="fileinput" style="display:none" />
 			</div>
 		</div>
 		<div class="actions">
-			<div class="ui black deny button"> Zrušit </div>
-			<a class="ui blue right labeled icon button" download="Kontakty.vcf" href="#" id="exportButton"> Exportovat
-				<i class="download icon"></i> </a>
-			<div class="ui green right labeled icon button" id="importButton"> Importovat <i class="wizard icon"></i>
+			<div class="ui black deny button">Zpět</div>
+			<a class="ui blue right labeled icon button" download="Kontakty.vcf" href="#" id="exportButton">Exportovat<i
+					class="download icon"></i></a>
+			<div class="ui green right labeled icon button" id="importButton">Importovat<i class="wizard icon"></i>
 			</div>
 		</div>
 	</div>
 	<!-- IMPORT WIZARD MODAL -->
 	<div class="ui modal" id="importWizardModal">
 		<i class="close icon"></i>
-		<div class="header"> Import </div>
+		<div class="header">Import</div>
 		<div class="content">
 			<p>Čísla zkratek i texty k číslům si můžete libovolně upravit. Pokud chcete kontakt vynechat, nastavte jeho
 				zkratku na nulu.</p>
@@ -605,14 +605,14 @@
 			</table>
 		</div>
 		<div class="actions">
-			<div class="ui black deny button"> Zrušit </div>
-			<div class="ui positive right labeled icon button"> Dokončit <i class="checkmark icon"></i> </div>
+			<div class="ui black deny button">Zpět</div>
+			<div class="ui positive right labeled icon button">Dokončit<i class="checkmark icon"></i></div>
 		</div>
 	</div>
 	<!-- FILTER MODAL -->
 	<div class="ui modal" id="filterModal">
 		<i class="close icon"></i>
-		<div class="header"> Filtrovat </div>
+		<div class="header">Filtrovat</div>
 		<div class="content">
 			<form class="ui form">
 				<div class="field">
@@ -660,22 +660,22 @@
 			</form>
 		</div>
 		<div class="actions">
-			<div class="ui black deny button"> Zrušit </div>
-			<div class="ui positive right labeled icon button" id="importButton"> Hotovo <i class="checkmark icon"></i>
+			<div class="ui black deny button">Zpět</div>
+			<div class="ui positive right labeled icon button" id="importButton">Hotovo<i class="checkmark icon"></i>
 			</div>
 		</div>
 	</div>
 	<!-- REDIRECTIONS MODAL -->
 	<div class="ui modal" id="redirectionsModal">
 		<i class="close icon"></i>
-		<div class="header"> Seznam přesměrování během hovoru </div>
+		<div class="header">Seznam přesměrování během hovoru</div>
 		<div class="content">
 			<div>
 				<!-- TABLE -->
 				<table class="ui celled table">
 					<thead>
 						<tr>
-							<th>Datum</th>
+							<th>Čas</th>
 							<th>Odkud</th>
 							<th>Kam</th>
 							<th>Délka</th>
@@ -689,7 +689,7 @@
 			</div>
 		</div>
 		<div class="actions">
-			<div class="ui black deny button"> Zavřít </div>
+			<div class="ui black deny button">Zavřít</div>
 		</div>
 	</div>
 	<!-- DIMMERS -->

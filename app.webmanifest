@@ -16,7 +16,7 @@
 	"display": "standalone",
 	"start_url": ".",
 	"short_name": "Odorik",
-	"orientation": "portrait",
+	"orientation": "any",
 	"theme_color": "#333",
 	"background_color": "#fff"
 }
