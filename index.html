@@ -111,15 +111,13 @@
 	<link
 		href="data:image/x-icon;base64,R0lGODlhIwAeAKEBAOM7O////////////yH5BAEKAAIALAAAAAAjAB4AAAJMjI+pywoPQZssWknp3Tg7vnkfGIoGCZonWppsK76XGsAcbS1wPO20Pvs1bsKKr1gjIhHKZfL4QzlZU2mVdE1lobjmFuJMBMPiB1lUAAA7"
 		rel="icon" type="image/x-icon" />
-	<link rel="preconnect" href="https://www.odorik.cz">
-	<link rel="preconnect" href="https://fonts.googleapis.com">
-	<link rel="preconnect" href="https://cdnjs.cloudflare.com">
-	<link rel="preconnect" href="http://object.center">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+	<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin="anonymous">
+	<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin="anonymous">
 	<!-- Import of CSS libraries (Semantic UI) -->
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/button.min.css">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/card.min.css">
-	<link rel="stylesheet"
-		href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/container.min.css">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/container.min.css">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/dimmer.min.css">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/dropdown.min.css">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/form.min.css">
@@ -136,14 +134,10 @@
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/reset.min.css">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/segment.min.css">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/site.min.css">
-	<link rel="stylesheet"
-		href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/statistic.min.css">
-	<!--link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/table.min.css"-->
-	<link rel="stylesheet"
-		href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/transition.min.css">
-	<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css">
-	<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Lato&subset=latin,latin-ext">
-	<link rel="stylesheet" type="text/css" href="odorik.css">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/statistic.min.css">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/transition.min.css">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-daterangepicker/3.0.5/daterangepicker.min.css">
+	<link rel="stylesheet" href="odorik.css">
 </head>
 
 <body>
@@ -155,14 +149,15 @@
 		<!--<![endif]-->
 
 	<!-- CONTAINER -->
-	<div class="ui container" style="display:none; width:calc(100% - 10px) !important;  margin:0 !important; padding:0 !important">
+	<div class="ui container"
+		style="display:none; width:calc(100% - 10px) !important;  margin:0 !important; padding:0 !important">
 		<!-- TITLE -->
-		<h1 class="ui header">
-			<br>Odorik.cz<div class="ui grey label">v1.10.2</div>
+		<h1 class="ui header" style="padding-left:10px">
+			<br>Odorik.cz<div class="ui grey label">v1.10.3</div>
 			<span style="float:right" class="sub header" id="credit"></span>
 		</h1>
 		<!-- MENU -->
-		<div class="ui secondary stackable menu">
+		<div class="ui secondary stackable menu" style="padding-left:10px">
 			<!-- CATEGORY SELECTOR DROPDOWN -->
 			<div class="item fitted">
 				<div class="ui blue floating button dropdown" id="categorySelector">
@@ -431,17 +426,17 @@
 		<div class="content">
 			<form class="ui form">
 				<div class="field">
-					<label>Zkratka</label>
-					<input type="number" name="edit-shortcut" placeholder="Zkratka" pattern="\d*" min="1" max="999"
+					<label for="edit-shortcut">Zkratka</label>
+					<input type="number" id="edit-shortcut" name="edit-shortcut" placeholder="Zkratka" pattern="\d*" min="1" max="999"
 						required>
 				</div>
 				<div class="field">
-					<label>Název</label>
-					<input type="text" name="edit-name" autocapitalize="words">
+					<label for="edit-name">Název</label>
+					<input type="text" id="edit-name" name="edit-name" autocapitalize="words">
 				</div>
 				<div class="field">
-					<label>Číslo</label>
-					<input type="tel" name="edit-number" required>
+					<label for="edit-number">Číslo</label>
+					<input type="tel" id="edit-number" name="edit-number" required>
 				</div>
 			</form>
 			<p><b>TIP:</b> Lze editovat i dvojklikem na hlavní stránce.</p>
@@ -458,17 +453,17 @@
 		<div class="content">
 			<form class="ui form">
 				<div class="field">
-					<label>Zkratka</label>
-					<input type="number" name="add-shortcut" placeholder="Zkratka" pattern="\d*" min="1" max="999"
+					<label for="add-shortcut">Zkratka</label>
+					<input type="number" id="add-shortcut" name="add-shortcut" placeholder="Zkratka" pattern="\d*" min="1" max="999"
 						required>
 				</div>
 				<div class="field">
-					<label>Název</label>
-					<input type="text" name="add-name" placeholder="Název" autocapitalize="words">
+					<label for="add-name">Název</label>
+					<input type="text" id="add-name" name="add-name" placeholder="Název" autocapitalize="words">
 				</div>
 				<div class="field">
-					<label>Číslo</label>
-					<input type="tel" name="add-number" placeholder="Číslo" required>
+					<label for="add-number">Číslo</label>
+					<input type="tel" id="add-number" name="add-number" placeholder="Číslo" required>
 				</div>
 			</form>
 		</div>
@@ -502,12 +497,12 @@
 				oné lince.</p>
 			<form class="ui form">
 				<div class="field">
-					<label>API jméno</label>
-					<input type="text" name="login-name" autocomplete="username" autocapitalize="none">
+					<label for="login-name">API jméno</label>
+					<input type="text" id="login-name" name="login-name" autocomplete="username" autocapitalize="none">
 				</div>
 				<div class="field">
-					<label>API heslo</label>
-					<input type="password" name="login-pass" autocomplete="current-password">
+					<label for="login-pass">API heslo</label>
+					<input type="password" id="login-pass" name="login-pass" autocomplete="current-password">
 				</div>
 			</form>
 			<div class="ui negative message" id="badLogin" style="display:none">
@@ -528,19 +523,19 @@
 		<div class="content">
 			<form class="ui form">
 				<div class="field">
-					<label>Volané číslo</label>
-					<input type="tel" name="call-target" disabled>
+					<label for="call-target">Volané číslo</label>
+					<input type="tel" id="call-target" name="call-target" disabled>
 				</div>
 				<div class="field required">
-					<label>Vaše číslo</label>
+					<label for="call-number">Vaše číslo</label>
 					<div class="ui input">
-						<input type="tel" name="call-number"
+						<input type="tel" id="call-number" name="call-number"
 							placeholder="Číslo, na kterém chcete přijmout callback: číslo vaší linky (s hvězdičkou), rychlá volba, veřejné tel. číslo">
 					</div>
 				</div>
 				<div class="field">
-					<label>Linka, kterou bude callback realizován</label>
-					<select class="ui dropdown" name="call-line">
+					<label for="call-line">Linka, kterou bude callback realizován</label>
+					<select class="ui dropdown" id="call-line" name="call-line">
 						<option value="none">Výchozí</option>
 					</select>
 				</div>
@@ -616,22 +611,22 @@
 		<div class="content">
 			<form class="ui form">
 				<div class="field">
-					<label>Řazení</label>
-					<select class="ui fluid dropdown" name="call-order">
+					<label for="call-order">Řazení</label>
+					<select class="ui fluid dropdown" id="call-order" name="call-order">
 						<option value="newest" selected>Od nejnovějšího</option>
 						<option value="oldest">Od nejstaršího</option>
 					</select>
 				</div>
 				<div class="two fields">
 					<div class="field">
-						<label>Linka</label>
-						<select class="ui fluid dropdown" name="line-filter">
+						<label for="line-filter">Linka</label>
+						<select class="ui fluid dropdown" id="line-filter" name="line-filter">
 							<option value="all">Vše</option>
 						</select>
 					</div>
 					<div class="field">
-						<label>Stav</label>
-						<select class="ui fluid dropdown" name="state-filter">
+						<label for="state-filter">Stav</label>
+						<select class="ui fluid dropdown" id="state-filter" name="state-filter">
 							<option value="all">Vše</option>
 							<option value="missed">Zmeškané</option>
 							<option value="answered">Spojené</option>
@@ -640,8 +635,8 @@
 				</div>
 				<div class="two fields">
 					<div class="field">
-						<label>Směr</label>
-						<select class="ui fluid dropdown" name="direction-filter">
+						<label for="direction-filter">Směr</label>
+						<select class="ui fluid dropdown" id="direction-filter" name="direction-filter">
 							<option value="all">Vše</option>
 							<option value="out">Odchozí</option>
 							<option value="in">Příchozí</option>
@@ -649,8 +644,8 @@
 						</select>
 					</div>
 					<div class="field">
-						<label>Cena</label>
-						<select class="ui fluid dropdown" name="price-filter">
+						<label for="price-filter">Cena</label>
+						<select class="ui fluid dropdown" id="price-filter" name="price-filter">
 							<option value="all">Vše</option>
 							<option value="free">Jen zdarma</option>
 							<option value="paid">Jen placené</option>
@@ -707,8 +702,8 @@
 		<div class="ui loader"></div>
 	</div>
 	<!-- SCRIPTS -->
-	<script src="https://code.jquery.com/jquery-3.6.3.min.js"
-		integrity="sha384-Ft/vb48LwsAEtgltj7o+6vtS2esTU9PCpDqcXs4OCVQFZu5BqprHtUCZ4kjK+bpE"
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js"
+		integrity="sha512-pumBsjNRGGqkPzKHndZMaAG+bir374sORyzM3uulLV14lN5LyykqNk8eEeUlUkB3U0M4FApyaHraT65ihJhDpQ=="
 		crossorigin="anonymous"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/semantic.min.js"
 		integrity="sha384-KfrAxmzWxzKdfquWGNOhm/N9kEjIgoP2yBPMQmAjQ+Is0hp+3BlcWT6PcI7NuKEP"
@@ -716,8 +711,8 @@
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"
 		integrity="sha384-VCGDSwGwLWkVOK5vAWSaY38KZ4oKJ0whHjpJQhjqrMlWadpf2dUVKLgOLBdEaLvZ"
 		crossorigin="anonymous"></script>
-	<script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"
-		integrity="sha384-u4eJN1VWrTf/FnYYQJo2kqJyVxEQf5UmWY4iUcNAoLenOEtEuCkfwc5bKvZOWBi5"
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-daterangepicker/3.0.5/daterangepicker.min.js"
+		integrity="sha512-mh+AjlD3nxImTUGisMpHXW03gE6F4WdQyvuFRkjecwuWLwD2yCijw4tKA3NsEFpA1C3neiKhGXPSIGSfCYPMlQ=="
 		crossorigin="anonymous"></script>
 	<script src="odorik.js"></script>
 	<br>
