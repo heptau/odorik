@@ -1,0 +1,2279 @@
+openapi: 3.0.3
+info:
+  title: Odorik API
+  description: |-
+    Originální dokumentaci najdete na adrese [www.odorik.cz/w/api](https://www.odorik.cz/w/api).
+
+    **Pozor:** Na většinu požadavků se odpovídá HTTP stavovým kódem 200 OK, i když v této dokumentaci jsou použity různé kódy (což je z toho důvodu že stávající řešení není běžné ani vhodné, a pokud by se to použilo v této dokumentaci, tak to bude extrémně nepřehledné).
+
+    ### Existují dvě možnosti pro přihlášení: ###
+
+    **Přihlášení platné pro celý účet**
+    - user - ID registrovaného uživatele služby Odorik.cz
+    - password - speciální heslo určené pro API volání daného uživatele najdete jej po přihlášení v menu [Nastavení účtu→API heslo](https://www.odorik.cz/ucet/nastaveni_uctu.html?ucet_podmenu=api_heslo)
+
+    **Přihlášení platné pro konkrétní linku**
+    - user - číslo linky v síti Odorik.cz
+    - password - heslo pro danou linku (používané například i pro SIP autentizaci)
+
+    Seznam vašich linek můžete nalézt na [www.odorik.cz/ucet/linky.html](http://www.odorik.cz/ucet/linky.html), hesla poté po kliknutí na jednotlivé linky.
+
+  contact:
+    email: karas@odorik.cz
+  version: "1.0.0"
+servers:
+  - url: https://www.odorik.cz/api/v1
+    description: Produkční API server
+tags:
+  - name: calls
+    description: Hovory
+  - name: balance
+    description: Kredit
+  - name: lines
+    description: Linky
+  - name: speed_dial
+    description: Rychlé kontakty
+  - name: sim_cards
+    description: SIM karty
+  - name: sms
+    description: SMS
+  - name: public_numbers
+    description: Veřejná čísla
+  - name: tts
+    description: Text to speach
+paths:
+  /callback:
+    post:
+      tags:
+        - calls
+      summary: Požadavek k iniciování zpětného volání (callback)
+      parameters:
+        - name: caller
+          in: query
+          required: true
+          description: telefonní číslo, se kterým se pokusí spojit ústředna Odorik.cz
+          schema:
+            type: string
+            example: "00420771234567"
+        - name: recipient
+          in: query
+          required: true
+          description: telefonní číslo, se kterým budete spojeni po navázání hovoru mezi ústřednou a číslem předanným pomocí parametru caller
+          schema:
+            type: string
+            example: "00420602123456"
+        - name: delayed
+          in: query
+          required: false
+          description: opožděný callback; možné hodnoty jsou buď jedno číslo určující počet minut, o kolik bude callback zdržen, anebo přesné datum pro vytvoření callbacku ve formátu dateTime z XML Schema
+          schema:
+            type: string
+            example: "50"
+        - name: line
+          in: query
+          required: false
+          description: v případě přihlášení přes API heslo určuje linku, přes kterou bude callback realizován (u této linky bude callback evidován ve výpisu hovorů, příjemci callbacku se zobrazí při volání číslo přiřazené k lince, …)
+          schema:
+            type: integer
+            example: 123456
+        - name: simple
+          in: query
+          required: false
+          description: v případě předání hodnoty “true” nebude moci caller pomocí hvězdičky a DTMF tónu vytočit jiné číslo; zároveň nedochází ke snaze využít ke spojení další operátory, pokud první operátor selhal nebo hovor nespojil; implicitní je hodnota “false”. Pokud si tedy někdo objedná hovor a ten hovor pak odmítne, nebude se pokus opakovat.
+          schema:
+            type: boolean
+            example: false
+      responses:
+        200:
+          description: Callback ordered
+        202:
+          description: Successfully enqueued
+        400:
+          description: Missing argument {seznam_chybejicich_argumentu} / Invalid delay format / Invalid line
+        401:
+          description: Unauthenticated
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: errors authentication_required
+        412:
+          description: Delayed into past
+        503:
+          description: Callback failed (požadavek se nepodařilo předat Odorik.cz ústředně)
+
+      security:
+        - LoginAuth: []
+        - PasswordAuth: []
+  /calls.csv:
+    get:
+      tags:
+        - calls
+      summary: Výpis hovorů
+      parameters:
+        - name: from
+          in: query
+          required: false
+          description: počátek časového rozmezí hovorů; řetězec formátovaný jako dateTime z XML Schema
+          schema:
+            type: string
+            format: date-time
+            example: "2023-02-01T00:00:00+01:00"
+        - name: to
+          in: query
+          required: false
+          description: konec časové rozmezí hovorů; řetězec formátovaný jako dateTime z XML Schema
+          schema:
+            type: string
+            format: date-time
+            example: "2023-03-01T00:00:00+01:00"
+        - name: since_id
+          in: query
+          required: false
+          description: ID posledního staženého hovoru - vhodné pro periodické stahování nových záznamů
+          schema:
+            type: integer
+        - name: direction
+          in: query
+          required: false
+          description: filtr na příchozí/odchozí/přesměrované hovory
+          schema:
+            type: string
+            enum:
+            - in
+            - out
+            - redirected
+        - name: line
+          in: query
+          required: false
+          description: vrátit jen na hovory na dané lince
+          schema:
+            type: integer
+        - name: min_length
+          in: query
+          required: false
+          description: omezit výpis podle délky hovoru v sekundách
+          schema:
+            type: integer
+        - name: max_length
+          in: query
+          required: false
+          description: omezit výpis podle délky hovoru v sekundách
+          schema:
+            type: integer
+        - name: min_price
+          in: query
+          required: false
+          description: omezit podle ceny hovoru v korunách
+          schema:
+            type: string
+        - name: max_price
+          in: query
+          required: false
+          description: omezit podle ceny hovoru v korunách
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          description: filtr na zvednuté/zmeškané hovory
+          schema:
+            type: string
+            enum:
+            - answered
+            - missed
+        - name: phone_number_filter
+          in: query
+          required: false
+          description: prefix nebo celé telefonní číslo (např. 0049 nebo 00420533533533); filtruje podle source_number i destination_number (OR)
+          schema:
+            type: string
+        - name: sip_ids
+          in: query
+          required: false
+          description: pokud je předána hodnota true, přidají se k záznamům o hovorech atributy sip_in_call_id a sip_out_call_id
+          schema:
+            type: boolean
+        - name: include_sms
+          in: query
+          required: false
+          description: pokud je předána hodnota true, vrací se zároveň i SMS zprávy a není potřeba načítat SMS samostatně (pomocí GET /sms.csv (/sms.xml, /sms.json))
+          schema:
+            type: boolean
+        - name: page_size
+          in: query
+          required: false
+          description: maximální počet vracených hovorů na jednu stránku (výchozí 2000)
+          schema:
+            type: integer
+        - name: page
+          in: query
+          required: false
+          description: vrátit jinou než první stránku (indexujeme od 1)
+          schema:
+            type: integer
+      responses:
+        200:
+          description: OK
+          content:
+            text/csv:
+              schema:
+                type: string
+              example: |
+                id,redirection_parent_id,date,direction,source_number,destination_number,destination_name,length,ringing_length,status,price,price_per_minute,balance_after,line,active_call_id
+                509162522,,2023-02-19T20:45:55Z,out,00420602454455,*05602454455,Česká rep. - * v síti,20,5,answered,0.0,0.0,69.8116,732392,49882956
+        401:
+          description: Unauthenticated
+          content:
+            text/csv:
+              schema:
+                type: string
+                example: |
+                  errors
+                  authentication_required
+      security:
+        - LoginAuth: []
+        - PasswordAuth: []
+  /calls.json:
+    get:
+      tags:
+        - calls
+      summary: Výpis hovorů
+      parameters:
+        - name: from
+          in: query
+          required: false
+          description: počátek časového rozmezí hovorů; řetězec formátovaný jako dateTime z XML Schema
+          schema:
+            type: string
+            format: date-time
+            example: "2023-02-01T00:00:00+01:00"
+        - name: to
+          in: query
+          required: false
+          description: konec časové rozmezí hovorů; řetězec formátovaný jako dateTime z XML Schema
+          schema:
+            type: string
+            format: date-time
+            example: "2023-03-01T00:00:00+01:00"
+        - name: since_id
+          in: query
+          required: false
+          description: ID posledního staženého hovoru - vhodné pro periodické stahování nových záznamů
+          schema:
+            type: integer
+        - name: direction
+          in: query
+          required: false
+          description: filtr na příchozí/odchozí/přesměrované hovory
+          schema:
+            type: string
+            enum:
+            - in
+            - out
+            - redirected
+        - name: line
+          in: query
+          required: false
+          description: vrátit jen na hovory na dané lince
+          schema:
+            type: integer
+        - name: min_length
+          in: query
+          required: false
+          description: omezit výpis podle délky hovoru v sekundách
+          schema:
+            type: integer
+        - name: max_length
+          in: query
+          required: false
+          description: omezit výpis podle délky hovoru v sekundách
+          schema:
+            type: integer
+        - name: min_price
+          in: query
+          required: false
+          description: omezit podle ceny hovoru v korunách
+          schema:
+            type: string
+        - name: max_price
+          in: query
+          required: false
+          description: omezit podle ceny hovoru v korunách
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          description: filtr na zvednuté/zmeškané hovory
+          schema:
+            type: string
+            enum:
+            - answered
+            - missed
+        - name: phone_number_filter
+          in: query
+          required: false
+          description: prefix nebo celé telefonní číslo (např. 0049 nebo 00420533533533); filtruje podle source_number i destination_number (OR)
+          schema:
+            type: string
+        - name: sip_ids
+          in: query
+          required: false
+          description: pokud je předána hodnota true, přidají se k záznamům o hovorech atributy sip_in_call_id a sip_out_call_id
+          schema:
+            type: boolean
+        - name: include_sms
+          in: query
+          required: false
+          description: pokud je předána hodnota true, vrací se zároveň i SMS zprávy a není potřeba načítat SMS samostatně (pomocí GET /sms.csv (/sms.xml, /sms.json))
+          schema:
+            type: boolean
+        - name: page_size
+          in: query
+          required: false
+          description: maximální počet vracených hovorů na jednu stránku (výchozí 2000)
+          schema:
+            type: integer
+        - name: page
+          in: query
+          required: false
+          description: vrátit jinou než první stránku (indexujeme od 1)
+          schema:
+            type: integer
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/call'
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+      security:
+        - LoginAuth: []
+        - PasswordAuth: []
+  /calls.xml:
+    get:
+      tags:
+        - calls
+      summary: Výpis hovorů
+      parameters:
+        - name: from
+          in: query
+          required: false
+          description: počátek časového rozmezí hovorů; řetězec formátovaný jako dateTime z XML Schema
+          schema:
+            type: string
+            format: date-time
+            example: "2023-02-01T00:00:00+01:00"
+        - name: to
+          in: query
+          required: false
+          description: konec časové rozmezí hovorů; řetězec formátovaný jako dateTime z XML Schema
+          schema:
+            type: string
+            format: date-time
+            example: "2023-03-01T00:00:00+01:00"
+        - name: since_id
+          in: query
+          required: false
+          description: ID posledního staženého hovoru - vhodné pro periodické stahování nových záznamů
+          schema:
+            type: integer
+        - name: direction
+          in: query
+          required: false
+          description: filtr na příchozí/odchozí/přesměrované hovory
+          schema:
+            type: string
+            enum:
+            - in
+            - out
+            - redirected
+        - name: line
+          in: query
+          required: false
+          description: vrátit jen na hovory na dané lince
+          schema:
+            type: integer
+        - name: min_length
+          in: query
+          required: false
+          description: omezit výpis podle délky hovoru v sekundách
+          schema:
+            type: integer
+        - name: max_length
+          in: query
+          required: false
+          description: omezit výpis podle délky hovoru v sekundách
+          schema:
+            type: integer
+        - name: min_price
+          in: query
+          required: false
+          description: omezit podle ceny hovoru v korunách
+          schema:
+            type: string
+        - name: max_price
+          in: query
+          required: false
+          description: omezit podle ceny hovoru v korunách
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          description: filtr na zvednuté/zmeškané hovory
+          schema:
+            type: string
+            enum:
+            - answered
+            - missed
+        - name: phone_number_filter
+          in: query
+          required: false
+          description: prefix nebo celé telefonní číslo (např. 0049 nebo 00420533533533); filtruje podle source_number i destination_number (OR)
+          schema:
+            type: string
+        - name: sip_ids
+          in: query
+          required: false
+          description: pokud je předána hodnota true, přidají se k záznamům o hovorech atributy sip_in_call_id a sip_out_call_id
+          schema:
+            type: boolean
+        - name: include_sms
+          in: query
+          required: false
+          description: pokud je předána hodnota true, vrací se zároveň i SMS zprávy a není potřeba načítat SMS samostatně (pomocí GET /sms.csv (/sms.xml, /sms.json))
+          schema:
+            type: boolean
+        - name: page_size
+          in: query
+          required: false
+          description: maximální počet vracených hovorů na jednu stránku (výchozí 2000)
+          schema:
+            type: integer
+        - name: page
+          in: query
+          required: false
+          description: vrátit jinou než první stránku (indexujeme od 1)
+          schema:
+            type: integer
+      responses:
+        200:
+          description: OK
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/calls'
+        401:
+          description: Unauthenticated
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/errors'
+      security:
+        - LoginAuth: []
+        - PasswordAuth: []
+  /active_calls.json:
+    get:
+      tags:
+        - calls
+      summary: Výpis právě probíhajících hovorů
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ActiveCalls'
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+      security:
+        - LoginAuth: []
+        - PasswordAuth: []
+  /active_calls/{id}.json:
+    delete:
+      tags:
+        - calls
+      summary: Zavěšení hovoru
+      parameters:
+        - name: id
+          in: path
+          description: atribut “id” z výpisu právě probíhajících hovorů
+          required: true
+          schema:
+            type: string
+      responses:
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+      security:
+        - LoginAuth: []
+        - PasswordAuth: []
+  /call_statistics.json:
+    get:
+      tags:
+        - calls
+      summary: Statistika hovorů za zvolené období
+      parameters:
+        - name: from
+          in: query
+          required: true
+          description: počátek časového rozmezí hovorů; řetězec formátovaný jako dateTime z XML Schema
+          schema:
+            type: string
+            format: date-time
+            example: "2023-02-01T00:00:00+01:00"
+        - name: to
+          in: query
+          required: true
+          description: konec časové rozmezí hovorů; řetězec formátovaný jako dateTime z XML Schema
+          schema:
+            type: string
+            format: date-time
+            example: "2023-03-01T00:00:00+01:00"
+        - name: direction
+          in: query
+          required: false
+          description: filtr na příchozí/odchozí/přesměrované hovory
+          schema:
+            type: string
+            enum:
+            - in
+            - out
+            - redirected
+        - name: line
+          in: query
+          required: false
+          description: vrátit jen na hovory na dané lince
+          schema:
+            type: integer
+        - name: min_length
+          in: query
+          required: false
+          description: omezit výpis podle délky hovoru v sekundách
+          schema:
+            type: integer
+        - name: max_length
+          in: query
+          required: false
+          description: omezit výpis podle délky hovoru v sekundách
+          schema:
+            type: integer
+        - name: min_price
+          in: query
+          required: false
+          description: omezit podle ceny hovoru v korunách
+          schema:
+            type: string
+        - name: max_price
+          in: query
+          required: false
+          description: omezit podle ceny hovoru v korunách
+          schema:
+            type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CallStatistics'
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+      security:
+        - LoginAuth: []
+        - PasswordAuth: []
+  /call_statistics/by_destination.json:
+    get:
+      tags:
+        - calls
+      summary: Statistika hovorů za zvolené období podle destinací
+      parameters:
+        - name: from
+          in: query
+          required: true
+          description: počátek časového rozmezí hovorů; řetězec formátovaný jako dateTime z XML Schema
+          schema:
+            type: string
+            format: date-time
+            example: "2023-02-01T00:00:00+01:00"
+        - name: to
+          in: query
+          required: true
+          description: konec časové rozmezí hovorů; řetězec formátovaný jako dateTime z XML Schema
+          schema:
+            type: string
+            format: date-time
+            example: "2023-03-01T00:00:00+01:00"
+        - name: direction
+          in: query
+          required: false
+          description: filtr na příchozí/odchozí/přesměrované hovory
+          schema:
+            type: string
+            enum:
+            - in
+            - out
+            - redirected
+        - name: line
+          in: query
+          required: false
+          description: vrátit jen na hovory na dané lince
+          schema:
+            type: integer
+        - name: min_length
+          in: query
+          required: false
+          description: omezit výpis podle délky hovoru v sekundách
+          schema:
+            type: integer
+        - name: max_length
+          in: query
+          required: false
+          description: omezit výpis podle délky hovoru v sekundách
+          schema:
+            type: integer
+        - name: min_price
+          in: query
+          required: false
+          description: omezit podle ceny hovoru v korunách
+          schema:
+            type: string
+        - name: max_price
+          in: query
+          required: false
+          description: omezit podle ceny hovoru v korunách
+          schema:
+            type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CallStatisticsByDestination'
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+      security:
+        - LoginAuth: []
+        - PasswordAuth: []
+  /call_statistics/missed_calls.json:
+    get:
+      tags:
+        - calls
+      summary: Statistika zmeškaných hovorů za zvolené období
+      parameters:
+        - name: from
+          in: query
+          required: true
+          description: počátek časového rozmezí hovorů; řetězec formátovaný jako dateTime z XML Schema
+          schema:
+            type: string
+            format: date-time
+            example: "2023-02-01T00:00:00+01:00"
+        - name: to
+          in: query
+          required: true
+          description: konec časové rozmezí hovorů; řetězec formátovaný jako dateTime z XML Schema
+          schema:
+            type: string
+            format: date-time
+            example: "2023-03-01T00:00:00+01:00"
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TODO'
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+      security:
+        - LoginAuth: []
+        - PasswordAuth: []
+  /balance:
+    get:
+      tags:
+        - balance
+      summary: Vrací aktuální kredit uživatele v Kč zaokrouhlený na dvě desetinná místa
+      responses:
+        200:
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
+              example: "193.32"
+        401:
+          description: Unauthenticated
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: errors authentication_required
+      security:
+        - LoginAuth: []
+        - PasswordAuth: []
+  /balance.xml:
+    get:
+      tags:
+        - balance
+      summary: Vrací aktuální kredit uživatele v Kč zaokrouhlený na dvě desetinná místa
+      parameters:
+        - name: format
+          in: query
+          required: false
+          description: nastavením na hodnotu 'acrobits' bude vráceno XML pro klienta Acrobits Softphone - viz [fórum](http://forum.odorik.cz/viewtopic.php?f=19&t=2547&p=36587#p36587)
+          schema:
+            type: string
+            enum:
+              - acrobits
+      responses:
+        200:
+          description: OK
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/balance'
+        201:
+          description: OK for acrobits format
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/response'
+        401:
+          description: Unauthenticated
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/errors'
+      security:
+        - LoginAuth: []
+        - PasswordAuth: []
+  /balance_transfer.json:
+    post:
+      tags:
+        - balance
+      summary: Umožňuje převod kreditu jinému uživateli Odorik.cz
+      parameters:
+        - name: recepient
+          in: query
+          required: true
+          description: účet, na který se kredit převádí; PIN bez posledních 4 číslic (bývá to tedy buď mobilní číslo, na které je účet registrován, anebo číslo linky daného uživatele)
+          schema:
+            type: string
+            example: "602454455"
+        - name: amount
+          in: query
+          required: true
+          description: částka určená k převedení; minimálně 50 Kč, na účtu odesílatele musí zůstat alespoň 10 Kč
+          schema:
+            type: string
+            example: "120.00"
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TODO'
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+      security:
+        - LoginAuth: []
+        - PasswordAuth: []
+  /lines:
+    get:
+      tags:
+        - lines
+      summary: Vrací seznam linek přiřazených k uživatelskému účtu
+      responses:
+        200:
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
+              example: 300100,300110
+        401:
+          description: Unauthenticated
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: errors authentication_required
+      security:
+        - LoginAuth: []
+        - PasswordAuth: []
+  /lines.json:
+    get:
+      tags:
+        - lines
+      summary: Vrací seznam linek přiřazených k uživatelskému účtu včetně detailů o nastavení a připojených zařízeních
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/lines'
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+      security:
+        - LoginAuth: []
+        - PasswordAuth: []
+    post:
+      tags:
+        - lines
+      summary: Zakoupení nové linky k uživatelskému účtu
+      description: Cena je stejná jako při koupi v uživatelském rozhraní (5 Kč).
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TODO'
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+      security:
+        - LoginAuth: []
+        - PasswordAuth: []
+  /speed_dials.json:
+    get:
+      tags:
+        - speed_dial
+      summary: Vrací všechny rychlé kontakty
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TODO'
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+      security:
+        - LoginAuth: []
+        - PasswordAuth: []
+    post:
+      tags:
+        - speed_dial
+      summary: Přidání nového rychlého kontaktu
+      parameters:
+        - name: number
+          in: query
+          description: číslo, na které je voláno po vytočení rychlého kontaktu
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: query
+          description: jméno rychlého kontaktu; maximální délka 150 znaků
+          required: true
+          schema:
+            type: string
+        - name: shortcut
+          in: query
+          description: číslo zkrácené volby; v případě absence se použije nejmenší nevyužité číslo
+          required: false
+          schema:
+            type: integer
+      responses:
+        200:
+          description: OK
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+      security:
+        - LoginAuth: []
+        - PasswordAuth: []
+  /speed_dials/{rychly_kontakt}.json:
+    get:
+      tags:
+        - speed_dial
+      summary: Vrací konkrétní rychlý kontakt
+      parameters:
+        - name: rychly_kontakt
+          in: path
+          description: číslo rychlého kontaktu
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TODO'
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+      security:
+        - LoginAuth: []
+        - PasswordAuth: []
+    put:
+      tags:
+        - speed_dial
+      summary: Modifikace konkrétního rychlého kontaktu
+      parameters:
+        - name: rychly_kontakt
+          in: path
+          description: číslo rychlého kontaktu
+          required: true
+          schema:
+            type: integer
+        - name: number
+          in: query
+          description: nové číslo, na které je voláno po vytočení rychlého kontaktu
+          required: false
+          schema:
+            type: string
+        - name: name
+          in: query
+          description: nové jméno rychlého kontaktu; maximální délka 150 znaků
+          required: false
+          schema:
+            type: string
+        - name: shortcut
+          in: query
+          description: nové číslo zkrácené volby
+          required: false
+          schema:
+            type: integer
+      responses:
+        200:
+          description: OK
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+      security:
+        - LoginAuth: []
+        - PasswordAuth: []
+    delete:
+      tags:
+        - speed_dial
+      summary: Smazání konkrétního rychlého kontaktu
+      parameters:
+        - name: rychly_kontakt
+          in: path
+          description: číslo rychlého kontaktu
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TODO'
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+      security:
+        - LoginAuth: []
+        - PasswordAuth: []
+  /sim_cards.json:
+    get:
+      tags:
+        - sim_cards
+      summary: Výpis nastavení parametrů všech SIM karet daného uživatelského účtu (nebo pouze linky v případě autentizace přes linku)
+      parameters:
+        - name: include_available_data_packages
+          in: query
+          required: false
+          schema:
+            type: boolean
+        - name: include_available_credit_addons
+          in: query
+          required: false
+          schema:
+            type: boolean
+        - name: include_available_packages_delayed_billing
+          in: query
+          required: false
+          schema:
+            type: boolean
+        - name: include_available_roaming_settings
+          in: query
+          required: false
+          schema:
+            type: boolean
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/sim_cards'
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+      security:
+        - LoginAuth: []
+        - PasswordAuth: []
+  /sim_cards/{mobilni_cislo}.json:
+    get:
+      tags:
+        - sim_cards
+      summary: Výpis nastavení parametrů SIM karty s telefonním číslem {mobilni_cislo}
+      parameters:
+        - name: mobilni_cislo
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "00420771234567"
+        - name: include_available_data_packages
+          in: query
+          required: false
+          schema:
+            type: boolean
+        - name: include_available_credit_addons
+          in: query
+          required: false
+          schema:
+            type: boolean
+        - name: include_available_packages_delayed_billing
+          in: query
+          required: false
+          schema:
+            type: boolean
+        - name: include_available_roaming_settings
+          in: query
+          required: false
+          schema:
+            type: boolean
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/sim_cards'
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+      security:
+        - LoginAuth: []
+        - PasswordAuth: []
+    put:
+      tags:
+        - sim_cards
+      summary: Vyvolá změnu nastavení parametrů SIM karty s telefonním číslem {mobilni_cislo}
+      description: |-
+        V případě změny stavu (state) se provádí pouze tato změna a ostatní parametry jsou ignorovány.
+
+        V případě již probíhajících změn u SIM karty (neprázdné pole changes_in_progress ve výpise stavu přes GET požadavek) je možné zadávat požadavek na změnu pouze následujících parametrů: requested_data_plan_for_next_month, requested_data_roaming_plan_for_next_month, requested_voice_roaming_plan_for_next_month a requested_tariff_plan_for_next_month.
+      parameters:
+        - name: mobilni_cislo
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "00420771234567"
+        - name: state
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - active
+              - suspended
+        - name: data_package
+          in: query
+          description: viz zdroj dostupných datových balíčků
+          required: false
+          schema:
+            type: string
+        - name: data_package_for_next_month
+          in: query
+          description: viz zdroj dostupných datových balíčků
+          required: false
+          schema:
+            type: string
+        - name: voice_package
+          in: query
+          description: viz zdroj dostupných hlasových balíčků
+          required: false
+          schema:
+            type: string
+        - name: voice_package_for_next_month
+          in: query
+          description: viz zdroj dostupných hlasových balíčků
+          required: false
+          schema:
+            type: string
+        - name: package_delayed_billing
+          in: query
+          description: viz zdroj dostupných balíčků naruby
+          required: false
+          schema:
+            type: string
+        - name: package_delayed_billing_for_next_month
+          in: query
+          description: viz zdroj dostupných balíčků naruby
+          required: false
+          schema:
+            type: string
+        - name: missed_calls_register
+          in: query
+          description: SMS upozornění o zmeškaných hovorech v době nepřihlášení do sítě; v budoucnu může být zaveden paušální poplatek
+          required: false
+          schema:
+            type: boolean
+        - name: mobile_data
+          in: query
+          required: false
+          schema:
+            type: boolean
+        - name: lte
+          in: query
+          required: false
+          schema:
+            type: boolean
+        - name: lte_for_next_month
+          in: query
+          required: false
+          schema:
+            type: boolean
+        - name: roaming
+          in: query
+          description: viz zdroj dostupných nastavení roamingu
+          required: false
+          schema:
+            type: string
+        - name: premium_services
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - off
+              - sms_payments_and_dms
+              - all_other_than_sms_payments_and_dms
+              - all
+        - name: add_credit
+          in: query
+          description: dokup dat, viz seznam nabízených dokupů
+          required: false
+          schema:
+            type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TODO'
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+      security:
+        - LoginAuth: []
+        - PasswordAuth: []
+  /sim_cards/{mobilni_cislo}/data_restart:
+    post:
+      tags:
+        - sim_cards
+      summary: Provede změny vedoucí k odblokování FUP na SIM kartě v závislosti na aktuálním datovém balíčku
+      parameters:
+        - name: mobilni_cislo
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "00420771234567"
+      responses:
+        200:
+          description: OK
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/TODO'
+        401:
+          description: Unauthenticated
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: errors authentication_required
+      security:
+        - LoginAuth: []
+        - PasswordAuth: []
+  /sim_cards/{mobilni_cislo}/mobile_data.json:
+    get:
+      tags:
+        - sim_cards
+      summary: Výpis datových přenosů SIM karty s telefonním číslem {mobilni_cislo} za zvolené období
+      parameters:
+        - name: mobilni_cislo
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "00420771234567"
+        - name: from
+          in: query
+          required: false
+          description: počátek časového rozmezí hovorů; řetězec formátovaný jako dateTime z XML Schema
+          schema:
+            type: string
+            format: date-time
+            example: "2023-02-01T00:00:00+01:00"
+        - name: to
+          in: query
+          required: false
+          description: konec časové rozmezí hovorů; řetězec formátovaný jako dateTime z XML Schema
+          schema:
+            type: string
+            format: date-time
+            example: "2023-03-01T00:00:00+01:00"
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/mobile_data'
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+      security:
+        - LoginAuth: []
+        - PasswordAuth: []
+  /sim_cards/mobile_data.json:
+    get:
+      tags:
+        - sim_cards
+      summary: Výpis datových přenosů všech SIM karet přiřazených k danému účtu za zvolené období
+      parameters:
+        - name: from
+          in: query
+          required: false
+          description: počátek časového rozmezí hovorů; řetězec formátovaný jako dateTime z XML Schema
+          schema:
+            type: string
+            format: date-time
+            example: "2023-02-01T00:00:00+01:00"
+        - name: to
+          in: query
+          required: false
+          description: konec časové rozmezí hovorů; řetězec formátovaný jako dateTime z XML Schema
+          schema:
+            type: string
+            format: date-time
+            example: "2023-03-01T00:00:00+01:00"
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/mobile_data'
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+      security:
+        - LoginAuth: []
+        - PasswordAuth: []
+  /sms/allowed_sender:
+    get:
+      tags:
+        - sms
+      summary: Vrací seznam hodnot použitelných pro hodnotu sender při odesílání SMS
+      description: Bez ohledu na to, co tato funkce vrátí, do ČR jsou dovoleny jen Odorik.cz, smsinfo a 5517. Pokud použijete jako odesilatele mobilní číslo, bude nahrazeno id “smsinfo”. Posílání SMS do ČR je spolehlivé a potvrzená doručenka znamená, že SMS byla opravdu doručena. U posílání do zahraničí existují případy, kdy si doručenku “vymyslí” tranzitní operátor. Spolehlivost se může lišit také podle zvoleného odesilatele. Mobilní operátoři obecně a celosvětově nemají odesílání SMS přes API rádi a dělají různé naschvály, mohou SMS i úmyslně zahazovat třeba dle id odesilatele.
+      responses:
+        200:
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
+              example: "Odorik.cz,5517,00420789123456"
+        401:
+          description: Unauthenticated
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: errors authentication_required
+      security:
+        - LoginAuth: []
+        - PasswordAuth: []
+  /sms/sms.csv:
+    get:
+      tags:
+        - sms
+      summary: Výpis odeslaných a přijatých zpráv
+      description: |-
+        Nelze načíst texty přijatých nebo odeslaných zpráv, ale jen informaci o tom kdo komu kdy poslal jakou SMS.
+
+        Je také možné využít parametru include_sms=true u historie hovorů, aby byly vráceny jak hovory, tak zprávy v jednom požadavku.
+      parameters:
+        - name: from
+          in: query
+          required: true
+          description: počátek časového rozmezí hovorů; řetězec formátovaný jako dateTime z XML Schema
+          schema:
+            type: string
+            format: date-time
+            example: "2023-02-01T00:00:00+01:00"
+        - name: to
+          in: query
+          required: true
+          description: konec časové rozmezí hovorů; řetězec formátovaný jako dateTime z XML Schema
+          schema:
+            type: string
+            format: date-time
+            example: "2023-03-01T00:00:00+01:00"
+        - name: direction
+          in: query
+          required: false
+          description: filtr na příchozí/odchozí zprávy
+          schema:
+            type: string
+            enum:
+            - in
+            - out
+        - name: line
+          in: query
+          required: false
+          description: vrátit jen na zprávy u dané linky
+          schema:
+            type: integer
+      responses:
+        200:
+          description: OK
+          content:
+            text/csv:
+              schema:
+                $ref: '#/components/schemas/TODO'
+        401:
+          description: Unauthenticated
+          content:
+            text/csv:
+              schema:
+                type: string
+                example: |
+                  errors
+                  authentication_required
+      security:
+        - LoginAuth: []
+        - PasswordAuth: []
+  /sms/sms.json:
+    get:
+      tags:
+        - sms
+      summary: Výpis odeslaných a přijatých zpráv
+      description: |-
+        Nelze načíst texty přijatých nebo odeslaných zpráv, ale jen informaci o tom kdo komu kdy poslal jakou SMS.
+
+        Je také možné využít parametru include_sms=true u historie hovorů, aby byly vráceny jak hovory, tak zprávy v jednom požadavku.
+      parameters:
+        - name: from
+          in: query
+          required: true
+          description: počátek časového rozmezí hovorů; řetězec formátovaný jako dateTime z XML Schema
+          schema:
+            type: string
+            format: date-time
+            example: "2023-02-01T00:00:00+01:00"
+        - name: to
+          in: query
+          required: true
+          description: konec časové rozmezí hovorů; řetězec formátovaný jako dateTime z XML Schema
+          schema:
+            type: string
+            format: date-time
+            example: "2023-03-01T00:00:00+01:00"
+        - name: direction
+          in: query
+          required: false
+          description: filtr na příchozí/odchozí zprávy
+          schema:
+            type: string
+            enum:
+            - in
+            - out
+        - name: line
+          in: query
+          required: false
+          description: vrátit jen na zprávy u dané linky
+          schema:
+            type: integer
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TODO'
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+      security:
+        - LoginAuth: []
+        - PasswordAuth: []
+  /sms/sms.xml:
+    get:
+      tags:
+        - sms
+      summary: Výpis odeslaných a přijatých zpráv
+      description: |-
+        Nelze načíst texty přijatých nebo odeslaných zpráv, ale jen informaci o tom kdo komu kdy poslal jakou SMS.
+
+        Je také možné využít parametru include_sms=true u historie hovorů, aby byly vráceny jak hovory, tak zprávy v jednom požadavku.
+      parameters:
+        - name: from
+          in: query
+          required: true
+          description: počátek časového rozmezí hovorů; řetězec formátovaný jako dateTime z XML Schema
+          schema:
+            type: string
+            format: date-time
+            example: "2023-02-01T00:00:00+01:00"
+        - name: to
+          in: query
+          required: true
+          description: konec časové rozmezí hovorů; řetězec formátovaný jako dateTime z XML Schema
+          schema:
+            type: string
+            format: date-time
+            example: "2023-03-01T00:00:00+01:00"
+        - name: direction
+          in: query
+          required: false
+          description: filtr na příchozí/odchozí zprávy
+          schema:
+            type: string
+            enum:
+            - in
+            - out
+        - name: line
+          in: query
+          required: false
+          description: vrátit jen na zprávy u dané linky
+          schema:
+            type: integer
+      responses:
+        200:
+          description: OK
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/TODO'
+        401:
+          description: Unauthenticated
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/errors'
+      security:
+        - LoginAuth: []
+        - PasswordAuth: []
+  /sms/sms:
+    post:
+      tags:
+        - sms
+      summary: Požadavek na odeslání SMS zprávy
+      parameters:
+        - name: recepient
+          in: query
+          description: adresát zprávy, telefonní číslo v mezinárodním formátu začínající 00
+          required: true
+          schema:
+            type: string
+            example: "00420789123456"
+        - name: message
+          in: query
+          description: text zprávy, automaticky ořezáno na maximální délku 765 znaků
+          required: true
+          schema:
+            type: string
+        - name: sender
+          in: query
+          description: odesílatel zprávy, musí být jedna z možností vrácena [/sms/allowed_sender](#/sms/get_sms_allowed_sender)
+          required: false
+          schema:
+            type: string
+            example: smsinfo
+        - name: delayed
+          in: query
+          description: opožděné odeslání zprávy; možné hodnoty jsou buď jedno číslo určující počet minut, o kolik bude zpráva zdržena, anebo přesné datum odeslání ve formátu dateTime z XML Schema
+          required: false
+          schema:
+            type: string
+            example: 2036-07-16T08:12:14Z
+      responses:
+        200:
+          description: OK
+          content:
+            text/plain: {}
+        404:
+          description: Unauthenticated
+          content:
+            text/plain: {}
+      security:
+        - LoginAuth: []
+        - PasswordAuth: []
+  /public_numbers.json:
+    get:
+      tags:
+        - public_numbers
+      summary: Vrací všechna veřejná čísla asociována s daným účtem
+      parameters:
+        - name: include_sip_names
+          in: query
+          description: v případě hodnoty “true” budou v seznamu i registrovaná SIP jména
+          required: false
+          schema:
+            type: boolean
+        - name: include_shared_numbers
+          in: query
+          description: v případě hodnoty “true” budou v seznamu i sdílená telefonní čísla (rozsah 533 533 4xy) využitelná pro routování hovorů
+          required: false
+          schema:
+            type: boolean
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/public_numbers'
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+      security:
+        - LoginAuth: []
+        - PasswordAuth: []
+  /public_numbers/{verejne_cislo}/ringings.json:
+    get:
+      tags:
+        - public_numbers
+      summary: Vrací všechna čísla, na kterých bude vyzvánět hovor na {verejne_cislo}
+      parameters:
+        - name: verejne_cislo
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "00420771234567"
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ringings'
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+      security:
+        - LoginAuth: []
+        - PasswordAuth: []
+    post:
+      tags:
+        - public_numbers
+      summary: Přidání nového čísla pro paralení vyzvánění na čísle {verejne_cislo}
+      parameters:
+        - name: verejne_cislo
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "00420771234567"
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TODO'
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+      security:
+        - LoginAuth: []
+        - PasswordAuth: []
+  /public_numbers/{verejne_cislo}/ringings/{cilove_cislo}.json:
+    delete:
+      tags:
+        - public_numbers
+      summary: Odstranění paralelního zvonění z čísla {verejne_cislo} na čísle {cilove_cislo}
+      parameters:
+        - name: verejne_cislo
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "00420771234567"
+        - name: cilove_cislo
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "00420602123456"
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TODO'
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+      security:
+        - LoginAuth: []
+        - PasswordAuth: []
+  /public_numbers/{verejne_cislo}/routes.json:
+    get:
+      tags:
+        - public_numbers
+      summary: Vrací všechna pravidla určující směrování hovorů na {verejne_cislo}
+      parameters:
+        - name: verejne_cislo
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "00420771234567"
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/routes'
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+      security:
+        - LoginAuth: []
+        - PasswordAuth: []
+    post:
+      tags:
+        - public_numbers
+      summary: Přidání nového pravidla pro vyzvánění na čísle {verejne_cislo}
+      parameters:
+        - name: verejne_cislo
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "00420771234567"
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TODO'
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+      security:
+        - LoginAuth: []
+        - PasswordAuth: []
+  /public_numbers/{verejne_cislo}/routes/{id}.json:
+    delete:
+      tags:
+        - public_numbers
+      summary: Odstranění routovacího pravidla
+      parameters:
+        - name: verejne_cislo
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "00420771234567"
+        - name: id
+          in: path
+          description: hodnota získaná voláním GET /public_numbers/<verejne_cislo>/routes.json
+          required: true
+          schema:
+            type: integer
+            example: 1234567
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TODO'
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+      security:
+        - LoginAuth: []
+        - PasswordAuth: []
+  /tts/synth:
+    post:
+      tags:
+        - tts
+      summary: Vrací WAV soubor vzniklý z požadovaného textu
+      description: Služba je zpoplatněna, cena je 12 Kč/min, účtováno po sekundách. Službu si můžete vyzkoušet na [stránce poskytovatele](http://www.speechtech.cz/speechtech-text-to-speech/speechtech-tts-online-demo/#Jan210)
+      parameters:
+        - name: text
+          in: query
+          description: hláška určená k převodu na audio
+          required: true
+          schema:
+            type: string
+        - name: voice
+          in: query
+          description: hlasový engine použítý k vytvoření hlášky (Jan210 je výchozí)
+          required: false
+          schema:
+            type: string
+            enum:
+              - Jan210
+              - Alena210
+              - Radka210
+              - Iva210
+              - Stanislav210
+              - Jiri210
+              - Melanie210
+              - Olga210
+      responses:
+        200:
+          description: OK
+          content:
+            audio/wav: {}
+        401:
+          description: Unauthenticated
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: errors authentication_required
+      security:
+        - LoginAuth: []
+        - PasswordAuth: []
+components:
+  schemas:
+    calls:
+      type: object
+      properties:
+        calls:
+          type: array
+          items:
+            $ref: '#/components/schemas/call'
+    call:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 506013378
+        redirection_parent_id:
+          type: integer
+          example: ''
+        date:
+          type: string
+          format: date-time
+          example: '2023-02-01T16:31:00Z'
+        direction:
+          type: string
+          example: 'in'
+        source_number:
+          type: string
+          example: '00420721709606'
+        destination_number:
+          type: string
+          example: '00420771167567'
+        destination_name:
+          type: string
+          example: 'Odorik.cz mobil'
+        length:
+          type: integer
+          example: 127
+        ringing_length:
+          type: integer
+          example: 0
+        status:
+          type: string
+          example: 'answered'
+        price:
+          type: number
+          example: 0.0
+        price_per_minute:
+          type: number
+          example: 0.0
+        balance_after:
+          type: number
+          example: 224.1392
+        line:
+          type: integer
+          example: 760560
+        active_call_id:
+          type: integer
+          example: 47088818
+    ActiveCalls:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 14990661
+        source_number:
+          type: string
+          example: "00420533533013"
+        destination_number:
+          type: string
+          example: "00420910110006"
+        destination_name:
+          type: string
+          example: "Česko v síti 910-test- přesměrováno"
+        start_date:
+          type: string
+          format: date-time
+          example: "2013-08-15T06:34:43Z"
+        answer_date:
+          type: string
+          format: date-time
+          example: "2013-08-15T06:34:46Z"
+        price_per_minute:
+          type: number
+          example: 0.0
+        line:
+          type: integer
+          example: 403366
+    CallStatistics:
+      type: object
+      properties:
+        incoming:
+          type: object
+          properties:
+            count:
+              type: integer
+              example: 32
+            length:
+              type: integer
+              example: 9810
+            price:
+              type: number
+              example: 0.0
+        outgoing:
+          type: object
+          properties:
+            count:
+              type: integer
+              example: 33
+            length:
+              type: integer
+              example: 6772
+            price:
+              type: number
+              example: 157.6997
+        redirected:
+          type: object
+          properties:
+            count:
+              type: integer
+              example: 0
+            length:
+              type: integer
+              example: 0
+            price:
+              type: number
+              example: 0.0
+    CallStatisticsByDestination:
+      type: object
+      properties:
+        destination:
+          type: string
+          example: "Česká rep. - mobil"
+        count:
+          type: integer
+          example: 2
+        length:
+          type: integer
+          example: 97
+        price:
+          type: number
+          example: 0.9538
+        price_per_minute:
+          type: number
+          example: 0.59
+        direction:
+          type: string
+          example: "out"
+    balance:
+      type: number
+      example: 156.48
+    response:
+      type: object
+      properties:
+        error:
+          type: number
+          example: 0
+        balanceString:
+          type: string
+          example: "156.48"
+    device:
+      type: object
+      properties:
+        user_agent:
+          type: string
+          example: Acrobits SIPIS
+        public_socket:
+          type: string
+          example: 159.65.251.173:35444
+        local_socket:
+          type: string
+          example: 10.65.5.1:35444
+        last_registration_at:
+          type: string
+          format: date-time
+          example: "2023-06-19T14:58:50+02:00"
+        registration_expires_at:
+          type: string
+          format: date-time
+          example: "2023-06-19T15:08:50+02:00"
+      required:
+        - user_agent
+        - public_socket
+        - local_socket
+        - last_registration_at
+        - registration_expires_at
+    lines:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 743210
+        name:
+          type: string
+          example: Line name
+        caller_id:
+          type: string
+          example: 00420771234567
+        public_number:
+          type: string
+          example: 00420910123456
+        backup_number:
+          type: integer
+          example: null
+        sip_password:
+          type: string
+          example: plain_text_password
+        active_822:
+          type: boolean
+          example: false
+        active_cz_restriction:
+          type: boolean
+          example: false
+        active_iax:
+          type: boolean
+          example: false
+        active_password:
+          type: boolean
+          example: true
+        active_pin:
+          type: boolean
+          example: true
+        active_ping:
+          type: boolean
+          example: false
+        active_rtp:
+          type: boolean
+          example: false
+        active_sip:
+          type: boolean
+          example: true
+        active_anonymous:
+          type: boolean
+          example: true
+        active_greeting:
+          type: boolean
+          example: false
+        missed_call_email:
+          type: string
+          example: null
+        recording_email:
+          type: string
+          example: email+sip@address.com
+        voicemail_email:
+          type: string
+          example: null
+        backup_number_email:
+          type: string
+          example: null
+        incoming_call_name_format:
+          type: integer
+          example: 0
+        incoming_call_number_format:
+          type: integer
+          example: 0
+        connected_devices:
+          type: array
+          items:
+            $ref: '#/components/schemas/device'
+    sim_cards:
+      type: array
+      items:
+        type: object
+        properties:
+          id:
+            type: integer
+            example: 22550
+          line:
+            type: integer
+            example: 765432
+          phone_number:
+            type: string
+            example: "00420606178567"
+          sim_number:
+            type: string
+            example: "8942001450338678975F"
+          state:
+            type: string
+            example: "active"
+          changes_in_progress:
+            type: array
+            items: {}
+          data_package:
+            type: string
+            example: "300MB"
+          data_package_for_next_month:
+            type: string
+            example: "none"
+          data_bought_total:
+            type: integer
+            example: 314572800
+          data_used:
+            type: integer
+            example: 127819100
+          data_package_valid_from:
+            type: string
+            format: date-time
+            example: "2023-05-31T22:00:00Z"
+          data_package_valid_to:
+            type: string
+            format: date-time
+            example: "2023-06-30T21:59:59Z"
+          voice_package:
+            type: string
+            example: "none"
+          voice_package_for_next_month:
+            type: string
+            example: "none"
+          package_delayed_billing:
+            type: string
+            example: "none"
+          package_delayed_billing_for_next_month:
+            type: string
+            example: "none"
+          missed_calls_register:
+            type: boolean
+            example: false
+          mobile_data:
+            type: boolean
+            example: true
+          lte:
+            type: boolean
+            example: false
+          lte_for_next_month:
+            type: boolean
+            example: false
+          roaming:
+            type: string
+            example: "unknown"
+          premium_services:
+            type: string
+            example: "off"
+    mobile_data:
+      type: array
+      items:
+        type: object
+        properties:
+          id:
+            type: integer
+            example: 33790022
+          date:
+            type: string
+            format: date-time
+            example: "2023-01-31T23:00:00Z"
+          bytes_up:
+            type: integer
+            example: 380863
+          bytes_down:
+            type: integer
+            example: 576821
+          bytes_total:
+            type: integer
+            example: 957684
+          price:
+            type: number
+            example: 0
+          price_per_mb:
+            type: number
+            example: 0
+          phone_number:
+            type: string
+            example: "00420771234567"
+    public_numbers:
+      type: array
+      items:
+        type: object
+        properties:
+          public_number:
+            type: string
+            example: "00420910123456"
+          type:
+            type: string
+            example: "nomadic"
+    ringings:
+      type: array
+      items:
+        type: object
+        properties:
+          public_number:
+            type: string
+            example: "00420910123456"
+          ringing_number:
+            type: string
+            example: "*754321"
+    routes:
+      type: array
+      items:
+        type: object
+        properties:
+          id:
+            type: integer
+            example: 22625402
+          public_number:
+            type: string
+            example: "00420910123456"
+          source_number:
+            type: string
+            example: "*"
+          ringing_number:
+            type: string
+            example: "*754321"
+
+    errors:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            type: string
+            example: authentication_required
+
+    TODO:
+      type: object
+      properties:
+        id:
+          type: integer
+      xml:
+        name: todo
+  securitySchemes:
+    LoginAuth:
+      type: apiKey
+      in: query
+      name: user
+    PasswordAuth:
+      type: apiKey
+      in: query
+      name: password

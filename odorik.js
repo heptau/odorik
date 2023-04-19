@@ -1,3 +1,58 @@
+﻿// coding: utf-8
+
+// NASTAVENÍ
+
+// API uživatelské jméno a heslo :: automatické přihlášení. Toto uložení jména a hesla není bezpečné - kdokoli, kdo má ke stránce přistup, si může zobrazit zdrojový kód a jméno i heslo si přečíst.
+var APIuser = "";
+var APIpass = "";
+
+// Zamknutá čísla :: čárkou oddělený seznam zkratek (klapek), které nejde editovat
+// př. var lockedNumbers = "1,7" // zakáže čísla 1 a 7
+var lockedNumbers = "";
+
+// Skrytí zamknutých čísel :: true = nezobrazovat vůbec, false = zobrazit, ale zakázat úpravy
+// př. var hideLockedNumbers = true // nezobrazí vůbec
+var hideLockedNumbers = true;
+
+// Povolené linky :: čárkou oddělený seznam linek, které jsou uživateli dostupné
+// Pokud je pole prázdné, tak jsou všechny linky povolené
+// př. var allowedLines = "300100,300200"; // Povolí jen linku 300100 a 300200
+var allowedLines = "";
+
+// Povolit upravování nových čísel :: true = povolit, false = zakázat
+// př. var enableEditing = true // povolí úpravy
+var enableEditing = true;
+
+// Povolit mazání nových čísel :: true = povolit, false = zakázat
+// př. var enableRemoving = false // zakáže mazání
+var enableRemoving = true;
+
+// Povolit callback :: true = povolit, false = zakázat
+// př. var enableCallback = false // zakáže callback
+var enableCallback = true;
+
+// Povolit úpravu přímo v tabulce :: true = povolit, false = zakázat
+// Klepněte dvakrát na políčko textu v tabulce a můžete ho přímo upravit
+// př. var enableInlineEditing = false // zakáže úpravy přímo v tabulce
+var enableInlineEditing = true;
+
+// Povolit animace :: true = povolit, false = zakázat
+// př. var enableAnimations = false; // zakáže animace
+var enableAnimations = true;
+
+// Přednastavené číslo pro callback
+// př. var defaultCallbackNumber = "0085023815827"; // nastaví výchozí číslo pro callback na 0085023815827
+var defaultCallbackNumber = "";
+
+// Přednastavená linka pro callback
+// př. var defaultCallbackLine = "623400"; // nastaví výchozí linku pro callback na 623400
+var defaultCallbackLine = "";
+
+// Počet položek na stránku
+// př. var pageLength = 24; // nastaví počet položek na stránku na 24
+var pageLength = 100;
+
+
 // Disable caching of AJAX responses (so the data is properly updated)
 $.ajaxSetup({
 	cache: false
@@ -35,6 +90,12 @@ var redirectedCalls = [];
 var statsLine = -10;
 
 var preload = false;
+
+
+//temporary values
+var selectedLine;
+var selectedContact;
+
 
 // Detect if user is logged in
 function loggedIn() {
@@ -113,7 +174,7 @@ function logInDialog() {
 						init();
 
 						localStorage.setItem('username', APIuser);
-						//localStorage.setItem('password', APIpass);  // TODO Save password is not secure
+						//localStorage.setItem('password', APIpass); // TODO Save password is not secure
 					}
 				}
 			});
@@ -125,19 +186,14 @@ function logInDialog() {
 
 // Show logout confirmation modal
 function logoutModal() {
-	$('#logoutModal').modal({
-		blurring: true,
-		duration: setDuration,
-		onApprove: function () {
-			logout();
-		}
-	}).modal('show');
+	openDialog('logout-user');
 }
 
 // Log out the user
 function logout() {
 	localStorage.removeItem('username');
 	localStorage.removeItem('password');
+	window.close();
 	location.reload();
 }
 
@@ -182,34 +238,36 @@ function initDropdown() {
 				if (value == "logout") {
 					logoutModal();
 
-					if ((enableContacts && !enableCallHistory && !enableStatistics) || localStorage.prevCategory == "speedDials") {
-						$(".ui.dropdown").dropdown("set selected", "speedDials");
-					}
-					else if ((enableStatistics && !enableCallHistory) || localStorage.prevCategory == "statistics") {
-						$(".ui.dropdown").dropdown("set selected", "statistics");
-					}
-					else if ((enableSmsHistory && !enableCallHistory) || localStorage.prevCategory == "smsHistory") {
-						$(".ui.dropdown").dropdown("set selected", "smsHistory");
-					}
-					else {
-						$(".ui.dropdown").dropdown("set selected", "callHistory");
-					}
+					$(".ui.dropdown").dropdown("set selected", localStorage.prevCategory);
 
 				} else {
 					localStorage.setItem("prevCategory", value);
 					$('#categorySelector').addClass("loading");
 				}
-				if (value == "speedDials") {
-					reloadContacts();
-				}
-				if (value == "callHistory") {
-					loadCalls();
-				}
-				if (value == "smsHistory") {
-					loadSms();
-				}
-				if (value == "statistics") {
-					loadStatistics();
+				switch (value) {
+					case "speedDials":
+						loadContacts();
+						break;
+					case "callHistory":
+						loadCalls();
+						break;
+					case "smsHistory":
+						loadSms();
+						break;
+					case "activeCalls":
+						loadActiveCalls();
+						break
+					case "lines":
+						loadLines();
+						break;
+					case "simCards":
+						loadSimCards();
+						break;
+					case "mobileData":
+						loadMobileData();
+						break;
+					case "statistics":
+						loadStatistics();
 				}
 			}
 			else {
@@ -263,55 +321,46 @@ function init() {
 	// Load contacts/calls
 
 	preload = true;
-	reloadContacts();
+	loadContacts();
 
-	if ((enableContacts && !enableCallHistory && !enableStatistics) || localStorage.prevCategory == "speedDials") {
-		$(".ui.dropdown").dropdown("set selected", "speedDials");
-		$(".callHistoryContent").hide();
-		$(".smsHistoryContent").hide();
-		$(".statisticsContent").hide();
-		$(".speedDialsContent").show();
-		reloadContacts();
-	}
-	else if ((enableStatistics && !enableCallHistory) || localStorage.prevCategory == "statistics") {
-		$(".ui.dropdown").dropdown("set selected", "statistics");
-		$(".callHistoryContent").hide();
-		$(".smsHistoryContent").hide();
-		$(".speedDialsContent").hide();
-		$(".statisticsContent").show();
-		loadStatistics();
-	}
-	else if ((enableSmsHistory && !enableCallHistory) || localStorage.prevCategory == "smsHistory") {
-		$(".ui.dropdown").dropdown("set selected", "smsHistory");
-		$(".callHistoryContent").hide();
-		$(".speedDialsContent").hide();
-		$(".statisticsContent").hide();
-		$(".smsHistoryContent").show();
-		loadSms();
-	}
-	else {
-		$(".ui.dropdown").dropdown("set selected", "callHistory");
-		$(".smsHistoryContent").hide();
-		$(".speedDialsContent").hide();
-		$(".statisticsContent").hide();
-		$(".callHistoryContent").show();
-		loadCalls();
+	$(".ui.dropdown").dropdown("set selected", localStorage.prevCategory);
+	$("." + localStorage.prevCategory + "Content").show();
+
+	switch (localStorage.prevCategory) {
+		case "speedDials":
+			loadContacts();
+			break;
+		case "statistics":
+			loadStatistics();
+			break;
+		case "smsHistory":
+			loadSms();
+			break;
+		case "activeCalls":
+			loadActiveCalls();
+			break;
+		case "lines":
+			loadLines();
+			break;
+		case "simCards":
+			loadSimCards();
+			break;
+		case "mobileData":
+			loadMobileData();
+			break;
+		default:
+			$(".callHistoryContent").show();
+			loadCalls();
 	}
 }
 
 // Shows the "dimmer" element - for displaying error messages
 function dim(status, text) {
+	$('#dimmer h1 i').removeClass("warning sign checkmark");
 	if (status == true) {
-		$('#dimmer h1 i').removeClass("warning");
-		$('#dimmer h1 i').removeClass("sign");
-		$('#dimmer h1 i').removeClass("checkmark");
 		$('#dimmer h1 i').addClass("checkmark");
 	} else {
-		$('#dimmer h1 i').removeClass("warning");
-		$('#dimmer h1 i').removeClass("sign");
-		$('#dimmer h1 i').removeClass("checkmark");
-		$('#dimmer h1 i').addClass("warning");
-		$('#dimmer h1 i').addClass("sign");
+		$('#dimmer h1 i').addClass("warning sign");
 	}
 	$('#dimmer small').html(text);
 	setTimeout("$('#dimmer').dimmer('show');", 800)
@@ -322,7 +371,7 @@ function dim(status, text) {
 // CONTACTS SECTION
 
 // Reload list
-function reloadContacts() {
+function loadContacts() {
 	allShortcuts = [];
 	allNumbers = [];
 	allNames = [];
@@ -342,13 +391,13 @@ function reloadContacts() {
 				allShortcuts.push(result[i].shortcut);
 				allNames.push(result[i].name);
 				if (editableLine("main", result[i].shortcut)) {
-					outstring += '<tr><td class="center table-short-' + result[i].shortcut + '">' + result[i].shortcut + '</td>' + '<td class="table-name-' + result[i].shortcut + '">' + result[i].name + '</td><td class="table-num-' + result[i].shortcut + '">' + result[i].number.replace(/^00/, "+") + '</td><td>';
+					outstring += '<tr oncontextmenu="deleteContactModal(\'main\', ' + result[i].shortcut + '); return false;"><td class="center table-short-' + result[i].shortcut + '">' + result[i].shortcut + '</td>' + '<td class="table-name-' + result[i].shortcut + '">' + result[i].name + '</td><td class="table-num-' + result[i].shortcut + '">' + unifyPhoneNo(result[i].number) + '</td><td>';
 
 					if (enableEditing || enableRemoving || enableCallback)
 						outstring += '<div class="ui icon buttons">';
 
 					if (enableRemoving)
-						outstring += '<button aria-label="smazat" class="ui red button" onclick="removeContact(\'main\', \'' + result[i].shortcut + '\')"><i class="trash alternate icon"></i></button>';
+						outstring += '<button aria-label="smazat" class="ui red button" onclick="deleteContactModal(\'main\', \'' + result[i].shortcut + '\')"><i class="trash alternate icon"></i></button>';
 
 					if (enableEditing)
 						outstring += '<button aria-label="upravit" class="ui blue button" onclick="editContact(\'main\', \'' + result[i].shortcut + '\',\'' + result[i].name + '\',\'' + result[i].number + '\')"><i class="write icon"></i></button>';
@@ -362,7 +411,7 @@ function reloadContacts() {
 					outstring += '</td></tr>';
 				} else {
 					if (hideLockedNumbers == false) {
-						outstring += '<tr><td class="center table-short-' + result[i].shortcut + '">' + result[i].shortcut + '</td>' + '<td class="table-name-' + result[i].shortcut + '">' + result[i].name + '</td><td class="table-num-' + result[i].shortcut + '">' + result[i].number.replace(/^00/, "+") + '</td><td>';
+						outstring += '<tr><td class="center table-short-' + result[i].shortcut + '">' + result[i].shortcut + '</td>' + '<td class="table-name-' + result[i].shortcut + '">' + result[i].name + '</td><td class="table-num-' + result[i].shortcut + '">' + unifyPhoneNo(result[i].number) + '</td><td>';
 						outstring += '<div class="ui icon buttons">' + '<button aria-label="smazat" class="ui red button" disabled><i class="trash alternate icon"></i></button>' + '<button aria-label="upravit" class="ui blue button" disabled><i class="edit icon"></i></button>' + '<button aria-label="zavolat" class="ui green button" disabled><i class="call icon"></i></button></div>';
 						outstring += '</td></tr>';
 					}
@@ -381,9 +430,8 @@ function reloadContacts() {
 
 				$('#categorySelector').removeClass("loading");
 
-				$(".statisticsContent").hide();
-				$(".callHistoryContent").hide();
-				$(".smsHistoryContent").hide();
+				$("section").hide();
+				$(".dynamic").hide();
 				$(".speedDialsContent").show();
 			}
 			else {
@@ -422,32 +470,35 @@ function reloadContacts() {
 }
 
 // Remove Contact
-function removeContact(line, id) {
-	$('#deleteModal').modal({
-		duration: setDuration,
-		blurring: true,
-		onApprove: function () {
-			if (line == "main") {
-				requestURL = 'https://www.odorik.cz/api/v1/speed_dials/' + id + '.json';
-			} else {
-				requestURL = "https://www.odorik.cz/api/v1/lines/" + line + '/speed_dials/' + id + '.json';
+function deleteContactModal(line, id) {
+	selectedContact = id;
+	selectedLine = line;
+	openDialog('delete-contact');
+}
+
+function deleteContact() {
+	if (selectedLine == "main") {
+		requestURL = 'https://www.odorik.cz/api/v1/speed_dials/' + selectedContact + '.json';
+	} else {
+		requestURL = "https://www.odorik.cz/api/v1/lines/" + selectedLine + '/speed_dials/' + selectedContact + '.json';
+	}
+
+	document.getElementById("delete-contact").close();
+
+	$.ajax({
+		url: requestURL,
+		type: 'DELETE',
+		data: {
+			user: APIuser,
+			password: APIpass
+		},
+		success: function (result) {
+			if (typeof result.errors != "undefined") {
+				parseErrors(result);
 			}
-			$.ajax({
-				url: requestURL,
-				type: 'DELETE',
-				data: {
-					user: APIuser,
-					password: APIpass
-				},
-				success: function (result) {
-					if (typeof result.errors != "undefined") {
-						parseErrors(result);
-					}
-					setTimeout("reloadContacts();", 500);
-				}
-			});
+			setTimeout("loadContacts();", 500);
 		}
-	}).modal('show');
+	});
 }
 
 // Edit Contact
@@ -478,7 +529,7 @@ function editContact(line, id, name, number) {
 					if (typeof result.errors != "undefined") {
 						parseErrors(result);
 					}
-					setTimeout("reloadContacts();", 500);
+					setTimeout("loadContacts();", 500);
 				}
 			});
 		}
@@ -506,7 +557,7 @@ function addContact() {
 					if (typeof result.errors != "undefined") {
 						parseErrors(result);
 					}
-					setTimeout("reloadContacts();", 500);
+					setTimeout("loadContacts();", 500);
 				}
 			});
 		}
@@ -550,7 +601,7 @@ function inlineEdit(id) {
 	$(".edited").each(function () {
 		$(this).text($(this).find("input").val());
 	});
-	console.log($('.table-name-' + id).text());
+	//console.log($('.table-name-' + id).text());
 	$(".edited").removeClass("edited");
 	$.ajax({
 		url: 'https://www.odorik.cz/api/v1/speed_dials/' + id + '.json',
@@ -566,7 +617,7 @@ function inlineEdit(id) {
 			if (typeof result.errors != "undefined") {
 				parseErrors(result);
 			}
-			setTimeout("reloadContacts();", 500);
+			setTimeout("loadContacts();", 500);
 		}
 	});
 }
@@ -758,18 +809,131 @@ function replaceAll(find, replace, str) {
 }
 
 // Unify phone number formats
-function unifyNumber(input) {
-	input = replaceAll(" ", "", input);
-	input = replaceAll("-", "", input);
-	input = input.replace("+", "00");
+function unifyPhoneNo(phoneNumber) {
+	const regexPattern = /^(\+|00)(2[1-69][0-9]|3[578][0-9]|42[0-9]|5[09][0-9]|6[7-9][0-9]|8[0578][0-9]|9[679][0-9]|[2-689][0-9]|[017])(.*)$/;
+	const replaced = phoneNumber.trim().replace(/\t/g, ' ');
+	const result = replaced.replace(regexPattern, '+$2 $3');
+	return result;
+}
 
-	if (input.length != 6) {
-		if (input.indexOf("00") != 0 && !isNaN(input.substr(0, 2))) {
-			input = "00420" + input;
+function sipPhoneNo(phoneNumber) {
+	// Odstranění bílých znaků
+	phoneNumber = phoneNumber.replace(/\s/g, '');
+	// Převod "+" na "00" na začátku
+	phoneNumber = phoneNumber.replace(/^\+/, '00');
+	// Ponechání pouze číselných znaků
+	phoneNumber = phoneNumber.replace(/\D/g, '');
+	// Doplnění "00420" na začátek (pokud nezačíná "00")
+	if (!phoneNumber.startsWith('00')) {
+		phoneNumber = '00420' + phoneNumber;
+	}
+	return phoneNumber;
+}
+
+function toSymbol(str) {
+	switch (String(str).toLowerCase()) {
+		case "active":
+		case "true":
+		case "yes":
+		case "on":
+			return "✅";
+		case "inactive":
+		case "false":
+		case "no":
+		case "off":
+			return "❌";
+		case "warning":
+			return "⚠️";
+		case "error":
+			return "❗️";
+		case "info":
+			return "ℹ️";
+		case "blocked":
+			return "⛔";
+		case "null":
+		case "none":
+		case "undefined":
+	 		return "🔹"; //➖
+		default:
+			return str;
+	}
+}
+
+function formatNumber(number) {
+  const str = number.toString();
+  const parts = [];
+
+  for (let i = str.length; i > 0; i -= 3) {
+    parts.unshift(str.substring(Math.max(0, i - 3), i));
+  }
+
+  const formattedParts = parts.map(part => `<span>${part}</span>`);
+  return formattedParts.join("");
+}
+
+function removeNonUCS2Chars(text) {
+	var cleanedText = '';
+	for (var i = 0; i < text.length; i++) {
+		var charCode = text.charCodeAt(i);
+
+		// Kontrola surrogátních párů UTF-16
+		if (charCode < 0xD800 || charCode > 0xDFFF) {
+		cleanedText += text[i];
 		}
 	}
+	return cleanedText;
+}
 
-	return input;
+function optimiseSMS(sms) {
+	var smsPreview = '';
+	sms = removeNonUCS2Chars(sms);
+	if (sms.normalize("NFD").replace(/[\u0300-\u036f]/g, "").length <= 70) {
+		smsPreview = sms; //removeNonUCS2Chars(sms)
+		var smsLength = sms.normalize("NFD").replace(/[\u0300-\u036f]/g, "").length;
+	}
+	else {
+		sms = sms.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+		var GSMCharset = "@£$¥èéùìòÇØøÅå\u0394_Øø\u03A6ÆæßÉ !\"#¤%&amp;'()*+,-./0123456789:;<=>?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ§¿abcdefghijklmnopqrstuvwxyzäöñüà€{}|~[]\\^\n";
+
+		for (var i = 0; i < sms.length; i++) {
+			var char = sms.charAt(i);
+			var charIndex = GSMCharset.indexOf(char);
+			if (charIndex !== -1) {
+				//smsPreview += String.fromCharCode(charIndex);
+				smsPreview += sms[i];
+			}
+		}
+		var smsLength = smsPreview.length + smsPreview.replace(/[^€{}|~[\]\\^]/g, '').length;
+	}
+
+	document.getElementById('sms-preview').value = smsPreview;
+	document.getElementById('sms-char-count').textContent = smsLength;
+	document.getElementById('sms-count').textContent = (smsLength > 1 && smsLength < 161) ? 1 : Math.ceil(smsLength / 153);
+}
+
+function sendSMS() {
+	var sms = sipPhoneNo(document.getElementById('sms-preview').value);
+	var recipient = document.getElementById('sms-recipient').value;
+	//var sender = document.getElementById('sms-sender').value;
+
+	$.ajax({
+		url: 'https://www.odorik.cz/api/v1/sms',
+		type: 'POST',
+		data: {
+			user: APIuser,
+			password: APIpass,
+			recipient: recipient,
+			message: sms
+		},
+		success: function (result) {
+			if (typeof result.errors != "undefined") {
+				//alert(result);
+				parseErrors(result);
+			}
+			//alert(result);
+			//setTimeout("loadContacts();", 500);
+		}
+	})
 }
 
 // Separate into individual contacts
@@ -798,8 +962,8 @@ function importVCard(input) {
 		if (typeof contact.tel != "undefined" && typeof contact.fn != "undefined") {
 			// Loop through specific phone numbers
 			for (a = 0; a < contact.tel.length; a++) {
-				if ($.inArray(unifyNumber(contact.tel[a].value[0]), usedNumbers) == -1) {
-					usedNumbers.push(unifyNumber(contact.tel[a].value[0]));
+				if ($.inArray(unifyPhoneNo(contact.tel[a].value[0]), usedNumbers) == -1) {
+					usedNumbers.push(unifyPhoneNo(contact.tel[a].value[0]));
 					totalCount += 1;
 					var shortcut = "";
 					// Check if the shortcut is defined and if not, define it
@@ -815,19 +979,21 @@ function importVCard(input) {
 					// Add a description
 					var type = "";
 					if (contact.tel.length > 1) {
-						console.log("multiple");
-						console.log(contact.tel[a].meta);
-						if (contact.tel[a].meta.TYPE == "HOME") {
-							type = " (domů)"
-						}
-						if (contact.tel[a].meta.TYPE == "WORK") {
-							type = " (práce)"
-						}
-						if (contact.tel[a].meta.TYPE == "CELL") {
-							type = " (mobil)"
-						}
-						if (contact.tel[a].meta.TYPE == "FAX") {
-							type = " (fax)"
+						//console.log("multiple");
+						//console.log(contact.tel[a].meta);
+						switch (contact.tel[a].meta.TYPE) {
+							case "HOME":
+								type = " (domů)";
+								break;
+							case "WORK":
+								type = " (práce)";
+								break;
+							case "CELL":
+								type = " (mobil)";
+								break;
+							case "FAX":
+								type = " (fax)";
+								break;
 						}
 					}
 					// Warn against conflicts in shortcuts
@@ -836,7 +1002,7 @@ function importVCard(input) {
 						warning = "error";
 					}
 					// Append to table
-					$("#tableImport").append("<tr class='" + warning + "'><td><div class='ui transparent left icon fluid " + warning + " input'><i style='display: none' class='remove icon'></i><input class='shortuctImport' id='import-shortuct" + i + "' type='number' min='1' value='" + shortcut + "'></div></td>" + "<td><div class='ui transparent fluid input'><input id='import-name" + i + "' value='" + contact.fn + type + "'></div></td>" + "<td><div class='ui transparent fluid input'><input id='import-number" + i + "' type='tel' value='" + unifyNumber(contact.tel[a].value[0]) + "'></div></td></tr>");
+					$("#tableImport").append("<tr class='" + warning + "'><td><div class='ui transparent left icon fluid " + warning + " input'><i style='display: none' class='remove icon'></i><input class='shortuctImport' id='import-shortuct" + i + "' type='number' min='1' value='" + shortcut + "'></div></td>" + "<td><div class='ui transparent fluid input'><input id='import-name" + i + "' value='" + contact.fn + type + "'></div></td>" + "<td><div class='ui transparent fluid input'><input id='import-number" + i + "' type='tel' value='" + unifyPhoneNo(contact.tel[a].value[0]) + "'></div></td></tr>");
 				}
 			}
 			// Check for change in shortcuts and hide conflict warnings
@@ -876,7 +1042,7 @@ function importVCard(input) {
 					});
 				}
 			}
-			setTimeout("reloadContacts();", 1200);
+			setTimeout("loadContacts();", 1200);
 		}
 	}).modal("show");
 }
@@ -979,18 +1145,8 @@ function reloadCalls() {
 	var endRange = page * pageLength;
 	var data = callHistory.slice(startRange, endRange);
 
-	if (data.length == pageLength) {
-		$("#nextPage").removeClass("disabled");
-	}
-	else {
-		$("#nextPage").addClass("disabled");
-	}
-	if (page > 1) {
-		$("#prevPage").removeClass("disabled");
-	}
-	else {
-		$("#prevPage").addClass("disabled");
-	}
+	$("#nextPage").toggleClass("disabled", data.length != pageLength);
+	$("#prevPage").toggleClass("disabled", page <= 1);
 
 	populateCallsTable(data);
 }
@@ -1066,10 +1222,8 @@ function loadCalls() {
 			}
 
 			$('#categorySelector').removeClass("loading");
-
-			$(".speedDialsContent").hide();
-			$(".statisticsContent").hide();
-			$(".smsHistoryContent").hide();
+			$("section").hide();
+			$(".dynamic").hide();
 			$(".callHistoryContent").show();
 
 			reloadCalls();
@@ -1097,15 +1251,18 @@ function populateCallsTable(result) {
 
 		outstring += '<span class="hasClickPopup" data-html="<b>ID:</b> ' + result[i].id + '">';
 
-		if (result[i].direction == "redirected") {
-			outstring += '<i class="forward mail icon"></i>Přesměrovaný';
+		switch (result[i].direction) {
+			case "redirected":
+				outstring += '<i class="forward mail icon"></i>Přesměrovaný';
+				break;
+			case "in":
+				outstring += '<i class="sign in icon"></i>Příchozí';
+				break;
+			case "out":
+				outstring += '<i class="sign out icon"></i>Odchozí';
+				break;
 		}
-		else if (result[i].direction == "in") {
-			outstring += '<i class="sign in icon"></i>Příchozí';
-		}
-		else if (result[i].direction == "out") {
-			outstring += '<i class="sign out icon"></i>Odchozí';
-		}
+
 		if (result[i].status == "missed") {
 			outstring += " nepřijatý";
 		}
@@ -1135,10 +1292,10 @@ function populateCallsTable(result) {
 // Get name of the contact
 function getSpeedDialName(number) {
 	if ($.inArray(number, allNumbers) != -1) {
-		return allNames[$.inArray(number, allNumbers)] + " (" + number.replace(/^00/, "+") + ")";
+		return allNames[$.inArray(number, allNumbers)] + " (" + unifyPhoneNo(number) + ")";
 	}
 	else {
-		return number.replace(/^00/, "+");
+		return unifyPhoneNo(number);
 	}
 }
 
@@ -1258,18 +1415,8 @@ function reloadSms() {
 	var endRange = page * pageLength;
 	var data = smsHistory.slice(startRange, endRange);
 
-	if (data.length == pageLength) {
-		$("#nextSmsPage").removeClass("disabled");
-	}
-	else {
-		$("#nextSmsPage").addClass("disabled");
-	}
-	if (page > 1) {
-		$("#prevSmsPage").removeClass("disabled");
-	}
-	else {
-		$("#prevSmsPage").addClass("disabled");
-	}
+	$("#nextSmsPage").toggleClass("disabled", data.length != pageLength);
+	$("#prevSmsPage").toggleClass("disabled", page <= 1);
 
 	populateSmsTable(data);
 }
@@ -1345,10 +1492,8 @@ function loadSms() {
 			}
 
 			$('#categorySelector').removeClass("loading");
-
-			$(".speedDialsContent").hide();
-			$(".statisticsContent").hide();
-			$(".callHistoryContent").hide();
+			$("section").hide();
+			$(".dynamic").hide();
 			$(".smsHistoryContent").show();
 
 			reloadSms();
@@ -1375,10 +1520,10 @@ function populateSmsTable(result) {
 			outstring += '<i class="forward mail icon"></i>Přesměrovaný';
 		}
 		else if (result[i].direction == "in") {
-			outstring += '<i class="right arrow icon"></i>Příchozí';
+			outstring += '<i class="sign in icon"></i>Příchozí';
 		}
 		else if (result[i].direction == "out") {
-			outstring += '<i class="left arrow icon"></i>Odchozí';
+			outstring += '<i class="sign out icon"></i>Odchozí';
 		}
 
 
@@ -1401,7 +1546,122 @@ function populateSmsTable(result) {
 }
 
 
-// STATISTICS SECTION
+function loadActiveCalls() {
+	$.ajax({
+		url: 'https://www.odorik.cz/api/v1/active_calls.json',
+		type: 'GET',
+		data: {
+			user: APIuser,
+			password: APIpass
+		}
+	}).done(function (data, textStatus, xhr) {
+		var outString = "";
+		for (var i = 0; i < data.length; i++) {
+			outString += "<tr><td class='center'>" + data[i].id + "</td><td>" + unifyPhoneNo(data[i].source_number) + "</td><td>" + unifyPhoneNo(data[i].destination_number) + "</td><td>" + data[i].destination_name + "</td><td>" + moment(data[i].start_date).format("DD.MM.YYYY H:mm:ss") + "</td><td>" + moment(data[i].answer_date).format("DD.MM.YYYY H:mm:ss") + "</td><td class='right'>" + data[i].price_per_minute + "</td><td class='center'>" + data[i].line + "</td></tr>"
+		}
+		$("#activeCalls").html(outString);
+	});
+
+	if ($(".ui.container").css("display") == "none") {
+		$("#loadingDimmer").dimmer("hide");
+		$("#loadingDimmer").remove();
+		$(".ui.container").transition("fade", setDuration + "ms");
+	}
+	$('#categorySelector').removeClass("loading");
+	$("section").hide();
+	$(".dynamic").hide();
+	$(".activeCallsContent").show();
+}
+
+
+function loadLines() {
+	$.ajax({
+		url: 'https://www.odorik.cz/api/v1/lines.json',
+		type: 'GET',
+		data: {
+			user: APIuser,
+			password: APIpass
+		}
+	}).done(function (data, textStatus, xhr) {
+		//console.log(data);
+		var outString = "";
+		for (var i = 0; i < data.length; i++) {
+			outString += "<tr><td class='center hasClickPopup' data-html='<b>SIP password:</b> " + data[i].sip_password + "'>" + data[i].id + "</td><td>" + data[i].name + "</td><td>" + unifyPhoneNo(data[i].caller_id) + "</td><td class='center'>" + toSymbol(data[i].public_name) + "</td><td class='center'>" + toSymbol(data[i].backup_number) + "</td><td class='center'>" + toSymbol(data[i].active_822) + "</td><td class='center'>" + toSymbol(data[i].active_cz_restriction) + "</td><td class='center'>" + toSymbol(data[i].active_iax) + "</td><td class='center'>" + toSymbol(data[i].active_password) + "</td><td class='center'>" + toSymbol(data[i].active_pin) + "</td><td class='center'>" + toSymbol(data[i].active_ping) + "</td><td class='center'>" + toSymbol(data[i].active_rtp) + "</td><td class='center'>" + toSymbol(data[i].active_sip) + "</td><td class='center'>" + toSymbol(data[i].active_anonymous) + "</td><td class='center'>" + toSymbol(data[i].active_greeting) + "</td><td class='center'>" + toSymbol(data[i].missed_call_email) + "</td><td class='center'>" + toSymbol(data[i].recording_email) + "</td><td class='center'>" + toSymbol(data[i].voicemail_email) + "</td><td class='center'>" + toSymbol(data[i].backup_number_email) + "</td><td class='center'>" + data[i].incoming_call_name_format + "</td><td class='center'>" + data[i].incoming_call_number_format + "</td></tr>"
+		}
+		$("#lines").html(outString);
+		$(".hasClickPopup").popup({ on: "click" });
+	});
+
+	if ($(".ui.container").css("display") == "none") {
+		$("#loadingDimmer").dimmer("hide");
+		$("#loadingDimmer").remove();
+		$(".ui.container").transition("fade", setDuration + "ms");
+	}
+	$('#categorySelector').removeClass("loading");
+	$("section").hide();
+	$(".dynamic").hide();
+	$(".linesContent").show();
+}
+
+
+function loadSimCards() {
+	$.ajax({
+		url: 'https://www.odorik.cz/api/v1/sim_cards.json',
+		type: 'GET',
+		data: {
+			user: APIuser,
+			password: APIpass
+		}
+	}).done(function (data, textStatus, xhr) {
+		var outString = "";
+		for (var i = 0; i < data.length; i++) {
+			outString += "<tr><td class='center'>" + data[i].id + "</td><td>" + data[i].sim_number + "</td><td class='center'>" + toSymbol(data[i].state) + "</td><td class='center'>" + data[i].changes_in_progress + "</td><td class='right'>" + toSymbol(data[i].data_package) + "</td><td class='right'>" + toSymbol(data[i].data_package_for_next_month) + "</td><td class='number'>" + formatNumber(toSymbol(data[i].data_bought_total)) + "</td><td class='number'>" + formatNumber(toSymbol(data[i].data_used)) + "</td><td class='center'>" + toSymbol(data[i].voice_package) + "</td><td class='center'>" + toSymbol(data[i].voice_package_for_next_month) + "</td><td class='center'>" + toSymbol(data[i].package_delayed_billing) + "</td><td class='center'>" + toSymbol(data[i].package_delayed_billing_for_next_month) + "</td><td class='center' title='" + data[i].missed_calls_register + "'>" + toSymbol(data[i].missed_calls_register) + "</td><td class='center' title='" + data[i].mobile_data + "'>" + toSymbol(data[i].mobile_data) + "</td><td class='center' title='" + data[i].lte + "'>" + toSymbol(data[i].lte) + "</td><td class='center' title='" + data[i].lte_for_next_month + "'>" + toSymbol(data[i].lte_for_next_month) + "</td><td class='center'>" + data[i].roaming + "</td><td class='center' title='" + data[i].premium_services + "'>" + toSymbol(data[i].premium_services) + "</td></tr>"
+		}
+		$("#simCards").html(outString);
+	});
+
+
+	if ($(".ui.container").css("display") == "none") {
+		$("#loadingDimmer").dimmer("hide");
+		$("#loadingDimmer").remove();
+		$(".ui.container").transition("fade", setDuration + "ms");
+	}
+	$('#categorySelector').removeClass("loading");
+	$("section").hide();
+	$(".dynamic").hide();
+	$(".simCardsContent").show();
+}
+
+
+function loadMobileData() {
+	$.ajax({
+		url: 'https://www.odorik.cz/api/v1/sim_cards/mobile_data.json',
+		type: 'GET',
+		data: {
+			user: APIuser,
+			password: APIpass,
+			from: fromDate,
+			to: toDate
+		}
+	}).done(function (data, textStatus, xhr) {
+		var outString = "";
+		for (var i = 0; i < data.length; i++) {
+			outString += "<tr><td class='center'>" + data[i].id + "</td><td>" + moment(data[i].date).format("DD.MM.YYYY H:mm:ss") + "</td><td class='number'>" + formatNumber(data[i].bytes_up) + "</td><td class='number'>" + formatNumber(data[i].bytes_down) + "</td><td class='number'>" + formatNumber(data[i].bytes_total) + "</td><td class='number'>" + formatNumber(data[i].price) + "</td><td class='number'>" + formatNumber(data[i].price_per_mb) + "</td><td>" + unifyPhoneNo(data[i].phone_number) + "</td></tr>"
+		}
+		$("#mobileData").html(outString);
+	});
+
+	if ($(".ui.container").css("display") == "none") {
+		$("#loadingDimmer").dimmer("hide");
+		$("#loadingDimmer").remove();
+		$(".ui.container").transition("fade", setDuration + "ms");
+	}
+	$('#categorySelector').removeClass("loading");
+	$("section").hide();
+	$(".dynamic").hide();
+	$(".mobileDataContent").show();
+}
+
 
 function loadStatistics() {
 	var formatPrice = function (input) {
@@ -1435,17 +1695,12 @@ function loadStatistics() {
 		type: 'GET',
 		data: dataSet
 	}).done(function (data, textStatus, xhr) {
-		$("#incomingCount").text(data.incoming.count);
-		$("#incomingLength").text(formatLength(data.incoming.length));
-		$("#incomingPrice").text(formatPrice(data.incoming.price));
 
-		$("#outgoingCount").text(data.outgoing.count);
-		$("#outgoingLength").text(formatLength(data.outgoing.length));
-		$("#outgoingPrice").text(formatPrice(data.outgoing.price));
-
-		$("#redirectedCount").text(data.redirected.count);
-		$("#redirectedLength").text(formatLength(data.redirected.length));
-		$("#redirectedPrice").text(formatPrice(data.redirected.price));
+		$("#totalStatistics").html(
+				"<tr><td><i class='sign in icon'></i>Příchozí hovory</td><td class='center'>" + data.incoming.count + "</td><td class='right'>" + formatLength(data.incoming.length) + "&nbsp;min</td><td class='right'>" + formatPrice(data.incoming.price) + "&nbsp;Kč</td></tr>"
+			+ "<tr><td><i class='sign out icon'></i>Odchozí hovory</td><td class='center'>" + data.outgoing.count + "</td><td class='right'>" + formatLength(data.outgoing.length) + "&nbsp;min</td><td class='right'>" + formatPrice(data.outgoing.price) + "&nbsp;Kč</td></tr>"
+			+ "<tr><td><i class='external share icon'></i>Přesměrované hovory</td><td class='center'>" + data.redirected.count + "</td><td class='right'>" + formatLength(data.redirected.length) + "&nbsp;min</td><td class='right'>" + formatPrice(data.redirected.price) + "&nbsp;Kč</td></tr>"
+			);
 	});
 
 	$.ajax({
@@ -1453,15 +1708,15 @@ function loadStatistics() {
 		type: 'GET',
 		data: dataSet
 	}).done(function (data, textStatus, xhr) {
-		console.log(data);
+		//console.log(data);
 		var outString = "";
 		for (var i = 0; i < data.length; i++) {
-			var direction = "Odchozí";
+			var direction = "<i class='sign in icon'></i>Odchozí";
 			if (data[i].direction == "redirected") {
-				direction = "Přesměrované";
+				direction = "<i class='external share icon'></i>Přesměrované";
 			}
 			else if (data[i].direction == "in") {
-				direction = "Příchozí";
+				direction = "<i class='sign out icon'></i>Příchozí";
 			}
 			outString += "<tr><td>" + data[i].destination + "</td><td class='center'>" + data[i].count + "</td><td class='right'>" + formatLength(data[i].length) + "&nbsp;min</td><td class='right'>" + formatPrice(data[i].price) + "&nbsp;Kč</td><td class='right'>" + data[i].price_per_minute + "&nbsp;Kč</td><td class='center'>" + direction + "</td></tr>";
 		}
@@ -1473,7 +1728,7 @@ function loadStatistics() {
 		type: 'GET',
 		data: dataSet
 	}).done(function (data, textStatus, xhr) {
-		console.log(data);
+		//console.log(data);
 		var outString = "";
 		for (var i = 0; i < data.length; i++) {
 			outString += "<tr><td>" + data[i].destination_number + "</td><td>" + data[i].count + "</td></tr>"
@@ -1481,17 +1736,92 @@ function loadStatistics() {
 		$("#missedStatistics").html(outString);
 	});
 
+	$.ajax({
+		url: 'https://www.odorik.cz/api/v1/active_calls.json',
+		type: 'GET',
+		data: {
+			user: APIuser,
+			password: APIpass
+		}
+	}).done(function (data, textStatus, xhr) {
+		var outString = "";
+		for (var i = 0; i < data.length; i++) {
+			outString += "<tr><td>" + data[i].id + "</td><td>" + data[i].source_number + "</td><td>" + data[i].destination_number + "</td><td>" + data[i].destination_name + "</td><td>" + data[i].start_date + "</td><td>" + data[i].answer_date + "</td><td>" + data[i].price_per_minute + "</td><td>" + data[i].line + "</td></tr>"
+		}
+		$("#activeCalls").html(outString);
+	});
+
+
+	$.ajax({
+		url: 'https://www.odorik.cz/api/v1/lines.json',
+		type: 'GET',
+		data: {
+			user: APIuser,
+			password: APIpass
+		}
+	}).done(function (data, textStatus, xhr) {
+		//console.log(data);
+		var outString = "";
+		for (var i = 0; i < data.length; i++) {
+			outString += "<tr><td>" + data[i].id + "</td><td>" + data[i].name + "</td><td>" + data[i].caller_id + "</td><td>" + data[i].public_name + "</td><td>" + data[i].backup_number + "</td><td>" + data[i].sip_password + "</td><td class='center'>" + toSymbol(data[i].active_822) + "</td><td class='center'>" + toSymbol(data[i].active_cz_restriction) + "</td><td class='center'>" + toSymbol(data[i].active_iax) + "</td><td class='center'>" + toSymbol(data[i].active_password) + "</td><td class='center'>" + toSymbol(data[i].active_pin) + "</td><td class='center'>" + toSymbol(data[i].active_ping) + "</td><td class='center'>" + toSymbol(data[i].active_rtp) + "</td><td class='center'>" + toSymbol(data[i].active_sip) + "</td><td class='center'>" + toSymbol(data[i].active_anonymous) + "</td><td class='center'>" + toSymbol(data[i].active_greeting) + "</td><td>" + data[i].missed_call_email + "</td><td>" + data[i].recording_email + "</td><td>" + data[i].voicemail_email + "</td><td>" + data[i].backup_number_email + "</td><td>" + data[i].incoming_call_name_format + "</td><td>" + data[i].incoming_call_number_format + "</td></tr>"
+		}
+		$("#lines").html(outString);
+	});
+
+
+	$.ajax({
+		url: 'https://www.odorik.cz/api/v1/sim_cards.json',
+		type: 'GET',
+		data: {
+			user: APIuser,
+			password: APIpass
+		}
+	}).done(function (data, textStatus, xhr) {
+		var outString = "";
+		for (var i = 0; i < data.length; i++) {
+			outString += "<tr><td>" + data[i].id + "</td><td>" + data[i].sim_number + "</td><td>" + data[i].state + "</td><td>" + data[i].changes_in_progress + "</td><td>" + data[i].data_package + "</td><td>" + data[i].data_package_for_next_month + "</td><td>" + data[i].data_bought_total + "</td><td>" + data[i].data_used + "</td><td>" + data[i].voice_package + "</td><td>" + data[i].voice_package_for_next_month + "</td><td>" + data[i].package_delayed_billing + "</td><td>" + data[i].package_delayed_billing_for_next_month + "</td><td class='center'>" + toSymbol(data[i].missed_calls_register) + "</td><td class='center'>" + toSymbol(data[i].mobile_data) + "</td><td class='center'>" + toSymbol(data[i].lte) + "</td><td class='center'>" + toSymbol(data[i].lte_for_next_month) + "</td><td>" + data[i].roaming + "</td><td class='center'>" + toSymbol(data[i].premium_services) + "</td></tr>"
+		}
+		$("#simCards").html(outString);
+	});
+
+
 	if ($(".ui.container").css("display") == "none") {
 		$("#loadingDimmer").dimmer("hide");
 		$("#loadingDimmer").remove();
 		$(".ui.container").transition("fade", setDuration + "ms");
 	}
 	$('#categorySelector').removeClass("loading");
-	$(".speedDialsContent").hide();
-	$(".callHistoryContent").hide();
-	$(".smsHistoryContent").hide();
+	$("section").hide();
+	$(".dynamic").hide();
 	$(".statisticsContent").show();
 }
+
+
+function openDialog(dialog_id) {
+	var dialog = document.getElementById(dialog_id);
+	dialog.showModal();
+	dialog.classList.remove('hide');
+	dialog.classList.add('show');
+
+	dialog.addEventListener('close', () => {
+		dialog.classList.remove('show');
+		dialog.classList.add('hide');
+	});
+};
+
+
+document.addEventListener('click', (event) => {
+	const dialog = document.querySelector('dialog');
+	const dialogRect = dialog.getBoundingClientRect();
+	const clickX = event.clientX;
+	const clickY = event.clientY;
+	if (clickX < dialogRect.left || clickX > dialogRect.right || clickY < dialogRect.top || clickY > dialogRect.bottom) {
+			var openDlg = document.querySelector('dialog[open]');
+			if (event.target === openDlg) {
+				openDlg.close();
+			}
+	}
+});
 
 
 if ('serviceWorker' in navigator) {

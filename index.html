@@ -3,101 +3,6 @@
 
 <head>
 	<meta charset="UTF-8">
-	<script>
-		// NASTAVENÍ
-
-		// API uživatelské jméno a heslo :: automatické přihlášení. Toto uložení jména a hesla není bezpečné - kdokoli, kdo má ke stránce přistup, si může zobrazit zdrojový kód a jméno i heslo si přečíst.
-		var APIuser = "";
-		var APIpass = "";
-
-		// Povolit rychlé kontakty :: true = povolit, false = zakázat
-		// př. var enableSpeedDials = false; // zakáže sekci rychlých kontaktů
-		var enableContacts = true;
-
-		// Povolit historii volání :: true = povolit, false = zakázat
-		// př. var enableCallHistory = false; // zakáže sekci historie volání
-		var enableCallHistory = true;
-
-		// Povolit historii SMS :: true = povolit, false = zakázat
-		// př. var enableSmsHistory = false; // zakáže sekci historie SMS
-		var enableSmsHistory = true;
-
-		// Povolit statistiky volání :: true = povolit, false = zakázat
-		// př. var enableStatistics = false; // zakáže sekci statistiky volání
-		var enableStatistics = true;
-
-		// Musí být povolena alespoň jedna kategorie
-
-		// Zamknutá čísla :: čárkou oddělený seznam zkratek (klapek), které nejde editovat
-		// př. var lockedNumbers = "1,7" // zakáže čísla 1 a 7
-		var lockedNumbers = "";
-
-		// Skrytí zamknutých čísel :: true = nezobrazovat vůbec, false = zobrazit, ale zakázat úpravy
-		// př. var hideLockedNumbers = true // nezobrazí vůbec
-		var hideLockedNumbers = true;
-
-		// Povolené linky :: čárkou oddělený seznam linek, které jsou uživateli dostupné
-		// Pokud je pole prázdné, tak jsou všechny linky povolené
-		// př. var allowedLines = "300100,300200"; // Povolí jen linku 300100 a 300200
-		var allowedLines = "";
-
-		// Povolit přidávání nových čísel :: true = povolit, false = zakázat
-		// př. var enableAdding = false // zakáže přidávání
-		var enableAdding = true;
-
-		// Povolit upravování nových čísel :: true = povolit, false = zakázat
-		// př. var enableEditing = true // povolí úpravy
-		var enableEditing = true;
-
-		// Povolit mazání nových čísel :: true = povolit, false = zakázat
-		// př. var enableRemoving = false // zakáže mazání
-		var enableRemoving = true;
-
-		// Povolit callback :: true = povolit, false = zakázat
-		// př. var enableCallback = false // zakáže callback
-		var enableCallback = true;
-
-		// Povolit políčko rychlého callbacku :: true = povolit, false = zakázat
-		// př. var enableQuickCallback = false // zakáže políčko callbacku
-		var enableQuickCallback = true;
-
-		// Povolit odhlašovaní uživatele :: true = povolit, false = zakázat
-		// př. var enableLogout = false // zakáže odhlašování
-		var enableLogout = true;
-
-		// Povolit import/export :: true = povolit, false = zakázat
-		// př. var enableLogout = false // zakáže import/export
-		var enableImportExport = true;
-
-		// Povolit úpravu přímo v tabulce :: true = povolit, false = zakázat
-		// Klepněte dvakrát na políčko textu v tabulce a můžete ho přímo upravit
-		// př. var enableInlineEditing = false // zakáže úpravy přímo v tabulce
-		var enableInlineEditing = true;
-
-		// Povolit pokročilé filrování :: true = povolit, false = zakázat
-		// př. var enableFilters = false; // zakáže filtry
-		var enableFilters = true;
-
-		// Povolit animace :: true = povolit, false = zakázat
-		// př. var enableAnimations = false; // zakáže animace
-		var enableAnimations = true;
-
-		// Přednastavené číslo pro callback
-		// př. var defaultCallbackNumber = "0085023815827"; // nastaví výchozí číslo pro callback na 0085023815827
-		var defaultCallbackNumber = "";
-
-		// Přednastavená linka pro callback
-		// př. var defaultCallbackLine = "623400"; // nastaví výchozí linku pro callback na 623400
-		var defaultCallbackLine = "";
-
-		// Počet položek na stránku
-		// př. var pageLength = 24; // nastaví počet položek na stránku na 24
-		var pageLength = 100;
-
-		// KONEC NASTAVENÍ
-		// Pokud chcete upravit nějaké názvy, můžete v HTML kódu níže.
-	</script>
-
 	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, shrink-to-fit=no">
 	<title>Odorik</title>
 	<meta name="description"
@@ -140,7 +45,6 @@
 	<link rel="stylesheet" href="aui.css">
 	<link rel="stylesheet" href="odorik.css">
 </head>
-
 <body>
 	<!-- IE WARNING -->
 	<!--[if IE]>
@@ -149,12 +53,80 @@
 		</div>
 		<!--<![endif]-->
 
+
+<dialog id="compose-sms" class="full">
+	<h1>Nová zpráva</h1><!-- https://cs.wikipedia.org/wiki/GSM_03.38 -->
+	<input type="tel" id="sms-recipient" style="width:95%" placeholder="Komu:" />
+	<!--input type="tel" id="sms-sender" style="width:95%" placeholder="Od:" /-->
+	<textarea id="sms-input" maxlength="765" rows="8" style="width:95%" placeholder="Zpráva" oninput="optimiseSMS(this.value)"></textarea>
+	<textarea id="sms-preview" rows="8" style="width:95%" placeholder="Náhled" disabled></textarea>
+	<p>Znaků: <span id="sms-char-count">0</span>, zpráv <span id="sms-count">0</span></p>
+	<button onclick="this.closest('dialog').close()">Zavřít</button><button onclick="window.location.href = 'sms:' + document.getElementById('sms-recipient').value + '&body=' + encodeURIComponent(document.getElementById('sms-preview').value)">Otevřít ve Zprávy</button><button id="send-sms" onclick="sendSMS();">Odeslat</button>
+</dialog>
+
+<dialog id="delete-contact" class="h2btn">
+	<h1>Smazat kontakt</h1>
+	<p>Opravdu chcete smazat tento kontakt?</p>
+	<button onclick="this.closest('dialog').close()">Ne</button><button onclick="deleteContact()" class="warning" id="confirm-delete-contact">Smazat</button>
+</dialog>
+
+<dialog id="logout-user" class="h2btn">
+	<h1>Odhlášení</h1>
+	<p>Opravdu se chcete odhlásit?</p>
+	<button onclick="this.closest('dialog').close()">Ne</button><button onclick="logout()" id="confirm-logout-user">Odhlásit</button>
+</dialog>
+
+<!-- EDIT MODAL -->
+<dialog id="edit-contact" class="full">
+	<h1>Upravit kontakt</h1>
+	<div class="content">
+		<form class="ui form">
+			<div class="field">
+				<label for="contact-name">Název</label>
+				<input type="text" id="contact-name" name="contact-name" autocapitalize="words">
+			</div>
+			<div class="field">
+				<label for="contact-number">Číslo</label>
+				<input type="tel" id="contact-number" name="contact-number" required>
+			</div>
+			<div class="field">
+				<label for="contact-shortcut">Zkratka</label>
+				<input type="number" id="contact-shortcut" name="contact-shortcut" placeholder="Zkratka" pattern="\d*" min="1" max="999" required>
+			</div>
+		</form>
+		<p><b>TIP:</b> Lze editovat i dvojklikem na hlavní stránce.</p>
+	</div>
+	<button onclick="this.closest('dialog').close()">Zpět</button><button onclick="this.form.submit()">Upravit</button>
+</dialog>
+
+<!-- ADD MODAL -->
+<dialog id="add-contact" class="full">
+	<h1>Přidat kontakt</h1>
+	<div class="content">
+		<form class="ui form">
+			<div class="field">
+				<label for="contact-name">Název</label>
+				<input type="text" id="contact-name-add" name="contact-name" placeholder="Název" autocapitalize="words">
+			</div>
+			<div class="field">
+				<label for="contact-number">Číslo</label>
+				<input type="tel" id="contact-number-add" name="contact-number" placeholder="Číslo" required>
+			</div>
+			<div class="field">
+				<label for="contact-shortcut">Zkratka</label>
+				<input type="number" id="contact-shortcut-add" name="contact-shortcut" placeholder="Zkratka" pattern="\d*" min="1" max="999" required>
+			</div>
+		</form>
+	</div>
+	<button onclick="this.closest('dialog').close()">Zpět</button><button onclick="this.form.submit()">Přidat</button>
+</dialog>
+
 	<!-- CONTAINER -->
 	<div class="ui container"
 		style="display:none; /* overflow:hidden; width:100% */ width:calc(100% - 8px) !important; margin:0 !important; padding:0 !important">
 		<!-- TITLE -->
 		<h1 class="ui header" style="padding-left:8px">
-			<br>Odorik.cz<div class="ui grey label">v1.10.4</div>
+			<br>Odorik.cz<div class="ui grey label">v1.10.5</div>
 			<span style="float:right; padding-right:.8px" class="sub header" id="credit"></span>
 		</h1>
 		<!-- MENU -->
@@ -164,51 +136,30 @@
 				<div class="ui blue floating button dropdown" id="categorySelector">
 					<div class="text"></div><i class="dropdown icon"></i>
 					<div class="menu">
-						<script>
-							if (enableContacts) {
-								document.write('<div class="item" data-value="speedDials"><i class="address book outline icon"></i>Kontakty</div>');
-							}
-							if (enableCallHistory) {
-								document.write('<div class="item" data-value="callHistory"><i class="phone icon"></i>Hovory</div>');
-							}
-							if (enableSmsHistory) {
-								document.write('<div class="item" data-value="smsHistory"><i class="comment outline icon"></i>Zprávy</div>');
-							}
-							if (enableStatistics) {
-								document.write('<div class="item" data-value="statistics"><i class="bar chart icon"></i>Statistiky</div>');
-							}
-							if (enableLogout) {
-								document.write('<hr /><div class="item" data-value="logout" style="font-weight:normal !important"><i class="log out icon"></i>Odhlásit</div>');
-							}
-						</script>
+						<div class="item" data-value="speedDials"><i class="icon address book outline"></i>Kontakty</div>
+						<div class="item" data-value="activeCalls"><i class="icon clock outline"></i>Probíhající</div>
+						<div class="item" data-value="callHistory"><i class="icon phone"></i>Hovory</div>
+						<div class="item" data-value="smsHistory"><i class="icon comment outline"></i>Zprávy</div>
+						<div class="item" data-value="lines"><i class="icon tty"></i>Linky</div>
+						<div class="item" data-value="simCards"><i class="icon mobile"></i>SIM karty</div>
+						<div class="item" data-value="mobileData"><i class="icon cloud"></i>Data</div>
+						<div class="item" data-value="statistics"><i class="icon bar chart"></i>Statistiky</div>
+						<hr />
+						<div class="item" data-value="logout" style="font-weight:normal !important"><i class="icon power off"></i>Odhlásit</div>
 					</div>
 				</div>
 			</div>
 			<!-- REST OF THE ITEMS (DYNAMICALLY LOADED) -->
-			<script>
-				if (enableAdding) {
-					document.write('<div class="item fitted speedDialsContent"><button aria-label="přidat" class="ui green button" onclick="addContact();"><i class="plus icon"></i>Přidat</button></div>');
-				}
-
-				if (enableFilters) {
-					document.write('<div class="item fitted callHistoryContent smsHistoryContent"><button aria-label="filtrovat" class="ui pink button" onclick="filterModal();"><i class="filter icon"></i>Filtr</button></div>');
-				}
-
-				document.write('<div class="item fitted statisticsContent"><div class="ui pink floating button dropdown" id="statistics-line"><i class="filter icon"></i><div class="text" style="white-space:nowrap; overflow:hidden">Vše</div><i class="dropdown icon"></i><div class="menu"><div class="item" data-value="all">Vše</div></div></div></div>')
-
-				document.write('<div class="item fitted statisticsContent callHistoryContent smsHistoryContent"><div id="reportrange" class="ui button" style="white-space:nowrap; overflow:hidden"><i class="calendar icon"></i><span></span><i class="dropdown icon" style="margin:0"></i></div></div>')
-
-				if (enableImportExport) {
-					document.write('<div class="item fitted speedDialsContent"><button aria-label="import/export" class="ui button" onclick="importExportModal();"><i class="file archive outline icon"></i>Import/Export</button></div>');
-				}
-
-				if (enableQuickCallback) {
-					document.write('<div class="right item fitted" style="padding-right:.8px"><div class="ui action input"><input type="tel" name="quick-input" placeholder="Volané číslo"><button aria-label="volat" id="quick-button" class="ui icon button"><i class="call icon"></i></button></div></div>');
-				}
-			</script>
+			<div class="dynamic item fitted callHistoryContent smsHistoryContent"><button aria-label="filtrovat" class="ui pink button" onclick="filterModal();"><i class="filter icon"></i>Filtr</button></div>
+			<div class="dynamic item fitted statisticsContent"><div class="ui pink floating button dropdown" id="statistics-line"><i class="filter icon"></i><div class="text" style="white-space:nowrap; overflow:hidden">Vše</div><i class="dropdown icon"></i><div class="menu"><div class="item" data-value="all">Vše</div></div></div></div>
+			<div class="dynamic item fitted statisticsContent callHistoryContent smsHistoryContent"><div id="reportrange" class="ui button" style="white-space:nowrap; overflow:hidden"><i class="calendar icon"></i><span></span><i class="dropdown icon" style="margin:0"></i></div></div>
+			<div class="dynamic item fitted speedDialsContent"><button aria-label="import/export" class="ui button" onclick="importExportModal();"><i class="file archive outline icon"></i>Import/Export</button></div>
+			<div class="dynamic item fitted speedDialsContent"><button aria-label="přidat" class="ui green button" onclick="addContact();"><i class="plus icon"></i>Přidat</button></div>
+			<div class="dynamic item fitted smsHistoryContent"><button aria-label="nová SMS" class="ui green button" onclick="openDialog('compose-sms');"><i class="plus icon"></i>Nová SMS</button></div>
+			<div class="right item fitted"><div class="ui action input"><input type="tel" name="quick-input" placeholder="Volané číslo"><button aria-label="volat" id="quick-button" class="ui icon button"><i class="call icon"></i></button></div></div>
 		</div>
 		<!-- SPEED DIALS CONTENT -->
-		<div class="speedDialsContent">
+		<section class="speedDialsContent">
 			<!-- TABLE -->
 			<table class="ui celled compact table">
 				<thead>
@@ -222,9 +173,9 @@
 				<tbody id="tableContacts">
 				</tbody>
 			</table>
-		</div>
+		</section>
 		<!-- CALL HISTORY CONTENT -->
-		<div class="callHistoryContent">
+		<section class="callHistoryContent">
 			<!-- TABLE -->
 			<table class="ui celled table">
 				<thead>
@@ -258,9 +209,9 @@
 					</tr>
 				</tfoot>
 			</table>
-		</div>
+		</section>
 		<!-- SMS HISTORY CONTENT -->
-		<div class="smsHistoryContent">
+		<section class="smsHistoryContent">
 			<!-- TABLE -->
 			<table class="ui celled table">
 				<thead>
@@ -270,7 +221,7 @@
 						<th class="res" style="min-width:5em; width:calc(5em+35%)">Odkud</th>
 						<th class="res" style="min-width:5em; width:calc(5em+35%)">Kam</th>
 						<th class="res center" style="min-width:3em; max-width:5em; width:4em">Cena</th>
-						<th class="res center" style="min-width:4em; max-width:6em; width:5em">Linka</th>
+						<th class="res center" style="min-width:4em; max-width:6em; width:4em">Linka</th>
 					</tr>
 				</thead>
 				<tbody id="tableSms">
@@ -293,82 +244,122 @@
 					</tr>
 				</tfoot>
 			</table>
-		</div>
+		</section>
+
+
+		<section class="activeCallsContent">
+			<table class="ui black celled table">
+				<thead>
+					<tr>
+						<th class="res">ID</th>
+						<th class="res">Volající</th>
+						<th class="res">Volaný</th>
+						<th class="res">Destinace</th>
+						<th class="res">Voláno</th>
+						<th class="res">Přijato</th>
+						<th class="res">Cena za minutu</th>
+						<th class="res center" style="min-width:4em; max-width:6em; width:4em">Linka</th>
+					</tr>
+				</thead>
+				<tbody id="activeCalls"></tbody>
+			</table>
+		</section>
+
+
+		<section class="linesContent">
+			<table class="ui black celled table">
+				<thead>
+					<tr>
+						<th class="res center" style="min-width:4em; max-width:6em; width:4em">ID</th>
+						<th class="res">name</th>
+						<th class="res">caller id</th>
+						<th class="res">public name</th>
+						<th class="res">backup number</th>
+						<th class="res">active 822</th>
+						<th class="res">active cz restriction</th>
+						<th class="res">active iax</th>
+						<th class="res">active password</th>
+						<th class="res">active pin</th>
+						<th class="res">active ping</th>
+						<th class="res">active rtp</th>
+						<th class="res">active sip</th>
+						<th class="res">active anonymous</th>
+						<th class="res">active greeting</th>
+						<th class="res">missed call email</th>
+						<th class="res">recording email</th>
+						<th class="res">voicemail email</th>
+						<th class="res">backup number email</th>
+						<th class="res">incoming call name format</th>
+						<th class="res">incoming call number format</th>
+					</tr>
+				</thead>
+				<tbody id="lines"></tbody>
+			</table>
+		</section>
+
+
+		<section class="simCardsContent">
+			<table class="ui black celled table">
+				<thead>
+					<tr>
+						<th class="res">id</th>
+						<th class="res">sim number</th>
+						<th class="res">state</th>
+						<th class="res">changes in progress</th>
+						<th class="res">data package</th>
+						<th class="res">data package for next month</th>
+						<th class="res">data bought total</th>
+						<th class="res">data used</th>
+						<th class="res">voice package</th>
+						<th class="res">voice package for next month</th>
+						<th class="res">package delayed billing</th>
+						<th class="res">package delayed billing for next month</th>
+						<th class="res">missed calls register</th>
+						<th class="res">mobile data</th>
+						<th class="res">lte</th>
+						<th class="res">lte for next month</th>
+						<th class="res">roaming</th>
+						<th class="res">premium services</th>
+					</tr>
+				</thead>
+				<tbody id="simCards"></tbody>
+			</table>
+		</section>
+
+
+		<section class="mobileDataContent">
+			<table class="ui black celled table">
+				<thead>
+					<tr>
+						<th class="res">id</th>
+						<th class="res">date</th>
+						<th class="res">bytes up</th>
+						<th class="res">bytes down</th>
+						<th class="res">bytes total</th>
+						<th class="res">price</th>
+						<th class="res">price per MB</th>
+						<th class="res">phone number</th>
+					</tr>
+				</thead>
+				<tbody id="mobileData"></tbody>
+			</table>
+		</section>
+
+
 		<!-- STATISTICS CONTENT -->
-		<div class="statisticsContent">
-			<div class="ui three column stackable grid">
-				<div class="row">
-					<div class="column">
-						<div class="ui fluid card">
-							<div class="content">
-								<div class="header"><i class="sign in icon"></i>Příchozí hovory</div>
-							</div>
-							<div class="content">
-								<div class="ui horizontal statistics">
-									<div class="statistic">
-										<div class="value" id="incomingCount">0</div>
-										<div class="label">Hovorů</div>
-									</div>
-									<div class="statistic">
-										<div class="value" id="incomingLength">0</div>
-										<div class="label">Minut</div>
-									</div>
-									<div class="statistic">
-										<div class="value" id="incomingPrice">0</div>
-										<div class="label">Kč</div>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-					<div class="column">
-						<div class="ui fluid card">
-							<div class="content">
-								<div class="header"><i class="sign out icon"></i>Odchozí hovory</div>
-							</div>
-							<div class="content">
-								<div class="ui horizontal statistics">
-									<div class="statistic">
-										<div class="value" id="outgoingCount">0</div>
-										<div class="label">Hovorů</div>
-									</div>
-									<div class="statistic">
-										<div class="value" id="outgoingLength">0</div>
-										<div class="label">Minut</div>
-									</div>
-									<div class="statistic">
-										<div class="value" id="outgoingPrice">0</div>
-										<div class="label">Kč</div>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-					<div class="column">
-						<div class="ui fluid card">
-							<div class="content">
-								<div class="header"><i class="external share arrow icon"></i>Přesměrované hovory</div>
-							</div>
-							<div class="content">
-								<div class="ui horizontal statistics">
-									<div class="statistic">
-										<div class="value" id="redirectedCount">0</div>
-										<div class="label">Hovorů</div>
-									</div>
-									<div class="statistic">
-										<div class="value" id="redirectedLength">0</div>
-										<div class="label">Minut</div>
-									</div>
-									<div class="statistic">
-										<div class="value" id="redirectedPrice">0</div>
-										<div class="label">Kč</div>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
+		<section class="statisticsContent">
+			<table class="ui black celled table">
+				<thead>
+					<tr>
+						<th class="res">Typ hovorů</th>
+						<th class="center">Počet hovorů</th>
+						<th class="center">Délka celkem</th>
+						<th class="center">Cena celkem</th>
+					</tr>
+				</thead>
+				<tbody id="totalStatistics">
+				</tbody>
+			</table>
 
 			<div class="ui stackable grid">
 				<div class="row">
@@ -398,15 +389,16 @@
 									<th>Počet</th>
 								</tr>
 							</thead>
-							<tbody id="missedStatistics">
-							</tbody>
+							<tbody id="missedStatistics"></tbody>
 						</table>
 					</div>
 				</div>
 			</div>
-		</div>
+
+		</section>
 	</div>
 	<!-- DELETE MODAL -->
+
 	<div class="ui modal" id="deleteModal">
 		<i class="close icon"></i>
 		<div class="header">Smazat kontakt</div>
@@ -420,6 +412,7 @@
 			<div class="ui positive right labeled icon button" style="background-color:red">Smazat<i class="trash icon"></i></div>
 		</div>
 	</div>
+
 	<!-- EDIT MODAL -->
 	<div class="ui modal" id="editModal">
 		<i class="close icon"></i>
@@ -473,8 +466,9 @@
 			<div class="ui positive right labeled icon button">Přidat<i class="checkmark icon"></i></div>
 		</div>
 	</div>
+
 	<!-- LOGOUT MODAL -->
-	<div class="ui modal" id="logoutModal">
+	<!--div class="ui modal" id="logoutModal">
 		<i class="close icon"></i>
 		<div class="header">Odhlášení</div>
 		<div class="content">
@@ -486,7 +480,8 @@
 			<div class="ui black deny button">Ne</div>
 			<div class="ui positive right labeled icon button">Odhlásit<i class="sign out icon"></i></div>
 		</div>
-	</div>
+	</div-->
+
 	<!-- LOGIN MODAL -->
 	<div class="ui small modal" id="loginModal">
 		<div class="header">Odorik.cz</div>
@@ -525,7 +520,7 @@
 			<form class="ui form">
 				<div class="field">
 					<label for="call-target">Volané číslo</label>
-					<input type="tel" id="call-target" name="call-target" disabled>
+					<input type="tel" id="call-target" name="call-target"><!-- disabled-->
 				</div>
 				<div class="field required">
 					<label for="call-number">Vaše číslo</label>
@@ -547,6 +542,7 @@
 			<div class="ui positive right labeled icon button submit">Volat<i class="checkmark icon"></i></div>
 		</div>
 	</div>
+
 	<!-- IMPORT/EXPORT MODAL -->
 	<div class="ui modal" id="importExportModal">
 		<i class="close icon"></i>
@@ -676,7 +672,7 @@
 							<th>Kam</th>
 							<th>Délka</th>
 							<th>Cena</th>
-							<th>Linka</th>
+							<th class="res center" style="min-width:4em; max-width:6em; width:4em">Linka</th>
 						</tr>
 					</thead>
 					<tbody id="tableRedirects">
