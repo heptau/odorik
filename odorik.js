@@ -348,10 +348,10 @@ function reloadContacts() {
 						outstring += '<div class="ui icon buttons">';
 
 					if (enableRemoving)
-						outstring += '<button aria-label="smazat" class="ui red button" onclick="removeContact(\'main\', \'' + result[i].shortcut + '\')"><i class="delete icon"></i></button>';
+						outstring += '<button aria-label="smazat" class="ui red button" onclick="removeContact(\'main\', \'' + result[i].shortcut + '\')"><i class="trash alternate icon"></i></button>';
 
 					if (enableEditing)
-						outstring += '<button aria-label="upravit" class="ui blue button" onclick="editContact(\'main\', \'' + result[i].shortcut + '\',\'' + result[i].name + '\',\'' + result[i].number + '\')"><i class="edit icon"></i></button>';
+						outstring += '<button aria-label="upravit" class="ui blue button" onclick="editContact(\'main\', \'' + result[i].shortcut + '\',\'' + result[i].name + '\',\'' + result[i].number + '\')"><i class="write icon"></i></button>';
 
 					if (enableCallback)
 						outstring += '<button aria-label="zavolat" class="ui green button" onclick="callBack(\'' + result[i].number + '\',\'' + result[i].shortcut + '\',\'' + result[i].name + '\')"><i class="call icon"></i></button>';
@@ -363,7 +363,7 @@ function reloadContacts() {
 				} else {
 					if (hideLockedNumbers == false) {
 						outstring += '<tr><td class="center table-short-' + result[i].shortcut + '">' + result[i].shortcut + '</td>' + '<td class="table-name-' + result[i].shortcut + '">' + result[i].name + '</td><td class="table-num-' + result[i].shortcut + '">' + result[i].number.replace(/^00/, "+") + '</td><td>';
-						outstring += '<div class="ui icon buttons">' + '<button aria-label="smazat" class="ui red button" disabled><i class="delete icon"></i></button>' + '<button aria-label="upravit" class="ui blue button" disabled><i class="edit icon"></i></button>' + '<button aria-label="zavolat" class="ui green button" disabled><i class="call icon"></i></button></div>';
+						outstring += '<div class="ui icon buttons">' + '<button aria-label="smazat" class="ui red button" disabled><i class="trash alternate icon"></i></button>' + '<button aria-label="upravit" class="ui blue button" disabled><i class="edit icon"></i></button>' + '<button aria-label="zavolat" class="ui green button" disabled><i class="call icon"></i></button></div>';
 						outstring += '</td></tr>';
 					}
 				}
@@ -529,7 +529,7 @@ function parseErrors(resp) {
 		showError("Název je příliš dlouhý.");
 	}
 	if (error.indexOf("shortcut_already_used") >= 0) {
-		showError("Zkratka je už použitá.");
+		showError("Zkratka je již použita.");
 	}
 	if (error.indexOf("speed_dials_full") >= 0) {
 		showError("Rychlé kontakty jsou už plné.");
@@ -623,7 +623,7 @@ function callBack(number, shortcut, name) {
 				$('#callModal').modal('hide');
 				if (response && response.indexOf("error") != 0) dim(true, "Callback objednán");
 				else if (response) dim(false, "Došlo k chybě. Zkontrolujte zadané číslo.");
-				else dim(false, "Došlo k chybě. Nelze se připojit na API Odorik.");
+				else dim(false, "Došlo k chybě. Nelze se připojit k Odorik API.");
 			},
 		});
 }
@@ -1092,7 +1092,7 @@ function populateCallsTable(result) {
 		outstring += '><td>';
 
 		if ($.inArray(result[i].id.toString(), redirectedCalls) != -1) {
-			outstring += '<a onclick="redirectionsModal(' + "'" + result[i].id + "'" + ',' + "'" + result[i].date + "'" + ');" class="ui teal ribbon label"><i class="forward mail icon"></i></a>';
+			outstring += '<a onclick="redirectionsModal(' + "'" + result[i].id + "','" + result[i].date + "'" + ');" class="ui teal ribbon label"><i class="forward mail icon"></i></a>';
 		}
 
 		outstring += '<span class="hasClickPopup" data-html="<b>ID:</b> ' + result[i].id + '">';
@@ -1101,10 +1101,10 @@ function populateCallsTable(result) {
 			outstring += '<i class="forward mail icon"></i>Přesměrovaný';
 		}
 		else if (result[i].direction == "in") {
-			outstring += '<i class="right arrow icon"></i>Příchozí';
+			outstring += '<i class="sign in icon"></i>Příchozí';
 		}
 		else if (result[i].direction == "out") {
-			outstring += '<i class="left arrow icon"></i>Odchozí';
+			outstring += '<i class="sign out icon"></i>Odchozí';
 		}
 		if (result[i].status == "missed") {
 			outstring += " nepřijatý";

@@ -43,7 +43,6 @@ hr {
 }
 
 @media (prefers-color-scheme: dark) {
-
 	h1,
 	h3,
 	#credit {
@@ -130,19 +129,19 @@ td {
 }
 
 .fix1 {
-	width: 2em;
+	width: 3ch;
 }
 
 .fix3 {
-	width: 2.5em;
+	width: 5ch;
 }
 
 .date {
-	width: 5.5em;
+	width: 9ch;
 }
 
 .num {
-	width: 6.9em;
+	width: 12ch;
 }
 
 .table thead tr {
@@ -201,34 +200,34 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 .kind-call {
-	min-width: 2em;
-	max-width: 11em;
-	width: 10em
+	min-width: 3ch;
+	max-width: 20ch;
+	width: 18ch
 }
 
 .kind-sms {
-	min-width: 2em;
-	max-width: 7em;
-	width: 6em
+	min-width: 3ch;
+	max-width: 12ch;
+	width: 10ch
 }
 
 .shortcut {
-	width: 6em
+	width: 10ch
 }
 
 @media only screen and (max-width: 750px) {
 	.kind-call {
-		width: 2em
+		width: 3ch
 	}
 
 	.kind-sms {
-		width: 2em
+		width: 3ch
 	}
 }
 
 @media only screen and (max-width: 535px) {
 	.shortcut {
-		width: 2em
+		width: 3ch
 	}
 }
 

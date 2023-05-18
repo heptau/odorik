@@ -1,0 +1,215 @@
+
+:root {
+	color-scheme: light dark;
+	--red:    #FF3B30;
+	--orange: #FF9500;
+	--yellow: #FFCC00;
+	--green:  #34C759;
+	--mint:   #00C7BE;
+	--teal:   #5AC8FA;
+	--cyan:   #32ADE6;
+	--blue:   #007AFF;
+	--indigo: #5856D6;
+	--purple: #AF52DE;
+	--pink:   #FF2D55;
+	--brown:  #A2845E;
+
+	--gray:   #8E8E93;
+	--gray2:  #AEAEB2;
+	--gray3:  #C7C7CC;
+	--gray4:  #D1D1D6;
+	--gray5:  #E5E5EA;
+	--gray6:  #F2F2F7;
+
+	--label:  #000000;
+	--label2: #3C3C4399;
+	--label3: #3C3C434D;
+	--label4: #3C3C432E;
+
+	--placeholder: #3C3C434D;
+	--separator:   #3C3C434A;
+	--separator2:  #C6C6C8FF;
+
+	--background:  #FFFFFF;
+	--background2: #F2F2F7cc;
+	--background3: #FFFFFFcc;
+	--groupedBackground:  #F2F2F7;
+	--groupedBackground2: #FFFFFF;
+	--groupedBackground3: #F2F2F7;
+
+	--shadow: #0008;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+
+	--red:    #FF453A;
+	--orange: #FF9F0A;
+	--yellow: #FFD60A;
+	--green:  #30D158;
+	--mint:   #63E6E2;
+	--teal:   #64D2FF;
+	--cyan:   #64D2FF;
+	--blue:   #0A84FF;
+	--indigo: #5E5CE6;
+	--purple: #BF5AF2;
+	--pink:   #FF375F;
+	--brown:  #AC8E68;
+
+	--gray:   #8E8E93;
+	--gray2:  #636366;
+	--gray3:  #48484A;
+	--gray4:  #3A3A3C;
+	--gray5:  #2C2C2E;
+	--gray6:  #1C1C1E;
+
+	--label:  #FFFFFF;
+	--label2: #EBEBF599;
+	--label3: #EBEBF54D;
+	--label4: #EBEBF52E;
+
+	--placeholder: #EBEBF54D;
+	--separator:   #54545899;
+	--separator2:  #38383AFF;
+
+	--background:  #000000;
+	--background2: #1C1C1E;
+	--background3: #2C2C2E;
+	--groupedBackground:  #000000;
+	--groupedBackground2: #1C1C1E;
+	--groupedBackground3: #2C2C2E;
+	}
+}
+
+html,
+body {
+	user-select: none;
+	-webkit-user-select: none;
+
+	font-family: Helvetica sans-serif;
+	font: -apple-system-body;
+
+	color: var(--label);
+	background-color: var(--background);
+}
+
+
+dialog {
+	transform: scale(1.2);
+
+	backdrop-filter: blur(7px);
+	-webkit-backdrop-filter: blur(7px);
+
+	user-select: none;
+	-webkit-user-select: none;
+	border: none;
+	border-radius: 10px;
+	box-shadow: 0 0 20px var(--shadow);
+	width: 270px;
+	background-color: var(--background2);
+	text-align: center;
+	padding: 0;
+	font-size: 13px;
+	font-weight: 400;
+	font-family: Helvetica sans-serif;
+	font: -apple-system-footnote
+}
+
+dialog.full {
+	width: 640px;
+}
+
+dialog.show{
+	opacity: 1;
+	visibility: visible;
+	transform: scale(1.0);
+	transition: all 0.2s ease-in-out;
+}
+
+dialog.hide, dialog:not([open]){
+	opacity: 0;
+	visibility: hidden;
+	transform: scale(1.2);
+	/*transition: all 0.1s ease-in-out;*/
+}
+
+dialog h1 {
+	font-size: 17px;
+	font-weight: 700;
+	font: -apple-system-headline;
+	padding: 1em;
+}
+
+dialog button{
+	display: inline-block;
+	width: 100%;
+	text-align: center;
+	text-decoration: none;
+	padding: 10px;
+	margin: 0;
+	color: var(--blue);
+	background: none;
+	border: none;
+	border-top: var(--separator) solid 1px;
+	font-size: 17px;
+	font-weight: 400;
+	font: -apple-system-body;
+}
+
+dialog button.warning {
+	color: var(--red)
+}
+
+dialog.h2btn button {
+	width: calc(50% - 1px);
+	border-left: var(--separator) solid 1px;
+}
+
+dialog.h3btn button {
+	width: calc(33.4% - 1px);
+	border-left: var(--separator) solid 1px;
+}
+
+dialog.h4btn button {
+	width: calc(25% - 1px);
+	border-left: var(--separator) solid 1px;
+}
+
+dialog.h5btn button {
+	width: calc(20% - 1px);
+	border-left: var(--separator) solid 1px;
+}
+
+dialog.h6btn button {
+	width: calc(14.3% - 1px);
+	border-left: var(--separator) solid 1px;
+}
+
+dialog.h7btn button {
+	width: calc(15% - 2px);
+	border-left: var(--separator) solid 1px;
+}
+
+dialog button:first-of-type {
+	border-left: none;
+}
+
+dialog button:focus {
+	outline: none;
+}
+
+dialog::backdrop {
+	background: rgba(0,0,0,.05);
+	/*
+	backdrop-filter: blur(1px);
+	-webkit-backdrop-filter: blur(1px);
+	*/
+	-webkit-backdrop-filter: grayscale(0.5);
+	backdrop-filter: grayscale(0.4);
+	animation: fade-in 0.2s;
+}
+
+@keyframes fade-in {
+	from {opacity: 0;}
+	to {opacity: 1;}
+}
