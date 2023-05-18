@@ -137,6 +137,7 @@
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/statistic.min.css">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/transition.min.css">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-daterangepicker/3.0.5/daterangepicker.min.css">
+	<link rel="stylesheet" href="aui.css">
 	<link rel="stylesheet" href="odorik.css">
 </head>
 
@@ -150,14 +151,14 @@
 
 	<!-- CONTAINER -->
 	<div class="ui container"
-		style="display:none; width:calc(100% - 10px) !important;  margin:0 !important; padding:0 !important">
+		style="display:none; /* overflow:hidden; width:100% */ width:calc(100% - 8px) !important; margin:0 !important; padding:0 !important">
 		<!-- TITLE -->
-		<h1 class="ui header" style="padding-left:10px">
-			<br>Odorik.cz<div class="ui grey label">v1.10.3</div>
-			<span style="float:right" class="sub header" id="credit"></span>
+		<h1 class="ui header" style="padding-left:8px">
+			<br>Odorik.cz<div class="ui grey label">v1.10.4</div>
+			<span style="float:right; padding-right:.8px" class="sub header" id="credit"></span>
 		</h1>
 		<!-- MENU -->
-		<div class="ui secondary stackable menu" style="padding-left:10px">
+		<div class="ui secondary stackable menu" style="padding-left:8px">
 			<!-- CATEGORY SELECTOR DROPDOWN -->
 			<div class="item fitted">
 				<div class="ui blue floating button dropdown" id="categorySelector">
@@ -165,19 +166,19 @@
 					<div class="menu">
 						<script>
 							if (enableContacts) {
-								document.write('<div class="item" data-value="speedDials"><i class="user icon"></i>Rychlé kontakty</div>');
+								document.write('<div class="item" data-value="speedDials"><i class="address book outline icon"></i>Kontakty</div>');
 							}
 							if (enableCallHistory) {
-								document.write('<div class="item" data-value="callHistory"><i class="history icon"></i>Výpis volání</div>');
+								document.write('<div class="item" data-value="callHistory"><i class="phone icon"></i>Hovory</div>');
 							}
 							if (enableSmsHistory) {
-								document.write('<div class="item" data-value="smsHistory"><i class="history icon"></i>Výpis SMS</div>');
+								document.write('<div class="item" data-value="smsHistory"><i class="comment outline icon"></i>Zprávy</div>');
 							}
 							if (enableStatistics) {
-								document.write('<div class="item" data-value="statistics"><i class="bar chart icon"></i>Statistiky volání</div>');
+								document.write('<div class="item" data-value="statistics"><i class="bar chart icon"></i>Statistiky</div>');
 							}
 							if (enableLogout) {
-								document.write('<hr /><div class="item" data-value="logout" style="font-weight:normal !important"><i class="sign out icon"></i>Odhlásit</div>');
+								document.write('<hr /><div class="item" data-value="logout" style="font-weight:normal !important"><i class="log out icon"></i>Odhlásit</div>');
 							}
 						</script>
 					</div>
@@ -190,10 +191,10 @@
 				}
 
 				if (enableFilters) {
-					document.write('<div class="item fitted callHistoryContent smsHistoryContent"><button aria-label="filtrovat" class="ui green button" onclick="filterModal();"><i class="filter icon"></i>Filtrovat</button></div>');
+					document.write('<div class="item fitted callHistoryContent smsHistoryContent"><button aria-label="filtrovat" class="ui pink button" onclick="filterModal();"><i class="filter icon"></i>Filtr</button></div>');
 				}
 
-				document.write('<div class="item fitted statisticsContent"><div class="ui green floating button dropdown" id="statistics-line"><i class="phone icon"></i><div class="text" style="white-space:nowrap; overflow:hidden">Všechny</div><i class="dropdown icon"></i><div class="menu"><div class="item" data-value="all">Všechny</div></div></div></div>')
+				document.write('<div class="item fitted statisticsContent"><div class="ui pink floating button dropdown" id="statistics-line"><i class="filter icon"></i><div class="text" style="white-space:nowrap; overflow:hidden">Vše</div><i class="dropdown icon"></i><div class="menu"><div class="item" data-value="all">Vše</div></div></div></div>')
 
 				document.write('<div class="item fitted statisticsContent callHistoryContent smsHistoryContent"><div id="reportrange" class="ui button" style="white-space:nowrap; overflow:hidden"><i class="calendar icon"></i><span></span><i class="dropdown icon" style="margin:0"></i></div></div>')
 
@@ -202,7 +203,7 @@
 				}
 
 				if (enableQuickCallback) {
-					document.write('<div class="right item fitted"><div class="ui action input"><input type="tel" name="quick-input" placeholder="Volané číslo"><button aria-label="volat" id="quick-button" class="ui icon button"><i class="call icon"></i></button></div></div>');
+					document.write('<div class="right item fitted" style="padding-right:.8px"><div class="ui action input"><input type="tel" name="quick-input" placeholder="Volané číslo"><button aria-label="volat" id="quick-button" class="ui icon button"><i class="call icon"></i></button></div></div>');
 				}
 			</script>
 		</div>
@@ -228,7 +229,7 @@
 			<table class="ui celled table">
 				<thead>
 					<tr>
-						<th class="res kind-call">Druh</th>
+						<th class="res kind-call">Hovor</th>
 						<th class="res" style="min-width:4em; max-width:10em; width:calc(4em+30%)">Čas</th>
 						<th class="res" style="min-width:5em; width:calc(5em+35%)">Odkud</th>
 						<th class="res" style="min-width:5em; width:calc(5em+35%)">Kam</th>
@@ -264,7 +265,7 @@
 			<table class="ui celled table">
 				<thead>
 					<tr>
-						<th class="res kind-sms">Druh</th>
+						<th class="res kind-sms">SMS</th>
 						<th class="res" style="min-width:4em; max-width:10em; width:calc(4em+30%)">Čas</th>
 						<th class="res" style="min-width:5em; width:calc(5em+35%)">Odkud</th>
 						<th class="res" style="min-width:5em; width:calc(5em+35%)">Kam</th>
@@ -300,7 +301,7 @@
 					<div class="column">
 						<div class="ui fluid card">
 							<div class="content">
-								<div class="header"><i class="right arrow icon"></i>Příchozí hovory</div>
+								<div class="header"><i class="sign in icon"></i>Příchozí hovory</div>
 							</div>
 							<div class="content">
 								<div class="ui horizontal statistics">
@@ -323,7 +324,7 @@
 					<div class="column">
 						<div class="ui fluid card">
 							<div class="content">
-								<div class="header"><i class="left arrow icon"></i>Odchozí hovory</div>
+								<div class="header"><i class="sign out icon"></i>Odchozí hovory</div>
 							</div>
 							<div class="content">
 								<div class="ui horizontal statistics">
@@ -346,7 +347,7 @@
 					<div class="column">
 						<div class="ui fluid card">
 							<div class="content">
-								<div class="header"><i class="forward mail arrow icon"></i>Přesměrované hovory</div>
+								<div class="header"><i class="external share arrow icon"></i>Přesměrované hovory</div>
 							</div>
 							<div class="content">
 								<div class="ui horizontal statistics">
@@ -416,7 +417,7 @@
 		</div>
 		<div class="actions">
 			<div class="ui black deny button">Ne</div>
-			<div class="ui negative right labeled icon button">Smazat<i class="trash icon"></i></div>
+			<div class="ui positive right labeled icon button" style="background-color:red">Smazat<i class="trash icon"></i></div>
 		</div>
 	</div>
 	<!-- EDIT MODAL -->
@@ -508,7 +509,7 @@
 			<div class="ui negative message" id="badLogin" style="display:none">
 				<div class="header">Nesprávné uživatelské jméno nebo heslo.</div>
 			</div>
-			<a href="https://github.com/heptau/odorik/blob/master/index.html">Zdrojový kód</a> této "single page"
+			<a href="https://github.com/heptau/odorik/blob/master/index.html">Zdrojový kód</a> této
 			aplikace je k dispozici <a href="https://github.com/heptau/odorik/">včetně dokumentace</a>. Můžete si jej
 			sami nechat upravit a integrovat např. do vlastních webových stránek.
 		</div>
@@ -573,7 +574,7 @@
 			<div class="ui black deny button">Zpět</div>
 			<a class="ui blue right labeled icon button" download="Kontakty.vcf" href="#" id="exportButton">Exportovat<i
 					class="download icon"></i></a>
-			<div class="ui green right labeled icon button" id="importButton">Importovat<i class="wizard icon"></i>
+			<div class="ui green right labeled icon button" id="importButton">Importovat<i class="upload icon"></i>
 			</div>
 		</div>
 	</div>
@@ -607,7 +608,7 @@
 	<!-- FILTER MODAL -->
 	<div class="ui modal" id="filterModal">
 		<i class="close icon"></i>
-		<div class="header">Filtrovat</div>
+		<div class="header">Filtr</div>
 		<div class="content">
 			<form class="ui form">
 				<div class="field">

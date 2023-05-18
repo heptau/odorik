@@ -18,5 +18,7 @@
 	"short_name": "Odorik",
 	"orientation": "any",
 	"theme_color": "#333",
-	"background_color": "#fff"
+	"background_color": "#fff",
+	"lang": "cs",
+	"descriptions": "Aplikace pro správu rychlých kontaktů, vytváření hovorů a zobrazení přehledů a statistik pro zákazníky operátora Odorik.cz"
 }
