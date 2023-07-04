@@ -912,8 +912,8 @@ function optimiseSMS(sms) {
 }
 
 function sendSMS() {
-	var sms = sipPhoneNo(document.getElementById('sms-preview').value);
-	var recipient = document.getElementById('sms-recipient').value;
+	var sms = document.getElementById('sms-preview').value;
+	var recipient = sipPhoneNo(document.getElementById('sms-recipient').value);
 	//var sender = document.getElementById('sms-sender').value;
 
 	$.ajax({
@@ -929,6 +929,8 @@ function sendSMS() {
 			if (typeof result.errors != "undefined") {
 				//alert(result);
 				parseErrors(result);
+			} else {
+				document.getElementById("compose-sms").close();
 			}
 			//alert(result);
 			//setTimeout("loadContacts();", 500);
