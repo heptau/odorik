@@ -31,11 +31,6 @@ var enableRemoving = true;
 // př. var enableCallback = false // zakáže callback
 var enableCallback = true;
 
-// Povolit úpravu přímo v tabulce :: true = povolit, false = zakázat
-// Klepněte dvakrát na políčko textu v tabulce a můžete ho přímo upravit
-// př. var enableInlineEditing = false // zakáže úpravy přímo v tabulce
-var enableInlineEditing = true;
-
 // Povolit animace :: true = povolit, false = zakázat
 // př. var enableAnimations = false; // zakáže animace
 var enableAnimations = true;
@@ -391,7 +386,12 @@ function loadContacts() {
 				allShortcuts.push(result[i].shortcut);
 				allNames.push(result[i].name);
 				if (editableLine("main", result[i].shortcut)) {
-					outstring += '<tr oncontextmenu="deleteContactModal(\'main\', ' + result[i].shortcut + '); return false;"><td class="center table-short-' + result[i].shortcut + '">' + result[i].shortcut + '</td>' + '<td class="table-name-' + result[i].shortcut + '">' + result[i].name + '</td><td class="table-num-' + result[i].shortcut + '">' + unifyPhoneNo(result[i].number) + '</td><td>';
+					outstring
+						+= '<tr oncontextmenu="deleteContactModal(\'main\', ' + result[i].shortcut + '); return false;">'
+						+ '<td class="table-name-' + result[i].shortcut + '">' + result[i].name + '</td>'
+						+ '<td class="table-num-' + result[i].shortcut + '">' + unifyPhoneNo(result[i].number) + '</td>'
+						+ '<td class="center table-short-' + result[i].shortcut + '">' + result[i].shortcut + '</td>'
+						+ '<td>';
 
 					if (enableEditing || enableRemoving || enableCallback)
 						outstring += '<div class="ui icon buttons">';
@@ -403,7 +403,9 @@ function loadContacts() {
 						outstring += '<button aria-label="upravit" class="ui blue button" onclick="editContact(\'main\', \'' + result[i].shortcut + '\',\'' + result[i].name + '\',\'' + result[i].number + '\')"><i class="write icon"></i></button>';
 
 					if (enableCallback)
-						outstring += '<button aria-label="zavolat" class="ui green button" onclick="callBack(\'' + result[i].number + '\',\'' + result[i].shortcut + '\',\'' + result[i].name + '\')"><i class="call icon"></i></button>';
+						outstring
+							+= '<button aria-label="zavolat" class="ui green button" onclick="callBack(\'' + result[i].number + '\',\'' + result[i].shortcut + '\',\'' + result[i].name + '\')"><i class="call icon"></i></button>'
+							+ '<button aria-label="napsat" class="ui yellow button" onclick="document.getElementById(\'sms-recipient\').value=\'' + unifyPhoneNo(result[i].number) + '\'; openDialog(\'compose-sms\');"><i class="comment outline icon"></i></button>';
 
 					if (enableEditing || enableRemoving || enableCallback)
 						outstring += '</div>'
@@ -411,9 +413,17 @@ function loadContacts() {
 					outstring += '</td></tr>';
 				} else {
 					if (hideLockedNumbers == false) {
-						outstring += '<tr><td class="center table-short-' + result[i].shortcut + '">' + result[i].shortcut + '</td>' + '<td class="table-name-' + result[i].shortcut + '">' + result[i].name + '</td><td class="table-num-' + result[i].shortcut + '">' + unifyPhoneNo(result[i].number) + '</td><td>';
-						outstring += '<div class="ui icon buttons">' + '<button aria-label="smazat" class="ui red button" disabled><i class="trash alternate icon"></i></button>' + '<button aria-label="upravit" class="ui blue button" disabled><i class="edit icon"></i></button>' + '<button aria-label="zavolat" class="ui green button" disabled><i class="call icon"></i></button></div>';
-						outstring += '</td></tr>';
+						outstring
+							+= '<tr>'
+							+ '<td class="center table-short-' + result[i].shortcut + '">' + result[i].shortcut + '</td>'
+							+ '<td class="table-name-' + result[i].shortcut + '">' + result[i].name + '</td>'
+							+ '<td class="table-num-' + result[i].shortcut + '">' + unifyPhoneNo(result[i].number) + '</td>'
+							+ '<td><div class="ui icon buttons">'
+								+ '<button aria-label="smazat" class="ui red button" disabled><i class="trash alternate icon"></i></button>'
+								+ '<button aria-label="upravit" class="ui blue button" disabled><i class="edit icon"></i></button>'
+								+ '<button aria-label="zavolat" class="ui green button" disabled><i class="call icon"></i></button>'
+								+ '<button aria-label="napsat" class="ui yellow button" disabled><i class="comment outline icon"></i></button>'
+							+ '</div></td></tr>';
 					}
 				}
 
@@ -436,34 +446,6 @@ function loadContacts() {
 			}
 			else {
 				preload = false;
-			}
-
-			if (enableInlineEditing) {
-				$("#tableContacts td").dblclick(function () {
-					$(".edited").each(function () {
-						$(this).text($(this).find("input").attr("data-original"));
-					});
-					$(".edited").removeClass("edited");
-					$(this).addClass("edited");
-
-					var currData = $(this).text();
-
-					$(this).html("<div class='ui icon fluid input'><input type='text' data-original='' id='inlineInput' value=''><i id='inlineSubmit' class='link checkmark icon'></i></div>");
-
-					$("#inlineInput").attr("value", currData);
-					$("#inlineInput").attr("data-original", currData);
-
-					var id = $(this).attr("class").replace(" edited", "").split("-")[2];
-
-					$("#inlineInput").keypress(function (e) {
-						if (e.which == 13) {
-							inlineEdit(id);
-						}
-					});
-					$("#inlineSubmit").click(function () {
-						inlineEdit(id);
-					});
-				});
 			}
 		}
 	});
@@ -503,9 +485,12 @@ function deleteContact() {
 
 // Edit Contact
 function editContact(line, id, name, number) {
-	$('input[name="edit-shortcut"]').val(id);
-	$('input[name="edit-name"]').val(name);
-	$('input[name="edit-number"]').val(number);
+	$('#edit-shortcut').val(id);
+	$('#edit-name').val(name.match(/^([^<]*)/)?.[1].trim());
+	$('#edit-surname').val(name.match(/<b>(.*?)<\/b>/)?.[1]);
+	$('#edit-note').val(name.match(/<i>(.*?)<\/i>/)?.[1]);
+	$('#edit-number').val(unifyPhoneNo(number));
+
 	$('#editModal').modal({
 		duration: setDuration,
 		blurring: true,
@@ -515,15 +500,26 @@ function editContact(line, id, name, number) {
 			} else {
 				requestURL = "https://www.odorik.cz/api/v1/lines/" + line + '/speed_dials/' + id + '.json';
 			}
+
+			var name = $('#edit-name').val().trim();
+			var surname = $('#edit-surname').val().trim();
+			var note = $('#edit-note').val().trim();
+
+			var fullname = (
+					(name !== '' ? name : '')
+					+ (surname !== '' ? ' <b>' + surname + '</b>' : '')
+					+ (note !== '' ? ' <i>' + note + '</i>' : '')
+				).trim();
+
 			$.ajax({
 				url: requestURL,
 				type: 'PUT',
 				data: {
 					user: APIuser,
 					password: APIpass,
-					shortcut: $('input[name="edit-shortcut"]').val(),
-					name: $('input[name="edit-name"]').val(),
-					number: $('input[name="edit-number"]').val()
+					shortcut: +$('#edit-shortcut').val(),
+					name: fullname,
+					number: sipPhoneNo($('#edit-number').val())
 				},
 				success: function (result) {
 					if (typeof result.errors != "undefined") {
@@ -543,15 +539,26 @@ function addContact() {
 		blurring: true,
 		onApprove: function () {
 			requestURL = 'https://www.odorik.cz/api/v1/speed_dials.json';
+
+			var name = $('#add-name').val().trim();
+			var surname = $('#add-surname').val().trim();
+			var note = $('#add-note').val().trim();
+
+			var fullname = (
+					(name !== '' ? name : '')
+					+ (surname !== '' ? ' <b>' + surname + '</b>' : '')
+					+ (note !== '' ? ' <i>' + note + '</i>' : '')
+				).trim();
+
 			$.ajax({
 				url: requestURL,
 				type: 'POST',
 				data: {
 					user: APIuser,
 					password: APIpass,
-					shortcut: $('input[name="add-shortcut"]').val(),
-					name: $('input[name="add-name"]').val(),
-					number: $('input[name="add-number"]').val()
+					shortcut: +$('#add-shortcut').val(),
+					name: fullname,
+					number: sipPhoneNo($('#add-number').val())
 				},
 				success: function (result) {
 					if (typeof result.errors != "undefined") {
@@ -931,9 +938,8 @@ function sendSMS() {
 				parseErrors(result);
 			} else {
 				document.getElementById("compose-sms").close();
+				reloadSms();
 			}
-			//alert(result);
-			//setTimeout("loadContacts();", 500);
 		}
 	})
 }

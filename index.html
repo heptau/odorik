@@ -94,14 +94,13 @@
 				<input type="number" id="contact-shortcut" name="contact-shortcut" placeholder="Zkratka" pattern="\d*" min="1" max="999" required>
 			</div>
 		</form>
-		<p><b>TIP:</b> Lze editovat i dvojklikem na hlavní stránce.</p>
 	</div>
 	<button onclick="this.closest('dialog').close()">Zpět</button><button onclick="this.form.submit()">Upravit</button>
 </dialog>
 
 <!-- ADD MODAL -->
 <dialog id="add-contact" class="full">
-	<h1>Přidat kontakt</h1>
+	<h1>Nový kontakt</h1>
 	<div class="content">
 		<form class="ui form">
 			<div class="field">
@@ -126,7 +125,7 @@
 		style="display:none; /* overflow:hidden; width:100% */ width:calc(100% - 8px) !important; margin:0 !important; padding:0 !important">
 		<!-- TITLE -->
 		<h1 class="ui header" style="padding-left:8px">
-			<br>Odorik.cz<div class="ui grey label">v1.10.6</div>
+			<br>Odorik.cz<div class="ui grey label">v1.10.7</div>
 			<span style="float:right; padding-right:.8px" class="sub header" id="credit"></span>
 		</h1>
 		<!-- MENU -->
@@ -164,10 +163,10 @@
 			<table class="ui celled compact table">
 				<thead>
 					<tr>
-						<th class="center shortcut">Zkratka</th>
 						<th class="res" style="width:calc(6em+50%)">Název</th>
 						<th class="res" style="width:calc(6em+50%)">Číslo</th>
-						<th class="center" style="width:9em">Nástroje</th>
+						<th class="center shortcut">Zkratka</th>
+						<th class="center" style="width:11em">Nástroje</th>
 					</tr>
 				</thead>
 				<tbody id="tableContacts">
@@ -271,26 +270,26 @@
 				<thead>
 					<tr>
 						<th class="res center" style="min-width:4em; max-width:6em; width:4em">ID</th>
-						<th class="res">name</th>
-						<th class="res">caller id</th>
-						<th class="res">public name</th>
-						<th class="res">backup number</th>
-						<th class="res">active 822</th>
-						<th class="res">active cz restriction</th>
-						<th class="res">active iax</th>
-						<th class="res">active password</th>
-						<th class="res">active pin</th>
-						<th class="res">active ping</th>
-						<th class="res">active rtp</th>
-						<th class="res">active sip</th>
-						<th class="res">active anonymous</th>
-						<th class="res">active greeting</th>
-						<th class="res">missed call email</th>
-						<th class="res">recording email</th>
-						<th class="res">voicemail email</th>
-						<th class="res">backup number email</th>
-						<th class="res">incoming call name format</th>
-						<th class="res">incoming call number format</th>
+						<th class="res">Jméno</th>
+						<th class="res">Číslo</th>
+						<th class="res">Veřejné jméno</th>
+						<th class="res">Záložní Číslo</th>
+						<th class="res">822</th>
+						<th class="res">CZ omezení</th>
+						<th class="res">IAX</th>
+						<th class="res">Heslo</th>
+						<th class="res">PIN</th>
+						<th class="res">Ping</th>
+						<th class="res">RTP</th>
+						<th class="res">SIP</th>
+						<th class="res">Anonymní</th>
+						<th class="res">Uvítání</th>
+						<th class="res">E-mail pro změskané</th>
+						<th class="res">E-mail pro nahrávky</th>
+						<th class="res">E-mail pro hlasové zprávy</th>
+						<th class="res">E-mail pro záložní číslo</th>
+						<th class="res">Formát jména příchozích volání</th>
+						<th class="res">Formát čísla příchozích volání</th>
 					</tr>
 				</thead>
 				<tbody id="lines"></tbody>
@@ -302,24 +301,24 @@
 			<table class="ui black celled table">
 				<thead>
 					<tr>
-						<th class="res">id</th>
-						<th class="res">sim number</th>
-						<th class="res">state</th>
-						<th class="res">changes in progress</th>
-						<th class="res">data package</th>
-						<th class="res">data package for next month</th>
-						<th class="res">data bought total</th>
-						<th class="res">data used</th>
-						<th class="res">voice package</th>
-						<th class="res">voice package for next month</th>
-						<th class="res">package delayed billing</th>
-						<th class="res">package delayed billing for next month</th>
-						<th class="res">missed calls register</th>
-						<th class="res">mobile data</th>
-						<th class="res">lte</th>
-						<th class="res">lte for next month</th>
-						<th class="res">roaming</th>
-						<th class="res">premium services</th>
+						<th class="res">ID</th>
+						<th class="res">Číslo SIM</th>
+						<th class="res">Stav</th>
+						<th class="res">Probíhající změny</th>
+						<th class="res">Balíček dat</th>
+						<th class="res">Balíček dat pro další měsíc</th>
+						<th class="res">Nakoupená data</th>
+						<th class="res">Spotřebovaná data</th>
+						<th class="res">Hlasový balíček</th>
+						<th class="res">Hlasový balíček pro další měsíc</th>
+						<th class="res">Zpožděné vyúčtování</th>
+						<th class="res">Zpožděné vyúčtování pro další měsíc</th>
+						<th class="res">Evidence zmeškaných hovorů</th>
+						<th class="res">Mobilní data</th>
+						<th class="res">LTE</th>
+						<th class="res">LTE pro další měsíc</th>
+						<th class="res">Roaming</th>
+						<th class="res">Prémiové služby</th>
 					</tr>
 				</thead>
 				<tbody id="simCards"></tbody>
@@ -331,14 +330,14 @@
 			<table class="ui black celled table">
 				<thead>
 					<tr>
-						<th class="res">id</th>
-						<th class="res">date</th>
-						<th class="res">bytes up</th>
-						<th class="res">bytes down</th>
-						<th class="res">bytes total</th>
-						<th class="res">price</th>
-						<th class="res">price per MB</th>
-						<th class="res">phone number</th>
+						<th class="res">ID</th>
+						<th class="res">Datum</th>
+						<th class="res">Odeslaých bytů</th>
+						<th class="res">Stažených bytů</th>
+						<th class="res">Bytů celkem</th>
+						<th class="res">Cena</th>
+						<th class="res">Cena za MB</th>
+						<th class="res">Telefonní číslo</th>
 					</tr>
 				</thead>
 				<tbody id="mobileData"></tbody>
@@ -420,20 +419,26 @@
 		<div class="content">
 			<form class="ui form">
 				<div class="field">
-					<label for="edit-shortcut">Zkratka</label>
-					<input type="number" id="edit-shortcut" name="edit-shortcut" placeholder="Zkratka" pattern="\d*" min="1" max="999"
-						required>
+					<label for="edit-name">Jméno</label>
+					<input type="text" id="edit-name" name="edit-name" autocapitalize="words">
 				</div>
 				<div class="field">
-					<label for="edit-name">Název</label>
-					<input type="text" id="edit-name" name="edit-name" autocapitalize="words">
+					<label for="edit-name">Příjmení</label>
+					<input type="text" id="edit-surname" name="edit-surname" autocapitalize="words">
+				</div>
+				<div class="field">
+					<label for="edit-name">Poznámka</label>
+					<input type="text" id="edit-note" name="edit-note">
 				</div>
 				<div class="field">
 					<label for="edit-number">Číslo</label>
 					<input type="tel" id="edit-number" name="edit-number" required>
 				</div>
+				<div class="field">
+					<label for="edit-shortcut">Zkratka</label>
+					<input type="number" id="edit-shortcut" name="edit-shortcut" placeholder="Zkratka" pattern="\d*" min="1" max="999" required>
+				</div>
 			</form>
-			<p><b>TIP:</b> Lze editovat i dvojklikem na hlavní stránce.</p>
 		</div>
 		<div class="actions">
 			<div class="ui black deny button">Zpět</div>
@@ -443,21 +448,28 @@
 	<!-- ADD MODAL -->
 	<div class="ui modal" id="addModal">
 		<i class="close icon"></i>
-		<div class="header">Přidat kontakt</div>
+		<div class="header">Nový kontakt</div>
 		<div class="content">
 			<form class="ui form">
 				<div class="field">
-					<label for="add-shortcut">Zkratka</label>
-					<input type="number" id="add-shortcut" name="add-shortcut" placeholder="Zkratka" pattern="\d*" min="1" max="999"
-						required>
+					<label for="add-name">Jméno</label>
+					<input type="text" id="add-name" name="add-name" placeholder="Jméno" autocapitalize="words">
 				</div>
 				<div class="field">
-					<label for="add-name">Název</label>
-					<input type="text" id="add-name" name="add-name" placeholder="Název" autocapitalize="words">
+					<label for="add-surname">Příjmení</label>
+					<input type="text" id="add-surname" name="add-surname" placeholder="Příjmení" autocapitalize="words">
+				</div>
+				<div class="field">
+					<label for="add-note">Poznámka</label>
+					<input type="text" id="add-note" name="add-note" placeholder="Poznámka">
 				</div>
 				<div class="field">
 					<label for="add-number">Číslo</label>
 					<input type="tel" id="add-number" name="add-number" placeholder="Číslo" required>
+				</div>
+				<div class="field">
+					<label for="add-shortcut">Zkratka</label>
+					<input type="number" id="add-shortcut" name="add-shortcut" placeholder="Zkratka" pattern="\d*" min="1" max="999">
 				</div>
 			</form>
 		</div>
