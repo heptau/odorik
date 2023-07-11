@@ -19,18 +19,6 @@ var hideLockedNumbers = true;
 // př. var allowedLines = "300100,300200"; // Povolí jen linku 300100 a 300200
 var allowedLines = "";
 
-// Povolit upravování nových čísel :: true = povolit, false = zakázat
-// př. var enableEditing = true // povolí úpravy
-var enableEditing = true;
-
-// Povolit mazání nových čísel :: true = povolit, false = zakázat
-// př. var enableRemoving = false // zakáže mazání
-var enableRemoving = true;
-
-// Povolit callback :: true = povolit, false = zakázat
-// př. var enableCallback = false // zakáže callback
-var enableCallback = true;
-
 // Povolit animace :: true = povolit, false = zakázat
 // př. var enableAnimations = false; // zakáže animace
 var enableAnimations = true;
@@ -88,9 +76,15 @@ var preload = false;
 
 
 //temporary values
+
 var selectedLine;
 var selectedContact;
+var selectedContactNumber;
+var selectedContactName
 
+function isTouchDevice() {
+	return 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
+}
 
 // Detect if user is logged in
 function loggedIn() {
@@ -379,54 +373,31 @@ function loadContacts() {
 			password: APIpass
 		},
 		success: function (result) {
-			array = result;
 			outstring = "";
 			for (var i = 0; i < result.length; i++) {
 				allNumbers.push(result[i].number);
 				allShortcuts.push(result[i].shortcut);
 				allNames.push(result[i].name);
+
 				if (editableLine("main", result[i].shortcut)) {
 					outstring
-						+= '<tr oncontextmenu="deleteContactModal(\'main\', ' + result[i].shortcut + '); return false;">'
+						+= '<tr onclick="simulateContextMenu(event)" oncontextmenu="contactContextMenu(event, \'' + result[i].shortcut + '\', \'' + result[i].number + '\', \'' + result[i].name + '\'); return false;">'
 						+ '<td class="table-name-' + result[i].shortcut + '">' + result[i].name + '</td>'
 						+ '<td class="table-num-' + result[i].shortcut + '">' + unifyPhoneNo(result[i].number) + '</td>'
 						+ '<td class="center table-short-' + result[i].shortcut + '">' + result[i].shortcut + '</td>'
-						+ '<td>';
-
-					if (enableEditing || enableRemoving || enableCallback)
-						outstring += '<div class="ui icon buttons">';
-
-					if (enableRemoving)
-						outstring += '<button aria-label="smazat" class="ui red button" onclick="deleteContactModal(\'main\', \'' + result[i].shortcut + '\')"><i class="trash alternate icon"></i></button>';
-
-					if (enableEditing)
-						outstring += '<button aria-label="upravit" class="ui blue button" onclick="editContact(\'main\', \'' + result[i].shortcut + '\',\'' + result[i].name + '\',\'' + result[i].number + '\')"><i class="write icon"></i></button>';
-
-					if (enableCallback)
-						outstring
-							+= '<button aria-label="zavolat" class="ui green button" onclick="callBack(\'' + result[i].number + '\',\'' + result[i].shortcut + '\',\'' + result[i].name + '\')"><i class="call icon"></i></button>'
-							+ '<button aria-label="napsat" class="ui yellow button" onclick="document.getElementById(\'sms-recipient\').value=\'' + unifyPhoneNo(result[i].number) + '\'; openDialog(\'compose-sms\');"><i class="comment outline icon"></i></button>';
-
-					if (enableEditing || enableRemoving || enableCallback)
-						outstring += '</div>'
-
-					outstring += '</td></tr>';
+						+ '<td>'
+						+ '</td></tr>';
 				} else {
 					if (hideLockedNumbers == false) {
 						outstring
 							+= '<tr>'
-							+ '<td class="center table-short-' + result[i].shortcut + '">' + result[i].shortcut + '</td>'
 							+ '<td class="table-name-' + result[i].shortcut + '">' + result[i].name + '</td>'
 							+ '<td class="table-num-' + result[i].shortcut + '">' + unifyPhoneNo(result[i].number) + '</td>'
-							+ '<td><div class="ui icon buttons">'
-								+ '<button aria-label="smazat" class="ui red button" disabled><i class="trash alternate icon"></i></button>'
-								+ '<button aria-label="upravit" class="ui blue button" disabled><i class="edit icon"></i></button>'
-								+ '<button aria-label="zavolat" class="ui green button" disabled><i class="call icon"></i></button>'
-								+ '<button aria-label="napsat" class="ui yellow button" disabled><i class="comment outline icon"></i></button>'
-							+ '</div></td></tr>';
+							+ '<td class="center table-short-' + result[i].shortcut + '">' + result[i].shortcut + '</td>'
+							+ '<td>'
+							+ '</td></tr>';
 					}
 				}
-
 			}
 			$("#tableContacts").html(outstring);
 
@@ -451,12 +422,54 @@ function loadContacts() {
 	});
 }
 
+
 // Remove Contact
 function deleteContactModal(line, id) {
 	selectedContact = id;
 	selectedLine = line;
 	openDialog('delete-contact');
 }
+
+function contactContextMenu(event, shortcut, number, name) {
+	selectedContact = shortcut;
+	selectedContactNumber = number;
+	selectedContactName = name;
+	openDialog('contactContextMenu');
+
+	var dialog = document.getElementById('contactContextMenu');
+
+	if (!isTouchDevice()) {
+		var mouseX = event.clientX;
+		var mouseY = event.clientY;
+
+		var dialogWidth = dialog.offsetWidth;
+		var dialogHeight = dialog.offsetHeight;
+
+		var windowWidth = window.innerWidth;
+		var windowHeight = window.innerHeight;
+
+		var dialogLeft = 2 * ((windowWidth / 2) - windowWidth + mouseX);
+		var dialogTop = 2 * ((windowHeight / 2) - windowHeight + mouseY);
+
+		// Omezení pozicování dialogu, aby zůstal uvnitř okna
+		if (dialogLeft < 2 * ((windowWidth / 2) - windowWidth) + dialogWidth + 40) {
+			dialogLeft = 2 * ((windowWidth / 2) - windowWidth) + dialogWidth + 40;
+		} else
+		if (dialogLeft + dialogWidth + 40> windowWidth) {
+			dialogLeft = windowWidth - dialogWidth - 40;
+		}
+
+		if (dialogTop < 2 * ((windowHeight / 2) - windowHeight) + dialogHeight + 40) {
+			dialogTop = 2 * ((windowHeight / 2) - windowHeight) + dialogHeight + 40;
+		} else if (dialogTop + dialogHeight + 40 > windowHeight) {
+			dialogTop = windowHeight - dialogHeight - 40;
+		}
+
+		dialog.style.left = dialogLeft + 'px';
+		dialog.style.top = dialogTop + 'px';
+	}
+}
+
 
 function deleteContact() {
 	if (selectedLine == "main") {
@@ -483,12 +496,24 @@ function deleteContact() {
 	});
 }
 
+
+function splitContactName(fullname) {
+	var name = (fullname.match(/^([^<]*)/)?.[1]?.trim()) || '';
+	var surname = (fullname.match(/<b>(.*?)<\/b>/)?.[1]) || '';
+	var note = (fullname.match(/<i>(.*?)<\/i>/)?.[1]) || '';
+	return {
+		name: name,
+		surname: surname,
+		note: note
+	};
+}
+
 // Edit Contact
 function editContact(line, id, name, number) {
 	$('#edit-shortcut').val(id);
-	$('#edit-name').val(name.match(/^([^<]*)/)?.[1].trim());
-	$('#edit-surname').val(name.match(/<b>(.*?)<\/b>/)?.[1]);
-	$('#edit-note').val(name.match(/<i>(.*?)<\/i>/)?.[1]);
+	$('#edit-name').val(splitContactName(name).name);
+	$('#edit-surname').val(splitContactName(name).surname);
+	$('#edit-note').val(splitContactName(name).note);
 	$('#edit-number').val(unifyPhoneNo(number));
 
 	$('#editModal').modal({
@@ -867,15 +892,15 @@ function toSymbol(str) {
 }
 
 function formatNumber(number) {
-  const str = number.toString();
-  const parts = [];
+	const str = number.toString();
+	const parts = [];
 
-  for (let i = str.length; i > 0; i -= 3) {
-    parts.unshift(str.substring(Math.max(0, i - 3), i));
-  }
+	for (let i = str.length; i > 0; i -= 3) {
+		parts.unshift(str.substring(Math.max(0, i - 3), i));
+	}
 
-  const formattedParts = parts.map(part => `<span>${part}</span>`);
-  return formattedParts.join("");
+	const formattedParts = parts.map(part => `<span>${part}</span>`);
+	return formattedParts.join("");
 }
 
 function removeNonUCS2Chars(text) {
@@ -1831,6 +1856,29 @@ document.addEventListener('click', (event) => {
 	}
 });
 
+
+function copyToClipboard(text) {
+	const el = document.createElement('textarea');
+	el.value = text;
+	document.body.appendChild(el);
+	el.select();
+	document.execCommand('copy');
+	document.body.removeChild(el);
+}
+
+function simulateContextMenu(event) {
+	if (isTouchDevice()) {
+		event.preventDefault(); // Zamezí výchozímu chování
+
+		var contextMenuEvent = new MouseEvent('contextmenu', {
+			bubbles: true,
+			cancelable: true,
+			view: window
+		});
+
+		event.target.dispatchEvent(contextMenuEvent);
+	}
+}
 
 if ('serviceWorker' in navigator) {
 	window.addEventListener('load', function () {

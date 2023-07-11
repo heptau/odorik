@@ -76,6 +76,21 @@
 	<button onclick="this.closest('dialog').close()">Ne</button><button onclick="logout()" id="confirm-logout-user">Odhlásit</button>
 </dialog>
 
+
+<dialog id="contactContextMenu" class="contextmenu">
+	<button onclick="this.closest('dialog').close(); window.location.href='tel:'+ unifyPhoneNo(selectedContactNumber);">Zavolat <i class="phone icon"></i></button>
+	<button onclick="this.closest('dialog').close(); window.location.href='sip:'+ unifyPhoneNo(selectedContactNumber);">Zavolat přes VoIP <i class="call icon"></i></button>
+	<button onclick="this.closest('dialog').close(); callBack(unifyPhoneNo(selectedContactNumber), selectedContact, selectedContactName)">Callback <i class="phone icon"></i></button>
+	<button onclick="this.closest('dialog').close(); window.location.href='facetime://'+ unifyPhoneNo(selectedContactNumber);">Zavolat přes FaceTime <i class="video camera outline icon"></i></button>
+	<button onclick="this.closest('dialog').close(); document.getElementById('sms-recipient').value=unifyPhoneNo(selectedContactNumber); openDialog('compose-sms');">Napsat zprávu <i class="comment outline icon"></i></button>
+	<button onclick="this.closest('dialog').close(); window.location.href='tg://msg?to='+ unifyPhoneNo(selectedContactNumber);">Napsat přes Telegram <i class="telegram plane icon"></i></button>
+	<button onclick="this.closest('dialog').close(); editContact('main', selectedContact, selectedContactName, unifyPhoneNo(selectedContactNumber))">Upravit kontakt <i class="edit icon"></i></button>
+	<button onclick="this.closest('dialog').close(); copyToClipboard(unifyPhoneNo(selectedContactNumber))">Zkopírovat číslo do schránky <i class="copy icon"></i></button>
+	<button onclick="this.closest('dialog').close(); window.open('https://www.vyhledatcislo.cz/cislo/' + selectedContactNumber, '_blank');">Vyhledat číslo na webu <i class="search icon"></i></button>
+	<button onclick="this.closest('dialog').close(); window.location.href='data:text/vcard;charset=utf-8,' + encodeURIComponent('BEGIN:VCARD\nVERSION:3.0\nN:' + splitContactName(selectedContactName).name + ';' + splitContactName(selectedContactName).surname + ';;;\nFN:' + splitContactName(selectedContactName).name + ' ' + splitContactName(selectedContactName).surname + '\nTEL:' + unifyPhoneNo(selectedContactNumber) + '\nNOTE:' + splitContactName(selectedContactName).note + '\nEND:VCARD');">Přidat do kontaktů systému <i class="address book outline icon"></i></button>
+	<button onclick="this.closest('dialog').close(); deleteContactModal('main', selectedContact)" class="warning">Smazat kontakt <i class="trash alternate outline icon"></i></button>
+</dialog>
+
 <!-- EDIT MODAL -->
 <dialog id="edit-contact" class="full">
 	<h1>Upravit kontakt</h1>
@@ -125,7 +140,7 @@
 		style="display:none; /* overflow:hidden; width:100% */ width:calc(100% - 8px) !important; margin:0 !important; padding:0 !important">
 		<!-- TITLE -->
 		<h1 class="ui header" style="padding-left:8px">
-			<br>Odorik.cz<div class="ui grey label">v1.10.7</div>
+			<br>Odorik.cz<div class="ui grey label">v1.10.8</div>
 			<span style="float:right; padding-right:.8px" class="sub header" id="credit"></span>
 		</h1>
 		<!-- MENU -->
@@ -166,7 +181,7 @@
 						<th class="res" style="width:calc(6em+50%)">Název</th>
 						<th class="res" style="width:calc(6em+50%)">Číslo</th>
 						<th class="center shortcut">Zkratka</th>
-						<th class="center" style="width:11em">Nástroje</th>
+						<th class="empty"></th>
 					</tr>
 				</thead>
 				<tbody id="tableContacts">
@@ -478,21 +493,6 @@
 			<div class="ui positive right labeled icon button">Přidat<i class="checkmark icon"></i></div>
 		</div>
 	</div>
-
-	<!-- LOGOUT MODAL -->
-	<!--div class="ui modal" id="logoutModal">
-		<i class="close icon"></i>
-		<div class="header">Odhlášení</div>
-		<div class="content">
-			<div class="description">
-				<p>Opravdu se chcete odhlásit? Budete muset znovu zadat API jméno a heslo.</p>
-			</div>
-		</div>
-		<div class="actions">
-			<div class="ui black deny button">Ne</div>
-			<div class="ui positive right labeled icon button">Odhlásit<i class="sign out icon"></i></div>
-		</div>
-	</div-->
 
 	<!-- LOGIN MODAL -->
 	<div class="ui small modal" id="loginModal">

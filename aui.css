@@ -119,6 +119,10 @@ dialog.full {
 	width: 640px;
 }
 
+dialog.contextmenu {
+	width: 320px;
+}
+
 dialog.show{
 	opacity: 1;
 	visibility: visible;
@@ -154,6 +158,11 @@ dialog button{
 	font-size: 17px;
 	font-weight: 400;
 	font: -apple-system-body;
+}
+
+dialog.contextmenu button{
+	text-align: left;
+	color: var(--label);
 }
 
 dialog button.warning {
