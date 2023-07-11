@@ -657,7 +657,9 @@ function inlineEdit(id) {
 // Call back
 function callBack(number, shortcut, name) {
 	if (typeof shortcut !== "undefined") {
-		$('input[name="call-target"]').val(number + " - zk. " + shortcut + " (" + name + ")");
+		$('input[name="call-target"]').val(number
+			+ " - zk. " + shortcut
+			+ " (" + (splitContactName(name).name + ' ' + splitContactName(name).surname + ' ' + splitContactName(name).note).trim() + ")");
 	} else {
 		$('input[name="call-target"]').val(number);
 	}
