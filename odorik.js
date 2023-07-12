@@ -581,7 +581,7 @@ function addContact() {
 				data: {
 					user: APIuser,
 					password: APIpass,
-					shortcut: +$('#add-shortcut').val(),
+					shortcut: ($('#add-shortcut').val() !== '') ? +$('#add-shortcut').val() : undefined,
 					name: fullname,
 					number: sipPhoneNo($('#add-number').val())
 				},
