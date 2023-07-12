@@ -289,16 +289,7 @@ if (loggedIn()) {
 // Initialization
 function init() {
 	$("#loadingDimmer").dimmer("show");
-	$.ajax({
-		url: 'https://www.odorik.cz/api/v1/balance',
-		type: 'GET',
-		data: {
-			user: APIuser,
-			password: APIpass
-		}
-	}).done(function (data, textStatus, xhr) {
-		$("#credit").html("<b>Kredit: </b>" + data + "&nbsp;Kč");
-	});
+	refreshCredit(true);
 
 	updateLines();
 	$("input[name=call-number]").val(defaultCallbackNumber);
@@ -342,6 +333,31 @@ function init() {
 			loadCalls();
 	}
 }
+
+var lastCreditUpdated = 0;
+
+function refreshCredit(forceUpdate) {
+	var currentTime = new Date().getTime();
+	var timeDiff = currentTime - lastCreditUpdated;
+	var shouldUpdate = forceUpdate || timeDiff >= 9 * 60 * 1000; // 9 minutes in milliseconds
+
+	if (!shouldUpdate) {
+		return; // Skip update if not enough time has passed and forceUpdate is not true
+	}
+
+	$.ajax({
+		url: 'https://www.odorik.cz/api/v1/balance',
+		type: 'GET',
+		data: {
+			user: APIuser,
+			password: APIpass
+		}
+	}).done(function (data, textStatus, xhr) {
+		$("#credit").html("<b>Kredit: </b>" + data + "&nbsp;Kč");
+		lastCreditUpdated = new Date().getTime(); // Update the last update timestamp
+	});
+}
+
 
 // Shows the "dimmer" element - for displaying error messages
 function dim(status, text) {
@@ -400,6 +416,7 @@ function loadContacts() {
 				}
 			}
 			$("#tableContacts").html(outstring);
+			refreshCredit();
 
 
 			if (preload == false) {
@@ -966,6 +983,7 @@ function sendSMS() {
 			} else {
 				document.getElementById("compose-sms").close();
 				reloadSms();
+				refreshCredit(true);
 			}
 		}
 	})
@@ -1361,6 +1379,8 @@ function redirectionsModal(id, time) {
 		}
 
 		$("#tableRedirects").html(outstring);
+		refreshCredit();
+
 		$(".hasPopup").popup();
 		$("#redirectionsModal").modal({
 			duration: setDuration,
@@ -1595,6 +1615,7 @@ function loadActiveCalls() {
 			outString += "<tr><td class='center'>" + data[i].id + "</td><td>" + unifyPhoneNo(data[i].source_number) + "</td><td>" + unifyPhoneNo(data[i].destination_number) + "</td><td>" + data[i].destination_name + "</td><td>" + moment(data[i].start_date).format("DD.MM.YYYY H:mm:ss") + "</td><td>" + moment(data[i].answer_date).format("DD.MM.YYYY H:mm:ss") + "</td><td class='right'>" + data[i].price_per_minute + "</td><td class='center'>" + data[i].line + "</td></tr>"
 		}
 		$("#activeCalls").html(outString);
+		refreshCredit();
 	});
 
 	if ($(".ui.container").css("display") == "none") {
@@ -1624,6 +1645,8 @@ function loadLines() {
 			outString += "<tr><td class='center hasClickPopup' data-html='<b>SIP password:</b> " + data[i].sip_password + "'>" + data[i].id + "</td><td>" + data[i].name + "</td><td>" + unifyPhoneNo(data[i].caller_id) + "</td><td class='center'>" + toSymbol(data[i].public_name) + "</td><td class='center'>" + toSymbol(data[i].backup_number) + "</td><td class='center'>" + toSymbol(data[i].active_822) + "</td><td class='center'>" + toSymbol(data[i].active_cz_restriction) + "</td><td class='center'>" + toSymbol(data[i].active_iax) + "</td><td class='center'>" + toSymbol(data[i].active_password) + "</td><td class='center'>" + toSymbol(data[i].active_pin) + "</td><td class='center'>" + toSymbol(data[i].active_ping) + "</td><td class='center'>" + toSymbol(data[i].active_rtp) + "</td><td class='center'>" + toSymbol(data[i].active_sip) + "</td><td class='center'>" + toSymbol(data[i].active_anonymous) + "</td><td class='center'>" + toSymbol(data[i].active_greeting) + "</td><td class='center'>" + toSymbol(data[i].missed_call_email) + "</td><td class='center'>" + toSymbol(data[i].recording_email) + "</td><td class='center'>" + toSymbol(data[i].voicemail_email) + "</td><td class='center'>" + toSymbol(data[i].backup_number_email) + "</td><td class='center'>" + data[i].incoming_call_name_format + "</td><td class='center'>" + data[i].incoming_call_number_format + "</td></tr>"
 		}
 		$("#lines").html(outString);
+		refreshCredit();
+
 		$(".hasClickPopup").popup({ on: "click" });
 	});
 
@@ -1653,6 +1676,7 @@ function loadSimCards() {
 			outString += "<tr><td class='center'>" + data[i].id + "</td><td>" + data[i].sim_number + "</td><td class='center'>" + toSymbol(data[i].state) + "</td><td class='center'>" + data[i].changes_in_progress + "</td><td class='right'>" + toSymbol(data[i].data_package) + "</td><td class='right'>" + toSymbol(data[i].data_package_for_next_month) + "</td><td class='number'>" + formatNumber(toSymbol(data[i].data_bought_total)) + "</td><td class='number'>" + formatNumber(toSymbol(data[i].data_used)) + "</td><td class='center'>" + toSymbol(data[i].voice_package) + "</td><td class='center'>" + toSymbol(data[i].voice_package_for_next_month) + "</td><td class='center'>" + toSymbol(data[i].package_delayed_billing) + "</td><td class='center'>" + toSymbol(data[i].package_delayed_billing_for_next_month) + "</td><td class='center' title='" + data[i].missed_calls_register + "'>" + toSymbol(data[i].missed_calls_register) + "</td><td class='center' title='" + data[i].mobile_data + "'>" + toSymbol(data[i].mobile_data) + "</td><td class='center' title='" + data[i].lte + "'>" + toSymbol(data[i].lte) + "</td><td class='center' title='" + data[i].lte_for_next_month + "'>" + toSymbol(data[i].lte_for_next_month) + "</td><td class='center'>" + data[i].roaming + "</td><td class='center' title='" + data[i].premium_services + "'>" + toSymbol(data[i].premium_services) + "</td></tr>"
 		}
 		$("#simCards").html(outString);
+		refreshCredit();
 	});
 
 
@@ -1684,6 +1708,7 @@ function loadMobileData() {
 			outString += "<tr><td class='center'>" + data[i].id + "</td><td>" + moment(data[i].date).format("DD.MM.YYYY H:mm:ss") + "</td><td class='number'>" + formatNumber(data[i].bytes_up) + "</td><td class='number'>" + formatNumber(data[i].bytes_down) + "</td><td class='number'>" + formatNumber(data[i].bytes_total) + "</td><td class='number'>" + formatNumber(data[i].price) + "</td><td class='number'>" + formatNumber(data[i].price_per_mb) + "</td><td>" + unifyPhoneNo(data[i].phone_number) + "</td></tr>"
 		}
 		$("#mobileData").html(outString);
+		refreshCredit();
 	});
 
 	if ($(".ui.container").css("display") == "none") {
@@ -1769,54 +1794,7 @@ function loadStatistics() {
 			outString += "<tr><td>" + data[i].destination_number + "</td><td>" + data[i].count + "</td></tr>"
 		}
 		$("#missedStatistics").html(outString);
-	});
-
-	$.ajax({
-		url: 'https://www.odorik.cz/api/v1/active_calls.json',
-		type: 'GET',
-		data: {
-			user: APIuser,
-			password: APIpass
-		}
-	}).done(function (data, textStatus, xhr) {
-		var outString = "";
-		for (var i = 0; i < data.length; i++) {
-			outString += "<tr><td>" + data[i].id + "</td><td>" + data[i].source_number + "</td><td>" + data[i].destination_number + "</td><td>" + data[i].destination_name + "</td><td>" + data[i].start_date + "</td><td>" + data[i].answer_date + "</td><td>" + data[i].price_per_minute + "</td><td>" + data[i].line + "</td></tr>"
-		}
-		$("#activeCalls").html(outString);
-	});
-
-
-	$.ajax({
-		url: 'https://www.odorik.cz/api/v1/lines.json',
-		type: 'GET',
-		data: {
-			user: APIuser,
-			password: APIpass
-		}
-	}).done(function (data, textStatus, xhr) {
-		//console.log(data);
-		var outString = "";
-		for (var i = 0; i < data.length; i++) {
-			outString += "<tr><td>" + data[i].id + "</td><td>" + data[i].name + "</td><td>" + data[i].caller_id + "</td><td>" + data[i].public_name + "</td><td>" + data[i].backup_number + "</td><td>" + data[i].sip_password + "</td><td class='center'>" + toSymbol(data[i].active_822) + "</td><td class='center'>" + toSymbol(data[i].active_cz_restriction) + "</td><td class='center'>" + toSymbol(data[i].active_iax) + "</td><td class='center'>" + toSymbol(data[i].active_password) + "</td><td class='center'>" + toSymbol(data[i].active_pin) + "</td><td class='center'>" + toSymbol(data[i].active_ping) + "</td><td class='center'>" + toSymbol(data[i].active_rtp) + "</td><td class='center'>" + toSymbol(data[i].active_sip) + "</td><td class='center'>" + toSymbol(data[i].active_anonymous) + "</td><td class='center'>" + toSymbol(data[i].active_greeting) + "</td><td>" + data[i].missed_call_email + "</td><td>" + data[i].recording_email + "</td><td>" + data[i].voicemail_email + "</td><td>" + data[i].backup_number_email + "</td><td>" + data[i].incoming_call_name_format + "</td><td>" + data[i].incoming_call_number_format + "</td></tr>"
-		}
-		$("#lines").html(outString);
-	});
-
-
-	$.ajax({
-		url: 'https://www.odorik.cz/api/v1/sim_cards.json',
-		type: 'GET',
-		data: {
-			user: APIuser,
-			password: APIpass
-		}
-	}).done(function (data, textStatus, xhr) {
-		var outString = "";
-		for (var i = 0; i < data.length; i++) {
-			outString += "<tr><td>" + data[i].id + "</td><td>" + data[i].sim_number + "</td><td>" + data[i].state + "</td><td>" + data[i].changes_in_progress + "</td><td>" + data[i].data_package + "</td><td>" + data[i].data_package_for_next_month + "</td><td>" + data[i].data_bought_total + "</td><td>" + data[i].data_used + "</td><td>" + data[i].voice_package + "</td><td>" + data[i].voice_package_for_next_month + "</td><td>" + data[i].package_delayed_billing + "</td><td>" + data[i].package_delayed_billing_for_next_month + "</td><td class='center'>" + toSymbol(data[i].missed_calls_register) + "</td><td class='center'>" + toSymbol(data[i].mobile_data) + "</td><td class='center'>" + toSymbol(data[i].lte) + "</td><td class='center'>" + toSymbol(data[i].lte_for_next_month) + "</td><td>" + data[i].roaming + "</td><td class='center'>" + toSymbol(data[i].premium_services) + "</td></tr>"
-		}
-		$("#simCards").html(outString);
+		refreshCredit();
 	});
 
 
