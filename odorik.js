@@ -397,7 +397,7 @@ function loadContacts() {
 
 				if (editableLine("main", result[i].shortcut)) {
 					outstring
-						+= '<tr onclick="simulateContextMenu(event)" oncontextmenu="contactContextMenu(event, \'' + result[i].shortcut + '\', \'' + result[i].number + '\', \'' + result[i].name + '\'); return false;">'
+						+= '<tr ontouchstart="handleTouchStart(event)" ontouchend="handleTouchEnd(event)" ontouchcancel="handleTouchCancel(event)" oncontextmenu="contactContextMenu(event, \'' + result[i].shortcut + '\', \'' + result[i].number + '\', \'' + result[i].name + '\'); return false;">'
 						+ '<td class="table-name-' + result[i].shortcut + '">' + result[i].name + '</td>'
 						+ '<td class="table-num-' + result[i].shortcut + '">' + unifyPhoneNo(result[i].number) + '</td>'
 						+ '<td class="center table-short-' + result[i].shortcut + '">' + result[i].shortcut + '</td>'
@@ -455,38 +455,35 @@ function contactContextMenu(event, shortcut, number, name) {
 
 	var dialog = document.getElementById('contactContextMenu');
 
-	if (!isTouchDevice()) {
-		var mouseX = event.clientX;
-		var mouseY = event.clientY;
+	var mouseX = event.clientX;
+	var mouseY = event.clientY;
 
-		var dialogWidth = dialog.offsetWidth;
-		var dialogHeight = dialog.offsetHeight;
+	var dialogWidth = dialog.offsetWidth;
+	var dialogHeight = dialog.offsetHeight;
 
-		var windowWidth = window.innerWidth;
-		var windowHeight = window.innerHeight;
+	var windowWidth = window.innerWidth;
+	var windowHeight = window.innerHeight;
 
-		var dialogLeft = 2 * ((windowWidth / 2) - windowWidth + mouseX);
-		var dialogTop = 2 * ((windowHeight / 2) - windowHeight + mouseY);
+	var dialogLeft = 2 * ((windowWidth / 2) - windowWidth + mouseX);
+	var dialogTop = 2 * ((windowHeight / 2) - windowHeight + mouseY);
 
-		// Omezení pozicování dialogu, aby zůstal uvnitř okna
-		if (dialogLeft < 2 * ((windowWidth / 2) - windowWidth) + dialogWidth + 40) {
-			dialogLeft = 2 * ((windowWidth / 2) - windowWidth) + dialogWidth + 40;
-		} else
-		if (dialogLeft + dialogWidth + 40> windowWidth) {
-			dialogLeft = windowWidth - dialogWidth - 40;
-		}
-
-		if (dialogTop < 2 * ((windowHeight / 2) - windowHeight) + dialogHeight + 40) {
-			dialogTop = 2 * ((windowHeight / 2) - windowHeight) + dialogHeight + 40;
-		} else if (dialogTop + dialogHeight + 40 > windowHeight) {
-			dialogTop = windowHeight - dialogHeight - 40;
-		}
-
-		dialog.style.left = dialogLeft + 'px';
-		dialog.style.top = dialogTop + 'px';
+	// Omezení pozicování dialogu, aby zůstal uvnitř okna
+	if (dialogLeft < 2 * ((windowWidth / 2) - windowWidth) + dialogWidth + 40) {
+		dialogLeft = 2 * ((windowWidth / 2) - windowWidth) + dialogWidth + 40;
+	} else
+	if (dialogLeft + dialogWidth + 40> windowWidth) {
+		dialogLeft = windowWidth - dialogWidth - 40;
 	}
-}
 
+	if (dialogTop < 2 * ((windowHeight / 2) - windowHeight) + dialogHeight + 40) {
+		dialogTop = 2 * ((windowHeight / 2) - windowHeight) + dialogHeight + 40;
+	} else if (dialogTop + dialogHeight + 40 > windowHeight) {
+		dialogTop = windowHeight - dialogHeight - 40;
+	}
+
+	dialog.style.left = dialogLeft + 'px';
+	dialog.style.top = dialogTop + 'px';
+}
 
 function deleteContact() {
 	if (selectedLine == "main") {
@@ -1639,7 +1636,6 @@ function loadLines() {
 			password: APIpass
 		}
 	}).done(function (data, textStatus, xhr) {
-		//console.log(data);
 		var outString = "";
 		for (var i = 0; i < data.length; i++) {
 			outString += "<tr><td class='center hasClickPopup' data-html='<b>SIP password:</b> " + data[i].sip_password + "'>" + data[i].id + "</td><td>" + data[i].name + "</td><td>" + unifyPhoneNo(data[i].caller_id) + "</td><td class='center'>" + toSymbol(data[i].public_name) + "</td><td class='center'>" + toSymbol(data[i].backup_number) + "</td><td class='center'>" + toSymbol(data[i].active_822) + "</td><td class='center'>" + toSymbol(data[i].active_cz_restriction) + "</td><td class='center'>" + toSymbol(data[i].active_iax) + "</td><td class='center'>" + toSymbol(data[i].active_password) + "</td><td class='center'>" + toSymbol(data[i].active_pin) + "</td><td class='center'>" + toSymbol(data[i].active_ping) + "</td><td class='center'>" + toSymbol(data[i].active_rtp) + "</td><td class='center'>" + toSymbol(data[i].active_sip) + "</td><td class='center'>" + toSymbol(data[i].active_anonymous) + "</td><td class='center'>" + toSymbol(data[i].active_greeting) + "</td><td class='center'>" + toSymbol(data[i].missed_call_email) + "</td><td class='center'>" + toSymbol(data[i].recording_email) + "</td><td class='center'>" + toSymbol(data[i].voicemail_email) + "</td><td class='center'>" + toSymbol(data[i].backup_number_email) + "</td><td class='center'>" + data[i].incoming_call_name_format + "</td><td class='center'>" + data[i].incoming_call_number_format + "</td></tr>"
@@ -1846,18 +1842,46 @@ function copyToClipboard(text) {
 	document.body.removeChild(el);
 }
 
-function simulateContextMenu(event) {
-	if (isTouchDevice()) {
-		event.preventDefault(); // Zamezí výchozímu chování
 
-		var contextMenuEvent = new MouseEvent('contextmenu', {
-			bubbles: true,
-			cancelable: true,
-			view: window
-		});
+var touchStartTimestamp;
+var touchStartX;
+var touchStartY;
+var longPressDuration = 500; // Časový limit pro dlouhé stisknutí (v milisekundách)
+var longPressTimer;
 
-		event.target.dispatchEvent(contextMenuEvent);
-	}
+function handleTouchStart(event) {
+	touchStartTimestamp = Date.now();
+	touchStartX = event.touches[0].clientX;
+	touchStartY = event.touches[0].clientY;
+
+	// Spustit časovač pro dlouhé stisknutí
+	longPressTimer = setTimeout(handleLongPress, longPressDuration, event);
+}
+
+function handleTouchEnd(event) {
+	// Zrušit časovač pro dlouhé stisknutí
+	clearTimeout(longPressTimer); //TODO
+}
+
+function handleTouchCancel(event) {
+	// Zrušit časovač pro dlouhé stisknutí
+	clearTimeout(longPressTimer); //TODO
+}
+
+function handleLongPress(event) {
+	var element = event.target;
+	var touchEndX = touchStartX;
+	var touchEndY = touchStartY;
+
+	var contextMenuEvent = new MouseEvent('contextmenu', {
+		bubbles: true,
+		cancelable: true,
+		view: window,
+		clientX: touchEndX,
+		clientY: touchEndY
+	});
+
+	element.dispatchEvent(contextMenuEvent);
 }
 
 if ('serviceWorker' in navigator) {
