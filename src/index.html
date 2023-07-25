@@ -4,14 +4,14 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, shrink-to-fit=no">
-	<title>Odorik</title>
+	<title>Odorik Connect</title>
 	<meta name="description"
-		content="Aplikace pro správu rychlých kontaktů, vytváření hovorů a zobrazení výpisů pro zákazníky operátora Odorik.cz">
-	<meta name="apple-mobile-web-app-title" content="Odorik">
+		content="Aplikace pro správu rychlých kontaktů, vytváření hovorů a zobrazení výpisů pro zákazníky Odorik.cz">
+	<meta name="apple-mobile-web-app-title" content="Odorik Connect">
 	<meta name="apple-mobile-web-app-capable" content="yes">
 	<meta name="apple-mobile-web-app-status-bar-style" content="black">
 	<meta name="theme-color" content="#111111">
-	<link rel="manifest" href="app.webmanifest">
+	<link rel="manifest" href="manifest.json">
 	<link rel="apple-touch-icon" href="odorik-icon.png">
 	<link
 		href="data:image/x-icon;base64,R0lGODlhIQAeAKECAOM7O/////8AAP8AACH5BAEKAAIALAAAAAAhAB4AAAJLjI+pywYPQZsqWknb3TgjznkfGIokKAZn6a1b6l6wfLCZtbzwpKc87WPYgokh0WE8JoOoY43kVJ2iq6gU6qxSsduedUkEWkedMaUAADs="
@@ -78,10 +78,10 @@
 
 
 <dialog id="contactContextMenu" class="contextmenu">
-	<button onclick="this.closest('dialog').close(); window.location.href='tel:'+ unifyPhoneNo(selectedContactNumber);">Zavolat <i class="phone icon"></i></button>
-	<button onclick="this.closest('dialog').close(); window.location.href='sip:'+ unifyPhoneNo(selectedContactNumber);">Zavolat přes VoIP <i class="call icon"></i></button>
+	<button onclick="this.closest('dialog').close(); window.location.href='tel:'+ unifyPhoneNo(selectedContactNumber);">Hovor <i class="phone icon"></i></button>
+	<button onclick="this.closest('dialog').close(); window.location.href='sip:'+ unifyPhoneNo(selectedContactNumber);">Hovor přes VoIP <i class="call icon"></i></button>
 	<button onclick="this.closest('dialog').close(); callBack(unifyPhoneNo(selectedContactNumber), selectedContact, selectedContactName)">Callback <i class="phone icon"></i></button>
-	<button onclick="this.closest('dialog').close(); window.location.href='facetime://'+ unifyPhoneNo(selectedContactNumber);">Zavolat přes FaceTime <i class="video camera outline icon"></i></button>
+	<button onclick="this.closest('dialog').close(); window.location.href='facetime://'+ unifyPhoneNo(selectedContactNumber);">Hovor přes FaceTime <i class="video camera outline icon"></i></button>
 	<button onclick="this.closest('dialog').close(); document.getElementById('sms-recipient').value=unifyPhoneNo(selectedContactNumber); openDialog('compose-sms');">Napsat zprávu <i class="comment outline icon"></i></button>
 	<button onclick="this.closest('dialog').close(); window.location.href='tg://msg?to='+ unifyPhoneNo(selectedContactNumber);">Napsat přes Telegram <i class="telegram plane icon"></i></button>
 	<button onclick="this.closest('dialog').close(); editContact('main', selectedContact, selectedContactName, unifyPhoneNo(selectedContactNumber))">Upravit kontakt <i class="edit icon"></i></button>
@@ -89,6 +89,24 @@
 	<button onclick="this.closest('dialog').close(); window.open('https://www.vyhledatcislo.cz/cislo/' + selectedContactNumber, '_blank');">Vyhledat číslo na webu <i class="search icon"></i></button>
 	<button onclick="this.closest('dialog').close(); window.location.href='data:text/vcard;charset=utf-8,' + encodeURIComponent('BEGIN:VCARD\nVERSION:3.0\nN:' + splitContactName(selectedContactName).surname + ';' + splitContactName(selectedContactName).name + ';;;\nFN:' + splitContactName(selectedContactName).name + ' ' + splitContactName(selectedContactName).surname + '\nTEL:' + unifyPhoneNo(selectedContactNumber) + '\nNOTE:' + splitContactName(selectedContactName).note + '\nEND:VCARD');">Přidat do kontaktů systému <i class="address book outline icon"></i></button>
 	<button onclick="this.closest('dialog').close(); deleteContactModal('main', selectedContact)" class="warning">Smazat kontakt <i class="trash alternate outline icon"></i></button>
+</dialog>
+
+<dialog id="activeContextMenu" class="contextmenu">
+	<button onclick="this.closest('dialog').close(); window.location.href='tel:'+ unifyPhoneNo(selectedContactNumber);">Ukončit hovor <i class="times circle outline icon"></i></button>
+</dialog>
+
+
+<dialog id="lineContextMenu" class="contextmenu">
+	<button onclick="this.closest('dialog').close(); window.location.href='tel:'+ unifyPhoneNo(selectedContactNumber);">Hovor <i class="phone icon"></i></button>
+	<button onclick="this.closest('dialog').close(); window.location.href='sip:'+ unifyPhoneNo(selectedContactNumber);">Hovor přes VoIP <i class="call icon"></i></button>
+	<button onclick="this.closest('dialog').close(); callBack(unifyPhoneNo(selectedContactNumber), selectedContact, selectedContactName)">Callback <i class="phone icon"></i></button>
+	<button onclick="this.closest('dialog').close(); window.location.href='facetime://'+ unifyPhoneNo(selectedContactNumber);">Hovor přes FaceTime <i class="video camera outline icon"></i></button>
+	<button onclick="this.closest('dialog').close(); document.getElementById('sms-recipient').value=unifyPhoneNo(selectedContactNumber); openDialog('compose-sms');">Napsat zprávu <i class="comment outline icon"></i></button>
+	<button onclick="this.closest('dialog').close(); window.location.href='tg://msg?to='+ unifyPhoneNo(selectedContactNumber);">Napsat přes Telegram <i class="telegram plane icon"></i></button>
+	<!--button onclick="this.closest('dialog').close(); editLine('main', selectedContact, selectedContactName, unifyPhoneNo(selectedContactNumber))">Upravit linku <i class="edit icon"></i></button-->
+	<button onclick="this.closest('dialog').close(); copyToClipboard(unifyPhoneNo(selectedContactNumber))">Zkopírovat číslo do schránky <i class="copy icon"></i></button>
+	<button onclick="this.closest('dialog').close(); window.open('https://www.vyhledatcislo.cz/cislo/' + selectedContactNumber, '_blank');">Vyhledat číslo na webu <i class="search icon"></i></button>
+	<button onclick="this.closest('dialog').close(); window.location.href='data:text/vcard;charset=utf-8,' + encodeURIComponent('BEGIN:VCARD\nVERSION:3.0\nN:' + splitContactName(selectedContactName).surname + ';' + splitContactName(selectedContactName).name + ';;;\nFN:' + splitContactName(selectedContactName).name + ' ' + splitContactName(selectedContactName).surname + '\nTEL:' + unifyPhoneNo(selectedContactNumber) + '\nNOTE:' + splitContactName(selectedContactName).note + '\nEND:VCARD');">Přidat do kontaktů systému <i class="address book outline icon"></i></button>
 </dialog>
 
 <!-- EDIT MODAL -->
@@ -140,7 +158,7 @@
 		style="display:none; /* overflow:hidden; width:100% */ width:calc(100% - 8px) !important; margin:0 !important; padding:0 !important">
 		<!-- TITLE -->
 		<h1 class="ui header" style="padding-left:8px">
-			<br>Odorik.cz<div class="ui grey label">v1.10.8</div>
+			<br>Odorik Connect<div class="ui grey label">v1.11.0</div>
 			<span style="float:right; padding-right:.8px" class="sub header" id="credit"></span>
 		</h1>
 		<!-- MENU -->
@@ -496,7 +514,7 @@
 
 	<!-- LOGIN MODAL -->
 	<div class="ui small modal" id="loginModal">
-		<div class="header">Odorik.cz</div>
+		<div class="header">Odorik Connect</div>
 		<div class="content">
 			<p>API jméno a heslo pro celý účet najdete po přihlášení v menu <a
 					href="https://www.odorik.cz/ucet/nastaveni_uctu.html?ucet_podmenu=api_heslo"

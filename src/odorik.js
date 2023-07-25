@@ -447,14 +447,8 @@ function deleteContactModal(line, id) {
 	openDialog('delete-contact');
 }
 
-function contactContextMenu(event, shortcut, number, name) {
-	selectedContact = shortcut;
-	selectedContactNumber = number;
-	selectedContactName = name;
-	openDialog('contactContextMenu');
 
-	var dialog = document.getElementById('contactContextMenu');
-
+function positionDialog(dialog, event) {
 	var mouseX = event.clientX;
 	var mouseY = event.clientY;
 
@@ -470,8 +464,7 @@ function contactContextMenu(event, shortcut, number, name) {
 	// Omezení pozicování dialogu, aby zůstal uvnitř okna
 	if (dialogLeft < 2 * ((windowWidth / 2) - windowWidth) + dialogWidth + 40) {
 		dialogLeft = 2 * ((windowWidth / 2) - windowWidth) + dialogWidth + 40;
-	} else
-	if (dialogLeft + dialogWidth + 40> windowWidth) {
+	} else if (dialogLeft + dialogWidth + 40 > windowWidth) {
 		dialogLeft = windowWidth - dialogWidth - 40;
 	}
 
@@ -483,6 +476,33 @@ function contactContextMenu(event, shortcut, number, name) {
 
 	dialog.style.left = dialogLeft + 'px';
 	dialog.style.top = dialogTop + 'px';
+}
+
+
+function activeContextMenu(event, id) {
+	openDialog('activeContextMenu');
+	var dialog = document.getElementById('activeContextMenu');
+	positionDialog(dialog, event);
+}
+
+
+function lineContextMenu(event, number, name) {
+	selectedContactNumber = number;
+	selectedContactName = name;
+	openDialog('lineContextMenu');
+
+	var dialog = document.getElementById('lineContextMenu');
+	positionDialog(dialog, event);
+}
+
+function contactContextMenu(event, shortcut, number, name) {
+	selectedContact = shortcut;
+	selectedContactNumber = number;
+	selectedContactName = name;
+	openDialog('contactContextMenu');
+
+	var dialog = document.getElementById('contactContextMenu');
+	positionDialog(dialog, event);
 }
 
 function deleteContact() {
@@ -1284,54 +1304,28 @@ function loadCalls() {
 function populateCallsTable(result) {
 	outstring = "";
 	for (var i = 0; i < result.length; i++) {
-		outstring += '<tr class="';
-		if (result[i].status == "missed") {
-			outstring += "error";
-		}
-		outstring += '"';
-		outstring += ' data-id="' + result[i].id + '" ';
-		if (result[i].redirection_parent_id != "" && typeof result[i].redirection_parent_id != "undefined") {
-			outstring += ' data-redirection-id="' + result[i].redirection_parent_id + '"';
-		}
-		outstring += '><td>';
+		outstring += '<tr class="' + (result[i].status == "missed" ? "error" : "") + '" data-id="' + result[i].id + '"' + (result[i].redirection_parent_id != "" && typeof result[i].redirection_parent_id != "undefined" ? ' data-redirection-id="' + result[i].redirection_parent_id + '"' : '') + '>'
+						+ '<td>'
+							+ ($.inArray(result[i].id.toString(), redirectedCalls) != -1 ? '<a onclick="redirectionsModal(' + "'" + result[i].id + "','" + result[i].date + "'" + ');" class="ui teal ribbon label"><i class="forward mail icon"></i></a>' : '')
+							+ '<span class="hasClickPopup" data-html="<b>ID:</b> ' + result[i].id + '">'
+								+ (result[i].direction === "redirected" ? '<i class="forward mail icon"></i>Přesměrovaný'
+									: result[i].direction === "in" ? '<i class="sign in icon"></i>Příchozí'
+									: result[i].direction === "out" ? '<i class="sign out icon"></i>Odchozí'
+									: '');
+								+ (result[i].status === "missed" ? " nepřijatý" : '')
+							+ '</span> ';
 
-		if ($.inArray(result[i].id.toString(), redirectedCalls) != -1) {
-			outstring += '<a onclick="redirectionsModal(' + "'" + result[i].id + "','" + result[i].date + "'" + ');" class="ui teal ribbon label"><i class="forward mail icon"></i></a>';
-		}
-
-		outstring += '<span class="hasClickPopup" data-html="<b>ID:</b> ' + result[i].id + '">';
-
-		switch (result[i].direction) {
-			case "redirected":
-				outstring += '<i class="forward mail icon"></i>Přesměrovaný';
-				break;
-			case "in":
-				outstring += '<i class="sign in icon"></i>Příchozí';
-				break;
-			case "out":
-				outstring += '<i class="sign out icon"></i>Odchozí';
-				break;
-		}
-
-		if (result[i].status == "missed") {
-			outstring += " nepřijatý";
-		}
-
-		outstring += '</span> ';
 		var price = result[i].price.toString().substr(0, result[i].price.toString().indexOf(".") + 3);
 		var callLength = ~~(result[i].length / 60) + "&nbsp;min " + (result[i].length % 60) + "&nbsp;s";
 		if (result[i].length < 60)
 			callLength = (result[i].length % 60) + "&nbsp;s";
-		outstring += '</td><td class="hasClickPopup" data-html="' + moment(result[i].date).format("DD.MM.YYYY H:mm:ss") + '">'
-			+ moment(result[i].date).format("DD.MM.YYYY H:mm:ss") + '</td><td>'
-			+ getSpeedDialName(result[i].source_number) + '</td><td class="hasPopup" data-html="<b>Podrobnosti:</b> '
-			+ result[i].destination_name + '">'
-			+ getSpeedDialName(result[i].destination_number) + '</td><td class="right hasPopup" data-html="<b>Délka vyzvánění:</b> '
-			+ result[i].ringing_length + '&nbsp;s">'
-			+ callLength + '</td><td class="right hasPopup" data-html="<b>Minutová sazba:</b> '
-			+ result[i].price_per_minute + '&nbsp;Kč<br><b>Zbylý kredit:</b> '
-			+ result[i].balance_after + '&nbsp;Kč">'
-			+ price + '&nbsp;Kč</td><td class="center">' + result[i].line + '</td></tr>';
+		outstring += '</td>'
+						+ '<td class="hasClickPopup" data-html="' + moment(result[i].date).format("DD.MM.YYYY H:mm:ss") + '">' + moment(result[i].date).format("DD.MM.YYYY H:mm:ss") + '</td>'
+						+ '<td>' + getSpeedDialName(result[i].source_number) + '</td>'
+						+ '<td class="hasPopup" data-html="<b>Podrobnosti:</b> ' + result[i].destination_name + '">' + getSpeedDialName(result[i].destination_number) + '</td>'
+						+ '<td class="right hasPopup" data-html="<b>Délka vyzvánění:</b> ' + result[i].ringing_length + '&nbsp;s">' + callLength + '</td>'
+						+ '<td class="right hasPopup" data-html="<b>Minutová sazba:</b> ' + result[i].price_per_minute + '&nbsp;Kč<br><b>Zbylý kredit:</b> ' + result[i].balance_after + '&nbsp;Kč">' + price + '&nbsp;Kč</td>'
+						+ '<td class="center">' + result[i].line + '</td></tr>';
 	}
 	$("#tableCalls").html(outstring);
 	$(".hasClickPopup").popup({ on: "click" });
@@ -1366,12 +1360,13 @@ function redirectionsModal(id, time) {
 		var result = data;
 		for (var i = 0; i < result.length; i++) {
 			if (result[i].redirection_parent_id == id) {
-				outstring += '<tr class="';
-				if (result[i].status == "missed") {
-					outstring += "error";
-				}
-				outstring += '">';
-				outstring += '<td class="hasPopup" data-html="' + moment(result[i].date).format("DD.MM.YYYY H:mm:ss") + '">' + moment(result[i].date).format("DD.MM.YYYY H:mm:ss") + '</td><td>' + getSpeedDialName(result[i].source_number) + '</td><td class="hasPopup" data-html="<b>Podrobnosti:</b> ' + result[i].destination_name + '">' + getSpeedDialName(result[i].destination_number) + '</td><td class="right hasPopup" data-html="<b>Délka vyzvánění:</b> ' + result[i].ringing_length + '&nbsp;s">' + result[i].length + '&nbsp;s</td><td class="right hasPopup" data-html="<b>Minutová sazba:</b> ' + result[i].price_per_minute + '&nbsp;Kč<br><b>Zbylý kredit:</b> ' + result[i].balance_after + '&nbsp;Kč">' + result[i].price + '&nbsp;Kč</td><td class="center">' + result[i].line + '</td></tr>';
+				outstring += '<tr class="' + (result[i].status == "missed" ? "error" : "") + '">'
+								+ '<td class="hasPopup" data-html="' + moment(result[i].date).format("DD.MM.YYYY H:mm:ss") + '">' + moment(result[i].date).format("DD.MM.YYYY H:mm:ss") + '</td>'
+								+ '<td>' + getSpeedDialName(result[i].source_number) + '</td>'
+								+ '<td class="hasPopup" data-html="<b>Podrobnosti:</b> ' + result[i].destination_name + '">' + getSpeedDialName(result[i].destination_number) + '</td>'
+								+ '<td class="right hasPopup" data-html="<b>Délka vyzvánění:</b> ' + result[i].ringing_length + '&nbsp;s">' + result[i].length + '&nbsp;s</td>'
+								+ '<td class="right hasPopup" data-html="<b>Minutová sazba:</b> ' + result[i].price_per_minute + '&nbsp;Kč<br><b>Zbylý kredit:</b> ' + result[i].balance_after + '&nbsp;Kč">' + result[i].price + '&nbsp;Kč</td>'
+								+ '<td class="center">' + result[i].line + '</td></tr>';
 			}
 		}
 
@@ -1609,7 +1604,15 @@ function loadActiveCalls() {
 	}).done(function (data, textStatus, xhr) {
 		var outString = "";
 		for (var i = 0; i < data.length; i++) {
-			outString += "<tr><td class='center'>" + data[i].id + "</td><td>" + unifyPhoneNo(data[i].source_number) + "</td><td>" + unifyPhoneNo(data[i].destination_number) + "</td><td>" + data[i].destination_name + "</td><td>" + moment(data[i].start_date).format("DD.MM.YYYY H:mm:ss") + "</td><td>" + moment(data[i].answer_date).format("DD.MM.YYYY H:mm:ss") + "</td><td class='right'>" + data[i].price_per_minute + "</td><td class='center'>" + data[i].line + "</td></tr>"
+			outString += '<tr ontouchstart="handleTouchStart(event)" ontouchend="handleTouchEnd(event)" ontouchcancel="handleTouchCancel(event)" oncontextmenu="activeContextMenu(event, \'' + data[i].id + '\'); return false;">'
+							+ "<td class='center'>" + data[i].id + "</td>"
+							+ "<td>" + unifyPhoneNo(data[i].source_number) + "</td>"
+							+ "<td>" + unifyPhoneNo(data[i].destination_number) + "</td>"
+							+ "<td>" + data[i].destination_name + "</td>"
+							+ "<td>" + moment(data[i].start_date).format("DD.MM.YYYY H:mm:ss") + "</td>"
+							+ "<td>" + moment(data[i].answer_date).format("DD.MM.YYYY H:mm:ss") + "</td>"
+							+ "<td class='right'>" + data[i].price_per_minute + "</td>"
+							+ "<td class='center'>" + data[i].line + "</td></tr>"
 		}
 		$("#activeCalls").html(outString);
 		refreshCredit();
@@ -1638,7 +1641,28 @@ function loadLines() {
 	}).done(function (data, textStatus, xhr) {
 		var outString = "";
 		for (var i = 0; i < data.length; i++) {
-			outString += "<tr><td class='center hasClickPopup' data-html='<b>SIP password:</b> " + data[i].sip_password + "'>" + data[i].id + "</td><td>" + data[i].name + "</td><td>" + unifyPhoneNo(data[i].caller_id) + "</td><td class='center'>" + toSymbol(data[i].public_name) + "</td><td class='center'>" + toSymbol(data[i].backup_number) + "</td><td class='center'>" + toSymbol(data[i].active_822) + "</td><td class='center'>" + toSymbol(data[i].active_cz_restriction) + "</td><td class='center'>" + toSymbol(data[i].active_iax) + "</td><td class='center'>" + toSymbol(data[i].active_password) + "</td><td class='center'>" + toSymbol(data[i].active_pin) + "</td><td class='center'>" + toSymbol(data[i].active_ping) + "</td><td class='center'>" + toSymbol(data[i].active_rtp) + "</td><td class='center'>" + toSymbol(data[i].active_sip) + "</td><td class='center'>" + toSymbol(data[i].active_anonymous) + "</td><td class='center'>" + toSymbol(data[i].active_greeting) + "</td><td class='center'>" + toSymbol(data[i].missed_call_email) + "</td><td class='center'>" + toSymbol(data[i].recording_email) + "</td><td class='center'>" + toSymbol(data[i].voicemail_email) + "</td><td class='center'>" + toSymbol(data[i].backup_number_email) + "</td><td class='center'>" + data[i].incoming_call_name_format + "</td><td class='center'>" + data[i].incoming_call_number_format + "</td></tr>"
+			outString += '<tr ontouchstart="handleTouchStart(event)" ontouchend="handleTouchEnd(event)" ontouchcancel="handleTouchCancel(event)" oncontextmenu="lineContextMenu(event, \'' + data[i].caller_id + '\', \'' + data[i].name + '\'); return false;">'
+							+ "<td class='center hasClickPopup' data-html='<b>SIP password:</b> " + data[i].sip_password + "'>" + data[i].id + "</td>"
+							+ "<td>" + data[i].name + "</td>"
+							+ "<td>" + unifyPhoneNo(data[i].caller_id) + "</td>"
+							+ "<td class='center'>" + toSymbol(data[i].public_name) + "</td>"
+							+ "<td class='center'>" + toSymbol(data[i].backup_number) + "</td>"
+							+ "<td class='center'>" + toSymbol(data[i].active_822) + "</td>"
+							+ "<td class='center'>" + toSymbol(data[i].active_cz_restriction) + "</td>"
+							+ "<td class='center'>" + toSymbol(data[i].active_iax) + "</td>"
+							+ "<td class='center'>" + toSymbol(data[i].active_password) + "</td>"
+							+ "<td class='center'>" + toSymbol(data[i].active_pin) + "</td>"
+							+ "<td class='center'>" + toSymbol(data[i].active_ping) + "</td>"
+							+ "<td class='center'>" + toSymbol(data[i].active_rtp) + "</td>"
+							+ "<td class='center'>" + toSymbol(data[i].active_sip) + "</td>"
+							+ "<td class='center'>" + toSymbol(data[i].active_anonymous) + "</td>"
+							+ "<td class='center'>" + toSymbol(data[i].active_greeting) + "</td>"
+							+ "<td class='center'>" + toSymbol(data[i].missed_call_email) + "</td>"
+							+ "<td class='center'>" + toSymbol(data[i].recording_email) + "</td>"
+							+ "<td class='center'>" + toSymbol(data[i].voicemail_email) + "</td>"
+							+ "<td class='center'>" + toSymbol(data[i].backup_number_email) + "</td>"
+							+ "<td class='center'>" + data[i].incoming_call_name_format + "</td>"
+							+ "<td class='center'>" + data[i].incoming_call_number_format + "</td></tr>"
 		}
 		$("#lines").html(outString);
 		refreshCredit();
@@ -1669,7 +1693,25 @@ function loadSimCards() {
 	}).done(function (data, textStatus, xhr) {
 		var outString = "";
 		for (var i = 0; i < data.length; i++) {
-			outString += "<tr><td class='center'>" + data[i].id + "</td><td>" + data[i].sim_number + "</td><td class='center'>" + toSymbol(data[i].state) + "</td><td class='center'>" + data[i].changes_in_progress + "</td><td class='right'>" + toSymbol(data[i].data_package) + "</td><td class='right'>" + toSymbol(data[i].data_package_for_next_month) + "</td><td class='number'>" + formatNumber(toSymbol(data[i].data_bought_total)) + "</td><td class='number'>" + formatNumber(toSymbol(data[i].data_used)) + "</td><td class='center'>" + toSymbol(data[i].voice_package) + "</td><td class='center'>" + toSymbol(data[i].voice_package_for_next_month) + "</td><td class='center'>" + toSymbol(data[i].package_delayed_billing) + "</td><td class='center'>" + toSymbol(data[i].package_delayed_billing_for_next_month) + "</td><td class='center' title='" + data[i].missed_calls_register + "'>" + toSymbol(data[i].missed_calls_register) + "</td><td class='center' title='" + data[i].mobile_data + "'>" + toSymbol(data[i].mobile_data) + "</td><td class='center' title='" + data[i].lte + "'>" + toSymbol(data[i].lte) + "</td><td class='center' title='" + data[i].lte_for_next_month + "'>" + toSymbol(data[i].lte_for_next_month) + "</td><td class='center'>" + data[i].roaming + "</td><td class='center' title='" + data[i].premium_services + "'>" + toSymbol(data[i].premium_services) + "</td></tr>"
+			outString += '<tr>'
+							+ "<td class='center'>" + data[i].id + "</td>"
+							+ "<td>" + data[i].sim_number + "</td>"
+							+ "<td class='center'>" + toSymbol(data[i].state) + "</td>"
+							+ "<td class='center'>" + data[i].changes_in_progress + "</td>"
+							+ "<td class='right'>" + toSymbol(data[i].data_package) + "</td>"
+							+ "<td class='right'>" + toSymbol(data[i].data_package_for_next_month) + "</td>"
+							+ "<td class='number'>" + formatNumber(toSymbol(data[i].data_bought_total)) + "</td>"
+							+ "<td class='number'>" + formatNumber(toSymbol(data[i].data_used)) + "</td>"
+							+ "<td class='center'>" + toSymbol(data[i].voice_package) + "</td>"
+							+ "<td class='center'>" + toSymbol(data[i].voice_package_for_next_month) + "</td>"
+							+ "<td class='center'>" + toSymbol(data[i].package_delayed_billing) + "</td>"
+							+ "<td class='center'>" + toSymbol(data[i].package_delayed_billing_for_next_month) + "</td>"
+							+ "<td class='center' title='" + data[i].missed_calls_register + "'>" + toSymbol(data[i].missed_calls_register) + "</td>"
+							+ "<td class='center' title='" + data[i].mobile_data + "'>" + toSymbol(data[i].mobile_data) + "</td>"
+							+ "<td class='center' title='" + data[i].lte + "'>" + toSymbol(data[i].lte) + "</td>"
+							+ "<td class='center' title='" + data[i].lte_for_next_month + "'>" + toSymbol(data[i].lte_for_next_month) + "</td>"
+							+ "<td class='center'>" + data[i].roaming + "</td>"
+							+ "<td class='center' title='" + data[i].premium_services + "'>" + toSymbol(data[i].premium_services) + "</td></tr>"
 		}
 		$("#simCards").html(outString);
 		refreshCredit();
@@ -1701,7 +1743,15 @@ function loadMobileData() {
 	}).done(function (data, textStatus, xhr) {
 		var outString = "";
 		for (var i = 0; i < data.length; i++) {
-			outString += "<tr><td class='center'>" + data[i].id + "</td><td>" + moment(data[i].date).format("DD.MM.YYYY H:mm:ss") + "</td><td class='number'>" + formatNumber(data[i].bytes_up) + "</td><td class='number'>" + formatNumber(data[i].bytes_down) + "</td><td class='number'>" + formatNumber(data[i].bytes_total) + "</td><td class='number'>" + formatNumber(data[i].price) + "</td><td class='number'>" + formatNumber(data[i].price_per_mb) + "</td><td>" + unifyPhoneNo(data[i].phone_number) + "</td></tr>"
+			outString += '<tr>'
+							+ "<td class='center'>" + data[i].id + "</td>"
+							+ "<td>" + moment(data[i].date).format("DD.MM.YYYY H:mm:ss") + "</td>"
+							+ "<td class='number'>" + formatNumber(data[i].bytes_up) + "</td>"
+							+ "<td class='number'>" + formatNumber(data[i].bytes_down) + "</td>"
+							+ "<td class='number'>" + formatNumber(data[i].bytes_total) + "</td>"
+							+ "<td class='number'>" + formatNumber(data[i].price) + "</td>"
+							+ "<td class='number'>" + formatNumber(data[i].price_per_mb) + "</td>"
+							+ "<td>" + unifyPhoneNo(data[i].phone_number) + "</td></tr>"
 		}
 		$("#mobileData").html(outString);
 		refreshCredit();
@@ -1753,9 +1803,22 @@ function loadStatistics() {
 	}).done(function (data, textStatus, xhr) {
 
 		$("#totalStatistics").html(
-				"<tr><td><i class='sign in icon'></i>Příchozí hovory</td><td class='center'>" + data.incoming.count + "</td><td class='right'>" + formatLength(data.incoming.length) + "&nbsp;min</td><td class='right'>" + formatPrice(data.incoming.price) + "&nbsp;Kč</td></tr>"
-			+ "<tr><td><i class='sign out icon'></i>Odchozí hovory</td><td class='center'>" + data.outgoing.count + "</td><td class='right'>" + formatLength(data.outgoing.length) + "&nbsp;min</td><td class='right'>" + formatPrice(data.outgoing.price) + "&nbsp;Kč</td></tr>"
-			+ "<tr><td><i class='external share icon'></i>Přesměrované hovory</td><td class='center'>" + data.redirected.count + "</td><td class='right'>" + formatLength(data.redirected.length) + "&nbsp;min</td><td class='right'>" + formatPrice(data.redirected.price) + "&nbsp;Kč</td></tr>"
+				"<tr>"
+				+ "<td><i class='sign in icon'></i>Příchozí hovory</td>"
+				+ "<td class='center'>" + data.incoming.count + "</td>"
+				+ "<td class='right'>" + formatLength(data.incoming.length) + "&nbsp;min</td>"
+				+ "<td class='right'>" + formatPrice(data.incoming.price) + "&nbsp;Kč</td>"
+				+ "</tr><tr>"
+				+ "<td><i class='sign out icon'></i>Odchozí hovory</td>"
+				+ "<td class='center'>" + data.outgoing.count + "</td>"
+				+ "<td class='right'>" + formatLength(data.outgoing.length) + "&nbsp;min</td>"
+				+ "<td class='right'>" + formatPrice(data.outgoing.price) + "&nbsp;Kč</td>"
+				+ "</tr><tr>"
+				+ "<td><i class='external share icon'></i>Přesměrované hovory</td>"
+				+ "<td class='center'>" + data.redirected.count + "</td>"
+				+ "<td class='right'>" + formatLength(data.redirected.length) + "&nbsp;min</td>"
+				+ "<td class='right'>" + formatPrice(data.redirected.price) + "&nbsp;Kč</td>"
+				+ "</tr>"
 			);
 	});
 
@@ -1774,7 +1837,13 @@ function loadStatistics() {
 			else if (data[i].direction == "in") {
 				direction = "<i class='sign out icon'></i>Příchozí";
 			}
-			outString += "<tr><td>" + data[i].destination + "</td><td class='center'>" + data[i].count + "</td><td class='right'>" + formatLength(data[i].length) + "&nbsp;min</td><td class='right'>" + formatPrice(data[i].price) + "&nbsp;Kč</td><td class='right'>" + data[i].price_per_minute + "&nbsp;Kč</td><td class='center'>" + direction + "</td></tr>";
+			outString += "<tr>"
+							+ "<td>" + data[i].destination + "</td>"
+							+ "<td class='center'>" + data[i].count + "</td>"
+							+ "<td class='right'>" + formatLength(data[i].length) + "&nbsp;min</td>"
+							+ "<td class='right'>" + formatPrice(data[i].price) + "&nbsp;Kč</td>"
+							+ "<td class='right'>" + data[i].price_per_minute + "&nbsp;Kč</td>"
+							+ "<td class='center'>" + direction + "</td></tr>";
 		}
 		$("#destinationStatistics").html(outString);
 	});
@@ -1883,6 +1952,22 @@ function handleLongPress(event) {
 
 	element.dispatchEvent(contextMenuEvent);
 }
+
+
+// Přidáme posluchač události 'contextmenu' na nadřazený element body
+document.body.addEventListener('contextmenu', function(event) {
+	// Zjistíme, zda je cílovým elementem formulářový element (INPUT nebo TEXTAREA)
+	var isFormElement = event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA';
+
+	// Pokud cílový element je formulářovým elementem, necháme výchozí chování (zobrazení kontextového menu)
+	if (isFormElement) {
+		return;
+	}
+
+	// Jinak zabráníme výchozímu zobrazení kontextového menu
+	event.preventDefault();
+});
+
 
 if ('serviceWorker' in navigator) {
 	window.addEventListener('load', function () {
