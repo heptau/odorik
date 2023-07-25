@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, shrink-to-fit=no">
+<title>Odorik Connect</title>
+<meta name="description"
+content="Aplikace pro správu rychlých kontaktů, vytváření hovorů a zobrazení výpisů pro zákazníky Odorik.cz">
+<meta name="apple-mobile-web-app-title" content="Odorik Connect">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#111111">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="odorik-icon.png">
+<link
+href="data:image/x-icon;base64,R0lGODlhIQAeAKECAOM7O/////8AAP8AACH5BAEKAAIALAAAAAAhAB4AAAJLjI+pywYPQZsqWknb3TgjznkfGIokKAZn6a1b6l6wfLCZtbzwpKc87WPYgokh0WE8JoOoY43kVJ2iq6gU6qxSsduedUkEWkedMaUAADs="
+rel="icon" type="image/x-icon" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin="anonymous">
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin="anonymous">
+<!-- Import of CSS libraries (Semantic UI) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/button.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/card.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/container.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/dimmer.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/dropdown.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/form.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/grid.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/header.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/icon.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/input.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/label.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/loader.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/message.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/menu.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/modal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/popup.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/segment.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/site.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/statistic.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/components/transition.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-daterangepicker/3.0.5/daterangepicker.min.css">
+<link rel="stylesheet" href="aui.css">
+<link rel="stylesheet" href="odorik.css">
+</head>
+<body>
+<!-- IE WARNING -->
+<!--[if IE]>
+<div id="warningIE" style="padding-top:10%; background:white; width:100%; height:100%; position:absolute; top:0; left:0; z-index:10; padding:15px; text-align:center">
+<p>Používáte zastaralý prohlížeč. Nainstalujte si Google Chrome nebo Mozillu Firefox.<br>Pokud používáte jeden z těchto prohlížečů, zkuste znovu načíst stránku klávesou F5.</p>
+</div>
+<!--<![endif]-->
+<dialog id="compose-sms" class="full">
+<h1>Nová zpráva</h1><!-- https://cs.wikipedia.org/wiki/GSM_03.38 -->
+<input type="tel" id="sms-recipient" style="width:95%" placeholder="Komu:" />
+<!--input type="tel" id="sms-sender" style="width:95%" placeholder="Od:" /-->
+<textarea id="sms-input" maxlength="765" rows="8" style="width:95%" placeholder="Zpráva" oninput="optimiseSMS(this.value)"></textarea>
+<textarea id="sms-preview" rows="8" style="width:95%" placeholder="Náhled" disabled></textarea>
+<p>Znaků: <span id="sms-char-count">0</span>, zpráv <span id="sms-count">0</span></p>
+<button onclick="this.closest('dialog').close()">Zavřít</button><button onclick="window.location.href = 'sms:' + document.getElementById('sms-recipient').value + '&body=' + encodeURIComponent(document.getElementById('sms-preview').value)">Otevřít ve Zprávy</button><button id="send-sms" onclick="sendSMS();">Odeslat</button>
+</dialog>
+<dialog id="delete-contact" class="h2btn">
+<h1>Smazat kontakt</h1>
+<p>Opravdu chcete smazat tento kontakt?</p>
+<button onclick="this.closest('dialog').close()">Ne</button><button onclick="deleteContact()" class="warning" id="confirm-delete-contact">Smazat</button>
+</dialog>
+<dialog id="logout-user" class="h2btn">
+<h1>Odhlášení</h1>
+<p>Opravdu se chcete odhlásit?</p>
+<button onclick="this.closest('dialog').close()">Ne</button><button onclick="logout()" id="confirm-logout-user">Odhlásit</button>
+</dialog>
+<dialog id="contactContextMenu" class="contextmenu">
+<button onclick="this.closest('dialog').close(); window.location.href='tel:'+ unifyPhoneNo(selectedContactNumber);">Hovor <i class="phone icon"></i></button>
+<button onclick="this.closest('dialog').close(); window.location.href='sip:'+ unifyPhoneNo(selectedContactNumber);">Hovor přes VoIP <i class="call icon"></i></button>
+<button onclick="this.closest('dialog').close(); callBack(unifyPhoneNo(selectedContactNumber), selectedContact, selectedContactName)">Callback <i class="phone icon"></i></button>
+<button onclick="this.closest('dialog').close(); window.location.href='facetime://'+ unifyPhoneNo(selectedContactNumber);">Hovor přes FaceTime <i class="video camera outline icon"></i></button>
+<button onclick="this.closest('dialog').close(); document.getElementById('sms-recipient').value=unifyPhoneNo(selectedContactNumber); openDialog('compose-sms');">Napsat zprávu <i class="comment outline icon"></i></button>
+<button onclick="this.closest('dialog').close(); window.location.href='tg://msg?to='+ unifyPhoneNo(selectedContactNumber);">Napsat přes Telegram <i class="telegram plane icon"></i></button>
+<button onclick="this.closest('dialog').close(); editContact('main', selectedContact, selectedContactName, unifyPhoneNo(selectedContactNumber))">Upravit kontakt <i class="edit icon"></i></button>
+<button onclick="this.closest('dialog').close(); copyToClipboard(unifyPhoneNo(selectedContactNumber))">Zkopírovat číslo do schránky <i class="copy icon"></i></button>
+<button onclick="this.closest('dialog').close(); window.open('https://www.vyhledatcislo.cz/cislo/' + selectedContactNumber, '_blank');">Vyhledat číslo na webu <i class="search icon"></i></button>
+<button onclick="this.closest('dialog').close(); window.location.href='data:text/vcard;charset=utf-8,' + encodeURIComponent('BEGIN:VCARD\nVERSION:3.0\nN:' + splitContactName(selectedContactName).surname + ';' + splitContactName(selectedContactName).name + ';;;\nFN:' + splitContactName(selectedContactName).name + ' ' + splitContactName(selectedContactName).surname + '\nTEL:' + unifyPhoneNo(selectedContactNumber) + '\nNOTE:' + splitContactName(selectedContactName).note + '\nEND:VCARD');">Přidat do kontaktů systému <i class="address book outline icon"></i></button>
+<button onclick="this.closest('dialog').close(); deleteContactModal('main', selectedContact)" class="warning">Smazat kontakt <i class="trash alternate outline icon"></i></button>
+</dialog>
+<dialog id="activeContextMenu" class="contextmenu">
+<button onclick="this.closest('dialog').close(); window.location.href='tel:'+ unifyPhoneNo(selectedContactNumber);">Ukončit hovor <i class="times circle outline icon"></i></button>
+</dialog>
+<dialog id="lineContextMenu" class="contextmenu">
+<button onclick="this.closest('dialog').close(); window.location.href='tel:'+ unifyPhoneNo(selectedContactNumber);">Hovor <i class="phone icon"></i></button>
+<button onclick="this.closest('dialog').close(); window.location.href='sip:'+ unifyPhoneNo(selectedContactNumber);">Hovor přes VoIP <i class="call icon"></i></button>
+<button onclick="this.closest('dialog').close(); callBack(unifyPhoneNo(selectedContactNumber), selectedContact, selectedContactName)">Callback <i class="phone icon"></i></button>
+<button onclick="this.closest('dialog').close(); window.location.href='facetime://'+ unifyPhoneNo(selectedContactNumber);">Hovor přes FaceTime <i class="video camera outline icon"></i></button>
+<button onclick="this.closest('dialog').close(); document.getElementById('sms-recipient').value=unifyPhoneNo(selectedContactNumber); openDialog('compose-sms');">Napsat zprávu <i class="comment outline icon"></i></button>
+<button onclick="this.closest('dialog').close(); window.location.href='tg://msg?to='+ unifyPhoneNo(selectedContactNumber);">Napsat přes Telegram <i class="telegram plane icon"></i></button>
+<!--button onclick="this.closest('dialog').close(); editLine('main', selectedContact, selectedContactName, unifyPhoneNo(selectedContactNumber))">Upravit linku <i class="edit icon"></i></button-->
+<button onclick="this.closest('dialog').close(); copyToClipboard(unifyPhoneNo(selectedContactNumber))">Zkopírovat číslo do schránky <i class="copy icon"></i></button>
+<button onclick="this.closest('dialog').close(); window.open('https://www.vyhledatcislo.cz/cislo/' + selectedContactNumber, '_blank');">Vyhledat číslo na webu <i class="search icon"></i></button>
+<button onclick="this.closest('dialog').close(); window.location.href='data:text/vcard;charset=utf-8,' + encodeURIComponent('BEGIN:VCARD\nVERSION:3.0\nN:' + splitContactName(selectedContactName).surname + ';' + splitContactName(selectedContactName).name + ';;;\nFN:' + splitContactName(selectedContactName).name + ' ' + splitContactName(selectedContactName).surname + '\nTEL:' + unifyPhoneNo(selectedContactNumber) + '\nNOTE:' + splitContactName(selectedContactName).note + '\nEND:VCARD');">Přidat do kontaktů systému <i class="address book outline icon"></i></button>
+</dialog>
+<!-- EDIT MODAL -->
+<dialog id="edit-contact" class="full">
+<h1>Upravit kontakt</h1>
+<div class="content">
+<form class="ui form">
+<div class="field">
+<label for="contact-name">Název</label>
+<input type="text" id="contact-name" name="contact-name" autocapitalize="words">
+</div>
+<div class="field">
+<label for="contact-number">Číslo</label>
+<input type="tel" id="contact-number" name="contact-number" required>
+</div>
+<div class="field">
+<label for="contact-shortcut">Zkratka</label>
+<input type="number" id="contact-shortcut" name="contact-shortcut" placeholder="Zkratka" pattern="\d*" min="1" max="999" required>
+</div>
+</form>
+</div>
+<button onclick="this.closest('dialog').close()">Zpět</button><button onclick="this.form.submit()">Upravit</button>
+</dialog>
+<!-- ADD MODAL -->
+<dialog id="add-contact" class="full">
+<h1>Nový kontakt</h1>
+<div class="content">
+<form class="ui form">
+<div class="field">
+<label for="contact-name">Název</label>
+<input type="text" id="contact-name-add" name="contact-name" placeholder="Název" autocapitalize="words">
+</div>
+<div class="field">
+<label for="contact-number">Číslo</label>
+<input type="tel" id="contact-number-add" name="contact-number" placeholder="Číslo" required>
+</div>
+<div class="field">
+<label for="contact-shortcut">Zkratka</label>
+<input type="number" id="contact-shortcut-add" name="contact-shortcut" placeholder="Zkratka" pattern="\d*" min="1" max="999" required>
+</div>
+</form>
+</div>
+<button onclick="this.closest('dialog').close()">Zpět</button><button onclick="this.form.submit()">Přidat</button>
+</dialog>
+<!-- CONTAINER -->
+<div class="ui container"
+style="display:none; /* overflow:hidden; width:100% */ width:calc(100% - 8px) !important; margin:0 !important; padding:0 !important">
+<!-- TITLE -->
+<h1 class="ui header" style="padding-left:8px">
+<br>Odorik Connect<div class="ui grey label">v1.11.0</div>
+<span style="float:right; padding-right:.8px" class="sub header" id="credit"></span>
+</h1>
+<!-- MENU -->
+<div class="ui secondary stackable menu" style="padding-left:8px">
+<!-- CATEGORY SELECTOR DROPDOWN -->
+<div class="item fitted">
+<div class="ui blue floating button dropdown" id="categorySelector">
+<div class="text"></div><i class="dropdown icon"></i>
+<div class="menu">
+<div class="item" data-value="speedDials"><i class="icon address book outline"></i>Kontakty</div>
+<div class="item" data-value="activeCalls"><i class="icon clock outline"></i>Probíhající</div>
+<div class="item" data-value="callHistory"><i class="icon phone"></i>Hovory</div>
+<div class="item" data-value="smsHistory"><i class="icon comment outline"></i>Zprávy</div>
+<div class="item" data-value="lines"><i class="icon tty"></i>Linky</div>
+<div class="item" data-value="simCards"><i class="icon mobile"></i>SIM karty</div>
+<div class="item" data-value="mobileData"><i class="icon cloud"></i>Data</div>
+<div class="item" data-value="statistics"><i class="icon bar chart"></i>Statistiky</div>
+<hr />
+<div class="item" data-value="logout" style="font-weight:normal !important"><i class="icon power off"></i>Odhlásit</div>
+</div>
+</div>
+</div>
+<!-- REST OF THE ITEMS (DYNAMICALLY LOADED) -->
+<div class="dynamic item fitted callHistoryContent smsHistoryContent"><button aria-label="filtrovat" class="ui pink button" onclick="filterModal();"><i class="filter icon"></i>Filtr</button></div>
+<div class="dynamic item fitted statisticsContent"><div class="ui pink floating button dropdown" id="statistics-line"><i class="filter icon"></i><div class="text" style="white-space:nowrap; overflow:hidden">Vše</div><i class="dropdown icon"></i><div class="menu"><div class="item" data-value="all">Vše</div></div></div></div>
+<div class="dynamic item fitted statisticsContent callHistoryContent smsHistoryContent"><div id="reportrange" class="ui button" style="white-space:nowrap; overflow:hidden"><i class="calendar icon"></i><span></span><i class="dropdown icon" style="margin:0"></i></div></div>
+<div class="dynamic item fitted speedDialsContent"><button aria-label="import/export" class="ui button" onclick="importExportModal();"><i class="file archive outline icon"></i>Import/Export</button></div>
+<div class="dynamic item fitted speedDialsContent"><button aria-label="přidat" class="ui green button" onclick="addContact();"><i class="plus icon"></i>Přidat</button></div>
+<div class="dynamic item fitted smsHistoryContent"><button aria-label="nová SMS" class="ui green button" onclick="openDialog('compose-sms');"><i class="plus icon"></i>Nová SMS</button></div>
+<div class="right item fitted"><div class="ui action input"><input type="tel" name="quick-input" placeholder="Volané číslo"><button aria-label="volat" id="quick-button" class="ui icon button"><i class="call icon"></i></button></div></div>
+</div>
+<!-- SPEED DIALS CONTENT -->
+<section class="speedDialsContent">
+<!-- TABLE -->
+<table class="ui celled compact table">
+<thead>
+<tr>
+<th class="res" style="width:calc(6em+50%)">Název</th>
+<th class="res" style="width:calc(6em+50%)">Číslo</th>
+<th class="center shortcut">Zkratka</th>
+<th class="empty"></th>
+</tr>
+</thead>
+<tbody id="tableContacts">
+</tbody>
+</table>
+</section>
+<!-- CALL HISTORY CONTENT -->
+<section class="callHistoryContent">
+<!-- TABLE -->
+<table class="ui celled table">
+<thead>
+<tr>
+<th class="res kind-call">Hovor</th>
+<th class="res" style="min-width:4em; max-width:10em; width:calc(4em+30%)">Čas</th>
+<th class="res" style="min-width:5em; width:calc(5em+35%)">Odkud</th>
+<th class="res" style="min-width:5em; width:calc(5em+35%)">Kam</th>
+<th class="res center" style="min-width:5em; max-width:8em; width:5em">Délka</th>
+<th class="res center" style="min-width:4em; max-width:6em; width:4em">Cena</th>
+<th class="res center" style="min-width:4em; max-width:6em; width:4em">Linka</th>
+</tr>
+</thead>
+<tbody id="tableCalls">
+</tbody>
+<tfoot>
+<tr>
+<th colspan="7">
+<div class="ui right floated pagination menu">
+<a class="icon disabled item" id="prevPage"
+onclick="if(!$(this).hasClass('disabled')){page-=1;reloadCalls();}">
+<i class="left chevron icon"></i>
+</a>
+<a class="item" id="pageNumber"></a>
+<a class="icon disabled item" id="nextPage"
+onclick="if(!$(this).hasClass('disabled')){page+=1;reloadCalls();}">
+<i class="right chevron icon"></i>
+</a>
+</div>
+</th>
+</tr>
+</tfoot>
+</table>
+</section>
+<!-- SMS HISTORY CONTENT -->
+<section class="smsHistoryContent">
+<!-- TABLE -->
+<table class="ui celled table">
+<thead>
+<tr>
+<th class="res kind-sms">SMS</th>
+<th class="res" style="min-width:4em; max-width:10em; width:calc(4em+30%)">Čas</th>
+<th class="res" style="min-width:5em; width:calc(5em+35%)">Odkud</th>
+<th class="res" style="min-width:5em; width:calc(5em+35%)">Kam</th>
+<th class="res center" style="min-width:3em; max-width:5em; width:4em">Cena</th>
+<th class="res center" style="min-width:4em; max-width:6em; width:4em">Linka</th>
+</tr>
+</thead>
+<tbody id="tableSms">
+</tbody>
+<tfoot>
+<tr>
+<th colspan="6">
+<div class="ui right floated pagination menu">
+<a class="icon disabled item" id="prevSmsPage"
+onclick="if(!$(this).hasClass('disabled')){page-=1;reloadSms();}">
+<i class="left chevron icon"></i>
+</a>
+<a class="item" id="pageSmsNumber"></a>
+<a class="icon disabled item" id="nextSmsPage"
+onclick="if(!$(this).hasClass('disabled')){page+=1;reloadSms();}">
+<i class="right chevron icon"></i>
+</a>
+</div>
+</th>
+</tr>
+</tfoot>
+</table>
+</section>
+<section class="activeCallsContent">
+<table class="ui black celled table">
+<thead>
+<tr>
+<th class="res">ID</th>
+<th class="res">Volající</th>
+<th class="res">Volaný</th>
+<th class="res">Destinace</th>
+<th class="res">Voláno</th>
+<th class="res">Přijato</th>
+<th class="res">Cena za minutu</th>
+<th class="res center" style="min-width:4em; max-width:6em; width:4em">Linka</th>
+</tr>
+</thead>
+<tbody id="activeCalls"></tbody>
+</table>
+</section>
+<section class="linesContent">
+<table class="ui black celled table">
+<thead>
+<tr>
+<th class="res center" style="min-width:4em; max-width:6em; width:4em">ID</th>
+<th class="res">Jméno</th>
+<th class="res">Číslo</th>
+<th class="res">Veřejné jméno</th>
+<th class="res">Záložní Číslo</th>
+<th class="res">822</th>
+<th class="res">CZ omezení</th>
+<th class="res">IAX</th>
+<th class="res">Heslo</th>
+<th class="res">PIN</th>
+<th class="res">Ping</th>
+<th class="res">RTP</th>
+<th class="res">SIP</th>
+<th class="res">Anonymní</th>
+<th class="res">Uvítání</th>
+<th class="res">E-mail pro změskané</th>
+<th class="res">E-mail pro nahrávky</th>
+<th class="res">E-mail pro hlasové zprávy</th>
+<th class="res">E-mail pro záložní číslo</th>
+<th class="res">Formát jména příchozích volání</th>
+<th class="res">Formát čísla příchozích volání</th>
+</tr>
+</thead>
+<tbody id="lines"></tbody>
+</table>
+</section>
+<section class="simCardsContent">
+<table class="ui black celled table">
+<thead>
+<tr>
+<th class="res">ID</th>
+<th class="res">Číslo SIM</th>
+<th class="res">Stav</th>
+<th class="res">Probíhající změny</th>
+<th class="res">Balíček dat</th>
+<th class="res">Balíček dat pro další měsíc</th>
+<th class="res">Nakoupená data</th>
+<th class="res">Spotřebovaná data</th>
+<th class="res">Hlasový balíček</th>
+<th class="res">Hlasový balíček pro další měsíc</th>
+<th class="res">Zpožděné vyúčtování</th>
+<th class="res">Zpožděné vyúčtování pro další měsíc</th>
+<th class="res">Evidence zmeškaných hovorů</th>
+<th class="res">Mobilní data</th>
+<th class="res">LTE</th>
+<th class="res">LTE pro další měsíc</th>
+<th class="res">Roaming</th>
+<th class="res">Prémiové služby</th>
+</tr>
+</thead>
+<tbody id="simCards"></tbody>
+</table>
+</section>
+<section class="mobileDataContent">
+<table class="ui black celled table">
+<thead>
+<tr>
+<th class="res">ID</th>
+<th class="res">Datum</th>
+<th class="res">Odeslaých bytů</th>
+<th class="res">Stažených bytů</th>
+<th class="res">Bytů celkem</th>
+<th class="res">Cena</th>
+<th class="res">Cena za MB</th>
+<th class="res">Telefonní číslo</th>
+</tr>
+</thead>
+<tbody id="mobileData"></tbody>
+</table>
+</section>
+<!-- STATISTICS CONTENT -->
+<section class="statisticsContent">
+<table class="ui black celled table">
+<thead>
+<tr>
+<th class="res">Typ hovorů</th>
+<th class="center">Počet hovorů</th>
+<th class="center">Délka celkem</th>
+<th class="center">Cena celkem</th>
+</tr>
+</thead>
+<tbody id="totalStatistics">
+</tbody>
+</table>
+<div class="ui stackable grid">
+<div class="row">
+<div class="eleven wide column">
+<h3>Podle destinace</h3>
+<table class="ui black celled table">
+<thead>
+<tr>
+<th class="res" style="width:calc(8em+80%)">Destinace</th>
+<th class="center" style="width:calc(1em+4%)">Počet</th>
+<th class="center" style="width:calc(4em+4%)">Délka</th>
+<th class="center" style="width:calc(5em+4%)">Cena</th>
+<th class="center" style="width:calc(4em+4%)">Za minutu</th>
+<th class="center" style="width:calc(4em+4%)">Směr</th>
+</tr>
+</thead>
+<tbody id="destinationStatistics">
+</tbody>
+</table>
+</div>
+<div class="five wide column">
+<h3>Zmeškané</h3>
+<table class="ui red celled table">
+<thead>
+<tr>
+<th>Číslo</th>
+<th>Počet</th>
+</tr>
+</thead>
+<tbody id="missedStatistics"></tbody>
+</table>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- DELETE MODAL -->
+<div class="ui modal" id="deleteModal">
+<i class="close icon"></i>
+<div class="header">Smazat kontakt</div>
+<div class="content">
+<div class="description">
+<p>Opravdu chcete smazat tento rychlý kontakt?</p>
+</div>
+</div>
+<div class="actions">
+<div class="ui black deny button">Ne</div>
+<div class="ui positive right labeled icon button" style="background-color:red">Smazat<i class="trash icon"></i></div>
+</div>
+</div>
+<!-- EDIT MODAL -->
+<div class="ui modal" id="editModal">
+<i class="close icon"></i>
+<div class="header">Upravit kontakt</div>
+<div class="content">
+<form class="ui form">
+<div class="field">
+<label for="edit-name">Jméno</label>
+<input type="text" id="edit-name" name="edit-name" autocapitalize="words">
+</div>
+<div class="field">
+<label for="edit-name">Příjmení</label>
+<input type="text" id="edit-surname" name="edit-surname" autocapitalize="words">
+</div>
+<div class="field">
+<label for="edit-name">Poznámka</label>
+<input type="text" id="edit-note" name="edit-note">
+</div>
+<div class="field">
+<label for="edit-number">Číslo</label>
+<input type="tel" id="edit-number" name="edit-number" required>
+</div>
+<div class="field">
+<label for="edit-shortcut">Zkratka</label>
+<input type="number" id="edit-shortcut" name="edit-shortcut" placeholder="Zkratka" pattern="\d*" min="1" max="999" required>
+</div>
+</form>
+</div>
+<div class="actions">
+<div class="ui black deny button">Zpět</div>
+<div class="ui positive right labeled icon button">Upravit<i class="checkmark icon"></i></div>
+</div>
+</div>
+<!-- ADD MODAL -->
+<div class="ui modal" id="addModal">
+<i class="close icon"></i>
+<div class="header">Nový kontakt</div>
+<div class="content">
+<form class="ui form">
+<div class="field">
+<label for="add-name">Jméno</label>
+<input type="text" id="add-name" name="add-name" placeholder="Jméno" autocapitalize="words">
+</div>
+<div class="field">
+<label for="add-surname">Příjmení</label>
+<input type="text" id="add-surname" name="add-surname" placeholder="Příjmení" autocapitalize="words">
+</div>
+<div class="field">
+<label for="add-note">Poznámka</label>
+<input type="text" id="add-note" name="add-note" placeholder="Poznámka">
+</div>
+<div class="field">
+<label for="add-number">Číslo</label>
+<input type="tel" id="add-number" name="add-number" placeholder="Číslo" required>
+</div>
+<div class="field">
+<label for="add-shortcut">Zkratka</label>
+<input type="number" id="add-shortcut" name="add-shortcut" placeholder="Zkratka" pattern="\d*" min="1" max="999">
+</div>
+</form>
+</div>
+<div class="actions">
+<div class="ui black deny button">Zpět</div>
+<div class="ui positive right labeled icon button">Přidat<i class="checkmark icon"></i></div>
+</div>
+</div>
+<!-- LOGIN MODAL -->
+<div class="ui small modal" id="loginModal">
+<div class="header">Odorik Connect</div>
+<div class="content">
+<p>API jméno a heslo pro celý účet najdete po přihlášení v menu <a
+href="https://www.odorik.cz/ucet/nastaveni_uctu.html?ucet_podmenu=api_heslo"
+target="_blank">Nastavení účtu <i class="ui angle right icon"></i>API heslo.</a></p>
+<p>Případně je možné zadat SIP jméno (šestimístné číslo linky) a SIP heslo, pak lze zobrazovat jen hovory na
+oné lince.</p>
+<form class="ui form">
+<div class="field">
+<label for="login-name">API jméno</label>
+<input type="text" id="login-name" name="login-name" autocomplete="username" autocapitalize="none">
+</div>
+<div class="field">
+<label for="login-pass">API heslo</label>
+<input type="password" id="login-pass" name="login-pass" autocomplete="current-password">
+</div>
+</form>
+<div class="ui negative message" id="badLogin" style="display:none">
+<div class="header">Nesprávné uživatelské jméno nebo heslo.</div>
+</div>
+<a href="https://github.com/heptau/odorik/blob/master/index.html">Zdrojový kód</a> této
+aplikace je k dispozici <a href="https://github.com/heptau/odorik/">včetně dokumentace</a>. Můžete si jej
+sami nechat upravit a integrovat např. do vlastních webových stránek.
+</div>
+<div class="actions">
+<div class="ui positive right labeled icon button">Přihlásit se<i class="sign in icon"></i></div>
+</div>
+</div>
+<!-- CALL MODAL -->
+<div class="ui modal" id="callModal">
+<i class="close icon"></i>
+<div class="header">Objednat callback</div>
+<div class="content">
+<form class="ui form">
+<div class="field">
+<label for="call-target">Volané číslo</label>
+<input type="tel" id="call-target" name="call-target"><!-- disabled-->
+</div>
+<div class="field required">
+<label for="call-number">Vaše číslo</label>
+<div class="ui input">
+<input type="tel" id="call-number" name="call-number"
+placeholder="Číslo, na kterém chcete přijmout callback: číslo vaší linky (s hvězdičkou), rychlá volba, veřejné tel. číslo">
+</div>
+</div>
+<div class="field">
+<label for="call-line">Linka, kterou bude callback realizován</label>
+<select class="ui dropdown" id="call-line" name="call-line">
+<option value="none">Výchozí</option>
+</select>
+</div>
+</form>
+</div>
+<div class="actions">
+<div class="ui black deny button">Zpět</div>
+<div class="ui positive right labeled icon button submit">Volat<i class="checkmark icon"></i></div>
+</div>
+</div>
+<!-- IMPORT/EXPORT MODAL -->
+<div class="ui modal" id="importExportModal">
+<i class="close icon"></i>
+<div class="header">Import/Export</div>
+<div class="content">
+<div class="description">
+<p>Tato aplikace umožňuje import a export kontaktů ve formátu <b>vCard</b>.</p>
+<p>Pokud chcete importovat data z Google kontaktů:</p>
+<ol>
+<li>Na stránce <a href="https://www.google.com/contacts/u/0/?cplus=0#contacts"
+target="_blank">google.com/contacts</a> vyberte kontakty.</li>
+<li>Klikněte na <b>Další</b>, a pak <b>Exportovat...</b>. </li>
+<li>V následujicím okně vyberte formát exportu <b>vCard</b> a stáhněte a uložte soubor s kontakty
+kliknutím na tlačítko <b>Exportovat</b>.</li>
+<li>Níže v tomto okně klikněte na tlačítko <b>Importovat</b> a vyberte připravený soubor s kontakty.
+</li>
+<li>Jako čísla zkratek budou navrženy následující volné pozice, případně budou použita čísla uložená
+v poli <b>poznámka</b> u jednotlivých kontaktů.
+Před uložením dostanete možnost si vše prohlédnout a ručně upravit, případně import zrušit.</li>
+</ol>
+<input id="fileinput" type="file" name="fileinput" style="display:none" />
+</div>
+</div>
+<div class="actions">
+<div class="ui black deny button">Zpět</div>
+<a class="ui blue right labeled icon button" download="Kontakty.vcf" href="#" id="exportButton">Exportovat<i
+class="download icon"></i></a>
+<div class="ui green right labeled icon button" id="importButton">Importovat<i class="upload icon"></i>
+</div>
+</div>
+</div>
+<!-- IMPORT WIZARD MODAL -->
+<div class="ui modal" id="importWizardModal">
+<i class="close icon"></i>
+<div class="header">Import</div>
+<div class="content">
+<p>Čísla zkratek i texty k číslům si můžete libovolně upravit. Pokud chcete kontakt vynechat, nastavte jeho
+zkratku na nulu.</p>
+<p><b>Pozor:</b> Pokud navržená čísla zkratek změníte, může se stát, že si následným uložením přepíšete
+existující záznamy pod stejným číslem.
+Budete na to upozorněni zčervenáním čísla zkratky po opuštění editačního pole.</p>
+<table class="ui celled compact table">
+<thead>
+<tr>
+<th class="two wide">Zkratka</th>
+<th>Název</th>
+<th>Číslo</th>
+</tr>
+</thead>
+<tbody id="tableImport">
+</tbody>
+</table>
+</div>
+<div class="actions">
+<div class="ui black deny button">Zpět</div>
+<div class="ui positive right labeled icon button">Dokončit<i class="checkmark icon"></i></div>
+</div>
+</div>
+<!-- FILTER MODAL -->
+<div class="ui modal" id="filterModal">
+<i class="close icon"></i>
+<div class="header">Filtr</div>
+<div class="content">
+<form class="ui form">
+<div class="field">
+<label for="call-order">Řazení</label>
+<select class="ui fluid dropdown" id="call-order" name="call-order">
+<option value="newest" selected>Od nejnovějšího</option>
+<option value="oldest">Od nejstaršího</option>
+</select>
+</div>
+<div class="two fields">
+<div class="field">
+<label for="line-filter">Linka</label>
+<select class="ui fluid dropdown" id="line-filter" name="line-filter">
+<option value="all">Vše</option>
+</select>
+</div>
+<div class="field">
+<label for="state-filter">Stav</label>
+<select class="ui fluid dropdown" id="state-filter" name="state-filter">
+<option value="all">Vše</option>
+<option value="missed">Zmeškané</option>
+<option value="answered">Spojené</option>
+</select>
+</div>
+</div>
+<div class="two fields">
+<div class="field">
+<label for="direction-filter">Směr</label>
+<select class="ui fluid dropdown" id="direction-filter" name="direction-filter">
+<option value="all">Vše</option>
+<option value="out">Odchozí</option>
+<option value="in">Příchozí</option>
+<option value="redirected">Přesměrované</option>
+</select>
+</div>
+<div class="field">
+<label for="price-filter">Cena</label>
+<select class="ui fluid dropdown" id="price-filter" name="price-filter">
+<option value="all">Vše</option>
+<option value="free">Jen zdarma</option>
+<option value="paid">Jen placené</option>
+</select>
+</div>
+</div>
+</form>
+</div>
+<div class="actions">
+<div class="ui black deny button">Zpět</div>
+<div class="ui positive right labeled icon button" id="importButton">Hotovo<i class="checkmark icon"></i>
+</div>
+</div>
+</div>
+<!-- REDIRECTIONS MODAL -->
+<div class="ui modal" id="redirectionsModal">
+<i class="close icon"></i>
+<div class="header">Seznam přesměrování během hovoru</div>
+<div class="content">
+<div>
+<!-- TABLE -->
+<table class="ui celled table">
+<thead>
+<tr>
+<th>Čas</th>
+<th>Odkud</th>
+<th>Kam</th>
+<th>Délka</th>
+<th>Cena</th>
+<th class="res center" style="min-width:4em; max-width:6em; width:4em">Linka</th>
+</tr>
+</thead>
+<tbody id="tableRedirects">
+</tbody>
+</table>
+</div>
+</div>
+<div class="actions">
+<div class="ui black deny button">Zavřít</div>
+</div>
+</div>
+<!-- DIMMERS -->
+<div class="ui page dimmer" id="dimmer">
+<div class="content">
+<div class="center">
+<h1 class="ui inverted icon header">
+<i class="checkmark icon"></i>
+<small></small>
+</h1>
+</div>
+</div>
+</div>
+<div class="ui page dimmer" id="loadingDimmer">
+<div class="ui loader"></div>
+</div>
+<!-- SCRIPTS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js"
+integrity="sha512-pumBsjNRGGqkPzKHndZMaAG+bir374sORyzM3uulLV14lN5LyykqNk8eEeUlUkB3U0M4FApyaHraT65ihJhDpQ=="
+crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/semantic.min.js"
+integrity="sha384-KfrAxmzWxzKdfquWGNOhm/N9kEjIgoP2yBPMQmAjQ+Is0hp+3BlcWT6PcI7NuKEP"
+crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"
+integrity="sha384-VCGDSwGwLWkVOK5vAWSaY38KZ4oKJ0whHjpJQhjqrMlWadpf2dUVKLgOLBdEaLvZ"
+crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-daterangepicker/3.0.5/daterangepicker.min.js"
+integrity="sha512-mh+AjlD3nxImTUGisMpHXW03gE6F4WdQyvuFRkjecwuWLwD2yCijw4tKA3NsEFpA1C3neiKhGXPSIGSfCYPMlQ=="
+crossorigin="anonymous"></script>
+<script src="odorik.js"></script>
+<br>
+</body>
+</html>
