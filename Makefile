@@ -44,7 +44,7 @@ help:
 	@echo "Použití:"
 	@echo "  make install     - Nainstaluje potřebné nástroje"
 	@echo "  make dist        - Sestaví soubory pro nasazeni (do slozky dist)"
-	@echo "  make deploy      - Nasadí web (ze slozky dist) na GitHub Pages"
+	@echo "  make deploy      - Nasadí web (ze složky dist) na GitHub Pages"
 	@echo "  make deploy.init - Inicializuje gh-deploy a nasadi web na GitHub Pages"
 	@echo "  make help        - Vypíše tuto nápovědu"
 

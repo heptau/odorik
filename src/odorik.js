@@ -1,4 +1,4 @@
-﻿// coding: utf-8
+// coding: utf-8
 
 // NASTAVENÍ
 
@@ -34,6 +34,40 @@ var defaultCallbackLine = "";
 // Počet položek na stránku
 // př. var pageLength = 24; // nastaví počet položek na stránku na 24
 var pageLength = 100;
+
+
+let phoneDirectory = [];
+
+async function loadPhoneDirectory() {
+	try {
+		const response = await fetch('phone-directory.json');
+		const data = await response.json();
+		phoneDirectory = data.map(entry => ({
+			r: new RegExp(entry.r),
+			d: entry.d
+		}));
+	} catch (error) {
+		console.error("Failed to load phone directory:", error);
+	}
+}
+
+function getPhoneNumberDescription(phoneNumber) {
+	for (let entry of phoneDirectory) {
+		if (entry.r.test(phoneNumber)) {
+			return entry.d;
+		}
+	}
+	return ""; //Unknown
+}
+
+function lookupPhoneNumber() {
+	const phoneNumberInput = document.getElementById('phoneNumberInput').value;
+	const result = getPhoneNumberDescription(phoneNumberInput);
+	document.getElementById('result').innerText = result;
+}
+
+// Načtení dat při načtení stránky
+window.onload = loadPhoneDirectory;
 
 
 // Disable caching of AJAX responses (so the data is properly updated)
@@ -399,7 +433,7 @@ function loadContacts() {
 					outstring
 						+= '<tr ontouchstart="handleTouchStart(event)" ontouchend="handleTouchEnd(event)" ontouchcancel="handleTouchCancel(event)" oncontextmenu="contactContextMenu(event, \'' + result[i].shortcut + '\', \'' + result[i].number + '\', \'' + result[i].name + '\'); return false;">'
 						+ '<td class="table-name-' + result[i].shortcut + '">' + result[i].name + '</td>'
-						+ '<td class="table-num-' + result[i].shortcut + '">' + unifyPhoneNo(result[i].number) + '</td>'
+						+ '<td class="table-num-' + result[i].shortcut + '">' + getFlagFromPhoneNumber(unifyPhoneNo(result[i].number)) + ' ' + unifyPhoneNo(result[i].number) + '</td>'
 						+ '<td class="center table-short-' + result[i].shortcut + '">' + result[i].shortcut + '</td>'
 						+ '<td>'
 						+ '</td></tr>';
@@ -1322,7 +1356,7 @@ function populateCallsTable(result) {
 		outstring += '</td>'
 						+ '<td class="hasClickPopup" data-html="' + moment(result[i].date).format("DD.MM.YYYY H:mm:ss") + '">' + moment(result[i].date).format("DD.MM.YYYY H:mm:ss") + '</td>'
 						+ '<td>' + getSpeedDialName(result[i].source_number) + '</td>'
-						+ '<td class="hasPopup" data-html="<b>Podrobnosti:</b> ' + result[i].destination_name + '">' + getSpeedDialName(result[i].destination_number) + '</td>'
+						+ '<td class="hasPopup" data-html="<b>Podrobnosti:</b> ' + getFlagFromPhoneNumber(unifyPhoneNo(result[i].destination_number)) + ' ' + result[i].destination_name + '">' + getSpeedDialName(result[i].destination_number) + '</td>'
 						+ '<td class="right hasPopup" data-html="<b>Délka vyzvánění:</b> ' + result[i].ringing_length + '&nbsp;s">' + callLength + '</td>'
 						+ '<td class="right hasPopup" data-html="<b>Minutová sazba:</b> ' + result[i].price_per_minute + '&nbsp;Kč<br><b>Zbylý kredit:</b> ' + result[i].balance_after + '&nbsp;Kč">' + price + '&nbsp;Kč</td>'
 						+ '<td class="center">' + result[i].line + '</td></tr>';
@@ -1363,7 +1397,7 @@ function redirectionsModal(id, time) {
 				outstring += '<tr class="' + (result[i].status == "missed" ? "error" : "") + '">'
 								+ '<td class="hasPopup" data-html="' + moment(result[i].date).format("DD.MM.YYYY H:mm:ss") + '">' + moment(result[i].date).format("DD.MM.YYYY H:mm:ss") + '</td>'
 								+ '<td>' + getSpeedDialName(result[i].source_number) + '</td>'
-								+ '<td class="hasPopup" data-html="<b>Podrobnosti:</b> ' + result[i].destination_name + '">' + getSpeedDialName(result[i].destination_number) + '</td>'
+								+ '<td class="hasPopup" data-html="<b>Podrobnosti:</b>' + result[i].destination_name + '">' + getSpeedDialName(result[i].destination_number) + '</td>'
 								+ '<td class="right hasPopup" data-html="<b>Délka vyzvánění:</b> ' + result[i].ringing_length + '&nbsp;s">' + result[i].length + '&nbsp;s</td>'
 								+ '<td class="right hasPopup" data-html="<b>Minutová sazba:</b> ' + result[i].price_per_minute + '&nbsp;Kč<br><b>Zbylý kredit:</b> ' + result[i].balance_after + '&nbsp;Kč">' + result[i].price + '&nbsp;Kč</td>'
 								+ '<td class="center">' + result[i].line + '</td></tr>';
@@ -1580,7 +1614,7 @@ function populateSmsTable(result) {
 		if (result[i].length < 60)
 			callLength = (result[i].length % 60) + "&nbsp;s";
 		outstring += '</td><td class="hasClickPopup" data-html="' + moment(result[i].date).format("DD.MM.YYYY H:mm:ss") + '">' + moment(result[i].date).format("DD.MM.YYYY H:mm:ss") + '</td><td>'
-			+ getSpeedDialName(result[i].source_number) + '</td><td>'
+			+ getSpeedDialName(result[i].source_number) + '</td><td class="hasPopup" data-html="<b>Podrobnosti:</b> ' + getFlagFromPhoneNumber(unifyPhoneNo(result[i].destination_number)) + '">'
 			+ getSpeedDialName(result[i].destination_number) + '</span></td><td class="right hasPopup" data-html="'
 			+ '<b>Zbylý kredit:</b> '
 			+ result[i].balance_after + '&nbsp;Kč">'
@@ -1838,12 +1872,13 @@ function loadStatistics() {
 				direction = "<i class='sign out icon'></i>Příchozí";
 			}
 			outString += "<tr>"
+							+ "<td>" + direction + "</td>"
 							+ "<td>" + data[i].destination + "</td>"
 							+ "<td class='center'>" + data[i].count + "</td>"
 							+ "<td class='right'>" + formatLength(data[i].length) + "&nbsp;min</td>"
 							+ "<td class='right'>" + formatPrice(data[i].price) + "&nbsp;Kč</td>"
 							+ "<td class='right'>" + data[i].price_per_minute + "&nbsp;Kč</td>"
-							+ "<td class='center'>" + direction + "</td></tr>";
+							 + "</tr>";
 		}
 		$("#destinationStatistics").html(outString);
 	});
@@ -1856,7 +1891,7 @@ function loadStatistics() {
 		//console.log(data);
 		var outString = "";
 		for (var i = 0; i < data.length; i++) {
-			outString += "<tr><td>" + data[i].destination_number + "</td><td>" + data[i].count + "</td></tr>"
+			outString += "<tr><td>" + unifyPhoneNo(data[i].destination_number) + "</td><td>" + data[i].count + "</td></tr>"
 		}
 		$("#missedStatistics").html(outString);
 		refreshCredit();
@@ -1978,3 +2013,46 @@ if ('serviceWorker' in navigator) {
 		});
 	});
 };
+
+
+
+const countryCodeToPhonePrefix = {'AC':'247','AD':'376','AE':'971','AF':'93','AG':'1268','AI':'1264','AL':'355','AM':'374','AO':'244','AQ':'672','AR':'54','AS':'1684','AT':'43','AU':'61','AW':'297','AX':'35818','AZ':'994','BA':'387','BB':'1246','BD':'880','BE':'32','BF':'226','BG':'359','BH':'973','BI':'257','BJ':'229','BL':'590','BM':'1441','BN':'673','BO':'591','BQ':'599','BR':'55','BS':'1242','BT':'975','BW':'267','BY':'375','BZ':'501','CA':'1','CC':'61','CD':'243','CF':'236','CG':'242','CH':'41','CI':'225','CK':'682','CL':'56','CM':'237','CN':'86','CO':'57','CR':'506','CU':'53','CV':'238','CW':'599','CX':'61','CY':'357','CZ':'420','DE':'49','DJ':'253','DK':'45','DM':'1767','DO':'1809','DZ':'213','EC':'593','EE':'372','EG':'20','EH':'212','ER':'291','ES':'34','ET':'251','FI':'358','FJ':'679','FK':'500','FM':'691','FO':'298','FR':'33','GA':'241','GB':'44','GD':'1473','GE':'995','GF':'594','GG':'441481','GH':'233','GI':'350','GL':'299','GM':'220','GN':'224','GP':'590','GQ':'240','GR':'30','GT':'502','GU':'1671','GW':'245','GY':'592','HK':'852','HN':'504','HR':'385','HT':'509','HU':'36','ID':'62','IE':'353','IL':'972','IM':'441624','IN':'91','IO':'246','IQ':'964','IR':'98','IS':'354','IT':'39','JE':'441534','JM':'1876','JO':'962','JP':'81','KE':'254','KG':'996','KH':'855','KI':'686','KM':'269','KN':'1869','KP':'850','KR':'82','KW':'965','KY':'1345','KZ':'7','LA':'856','LB':'961','LC':'1758','LI':'423','LK':'94','LR':'231','LS':'266','LT':'370','LU':'352','LV':'371','LY':'218','MA':'212','MC':'377','MD':'373','ME':'382','MF':'590','MG':'261','MH':'692','MK':'389','ML':'223','MM':'95','MN':'976','MO':'853','MP':'1670','MQ':'596','MR':'222','MS':'1664','MT':'356','MU':'230','MV':'960','MW':'265','MX':'52','MY':'60','MZ':'258','NA':'264','NC':'687','NE':'227','NF':'672','NG':'234','NI':'505','NL':'31','NO':'47','NP':'977','NR':'674','NU':'683','NZ':'64','OM':'968','PA':'507','PE':'51','PF':'689','PG':'675','PH':'63','PK':'92','PL':'48','PM':'508','PR':'1787','PS':'970','PT':'351','PW':'680','PY':'595','QA':'974','RE':'262','RO':'40','RS':'381','RU':'7','RW':'250','SA':'966','SB':'677','SC':'248','SD':'249','SE':'46','SG':'65','SH':'290','SI':'386','SJ':'47','SK':'421','SL':'232','SM':'378','SN':'221','SO':'252','SR':'597','SS':'211','ST':'239','SV':'503','SX':'1721','SY':'963','SZ':'268','TA':'290','TC':'1649','TD':'235','TG':'228','TH':'66','TJ':'992','TK':'690','TL':'670','TM':'993','TN':'216','TO':'676','TR':'90','TT':'1868','TV':'688','TW':'886','TZ':'255','UA':'380','UG':'256','US':'1','UY':'598','UZ':'998','VA':'379','VC':'1784','VE':'58','VG':'1284','VI':'1340','VN':'84','VU':'678','WF':'681','WS':'685','XK':'383','YE':'967','YT':'262','ZA':'27','ZM':'260','ZW':'263'};
+
+// Vytvoření obráceného mapování pro vyhledávání
+const phonePrefixToCountryCode = {};
+for (const [code, prefix] of Object.entries(countryCodeToPhonePrefix)) {
+	phonePrefixToCountryCode[prefix] = code;
+}
+
+function phonePrefixToFlag(prefix) {
+	// Najdeme kód země podle předvolby
+	const countryCode = phonePrefixToCountryCode[prefix];
+
+	if (!countryCode) {
+		return '🌐'; // Výchozí globus, pokud předvolbu neznáme
+	}
+
+	// Unicode regionální indikátory jsou kódy A-Z (U+1F1E6 až U+1F1FF)
+	// Vlajka se vytvoří kombinací dvou písmen kódu země
+	const firstChar = countryCode.charCodeAt(0) - 0x41 + 0x1F1E6;
+	const secondChar = countryCode.charCodeAt(1) - 0x41 + 0x1F1E6;
+
+	return String.fromCodePoint(firstChar) + String.fromCodePoint(secondChar);
+}
+
+function getFlagFromPhoneNumber(phoneNumber) {
+	// Odstranění všech nečíselných znaků
+	const cleanNumber = phoneNumber.replace(/\D/g, '');
+
+	// Procházíme předvolby od nejdelších (aby se neshodovaly kratší náhodně)
+	const sortedPrefixes = Object.keys(phonePrefixToCountryCode)
+		.sort((a, b) => b.length - a.length);
+
+	for (const prefix of sortedPrefixes) {
+		if (cleanNumber.startsWith(prefix)) {
+			return phonePrefixToFlag(prefix);
+		}
+	}
+
+	return '🌐'; // Výchozí ikona
+}

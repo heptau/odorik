@@ -158,7 +158,7 @@
 		style="display:none; /* overflow:hidden; width:100% */ width:calc(100% - 8px) !important; margin:0 !important; padding:0 !important">
 		<!-- TITLE -->
 		<h1 class="ui header" style="padding-left:8px">
-			<br>Odorik Connect<div class="ui grey label">v1.11.0</div>
+			<br>Odorik Connect<div class="ui grey label">v1.11.1</div>
 			<span style="float:right; padding-right:.8px" class="sub header" id="credit"></span>
 		</h1>
 		<!-- MENU -->
@@ -365,9 +365,9 @@
 					<tr>
 						<th class="res">ID</th>
 						<th class="res">Datum</th>
-						<th class="res">Odeslaých bytů</th>
-						<th class="res">Stažených bytů</th>
-						<th class="res">Bytů celkem</th>
+						<th class="res">Odesláno bytů</th>
+						<th class="res">Staženo bytů</th>
+						<th class="res">Celkem bytů</th>
 						<th class="res">Cena</th>
 						<th class="res">Cena za MB</th>
 						<th class="res">Telefonní číslo</th>
@@ -395,23 +395,27 @@
 
 			<div class="ui stackable grid">
 				<div class="row">
-					<div class="eleven wide column">
+					<div class="wide column">
 						<h3>Podle destinace</h3>
 						<table class="ui black celled table">
 							<thead>
 								<tr>
+									<th class="res" style="width:calc(4em+4%)">Směr</th>
 									<th class="res" style="width:calc(8em+80%)">Destinace</th>
 									<th class="center" style="width:calc(1em+4%)">Počet</th>
 									<th class="center" style="width:calc(4em+4%)">Délka</th>
 									<th class="center" style="width:calc(5em+4%)">Cena</th>
 									<th class="center" style="width:calc(4em+4%)">Za minutu</th>
-									<th class="center" style="width:calc(4em+4%)">Směr</th>
 								</tr>
 							</thead>
 							<tbody id="destinationStatistics">
 							</tbody>
 						</table>
 					</div>
+				</div>
+			</div>
+			<div class="ui stackable grid">
+				<div class="row">
 					<div class="five wide column">
 						<h3>Zmeškané</h3>
 						<table class="ui red celled table">
