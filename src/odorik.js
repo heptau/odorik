@@ -932,6 +932,16 @@ function sipPhoneNo(phoneNumber) {
 	return phoneNumber;
 }
 
+function emailToSymbol(email, fallback) {
+  if (email && typeof email === 'string' && email.includes('@')) {
+    return '✉️';
+  } else if (fallback !== undefined) {
+    return fallback;
+  } else {
+    return '❌';
+  }
+}
+
 function toSymbol(str) {
 	switch (String(str).toLowerCase()) {
 		case "active":
@@ -1691,12 +1701,10 @@ function loadLines() {
 							+ "<td class='center'>" + toSymbol(data[i].active_sip) + "</td>"
 							+ "<td class='center'>" + toSymbol(data[i].active_anonymous) + "</td>"
 							+ "<td class='center'>" + toSymbol(data[i].active_greeting) + "</td>"
-							+ "<td class='center'>" + toSymbol(data[i].missed_call_email) + "</td>"
-							+ "<td class='center'>" + toSymbol(data[i].recording_email) + "</td>"
-							+ "<td class='center'>" + toSymbol(data[i].voicemail_email) + "</td>"
-							+ "<td class='center'>" + toSymbol(data[i].backup_number_email) + "</td>"
-							+ "<td class='center'>" + data[i].incoming_call_name_format + "</td>"
-							+ "<td class='center'>" + data[i].incoming_call_number_format + "</td></tr>"
+							+ "<td class='center hasClickPopup' data-html='" + data[i].missed_call_email + "'>" + emailToSymbol(data[i].missed_call_email) + "</td>"
+							+ "<td class='center hasClickPopup' data-html='" + data[i].recording_email + "'>" + emailToSymbol(data[i].recording_email) + "</td>"
+							+ "<td class='center hasClickPopup' data-html='" + data[i].voicemail_email + "'>" + emailToSymbol(data[i].voicemail_email, '🎧') + "</td>"
+							+ "<td class='center hasClickPopup' data-html='" + data[i].backup_number_email + "'>" + emailToSymbol(data[i].backup_number_email) + "</td>"
 		}
 		$("#lines").html(outString);
 		refreshCredit();
@@ -1891,7 +1899,7 @@ function loadStatistics() {
 		//console.log(data);
 		var outString = "";
 		for (var i = 0; i < data.length; i++) {
-			outString += "<tr><td>" + unifyPhoneNo(data[i].destination_number) + "</td><td>" + data[i].count + "</td></tr>"
+			outString += "<tr><td>" + unifyPhoneNo(data[i].destination_number) + "</td><td class='center'>" + data[i].count + "</td></tr>"
 		}
 		$("#missedStatistics").html(outString);
 		refreshCredit();
