@@ -972,7 +972,12 @@ function toSymbol(str) {
 }
 
 function formatNumber(number) {
-	const str = number.toString();
+	let num = parseInt(number);
+	if (isNaN(num)) {
+		return "<span>0</span>";
+	}
+
+	const str = num.toString();
 	const parts = [];
 
 	for (let i = str.length; i > 0; i -= 3) {
@@ -980,7 +985,7 @@ function formatNumber(number) {
 	}
 
 	const formattedParts = parts.map(part => `<span>${part}</span>`);
-	return formattedParts.join("");
+	return formattedParts.join(" ");
 }
 
 function removeNonUCS2Chars(text) {
@@ -1687,8 +1692,8 @@ function loadLines() {
 		for (var i = 0; i < data.length; i++) {
 			outString += '<tr ontouchstart="handleTouchStart(event)" ontouchend="handleTouchEnd(event)" ontouchcancel="handleTouchCancel(event)" oncontextmenu="lineContextMenu(event, \'' + data[i].caller_id + '\', \'' + data[i].name + '\'); return false;">'
 							+ "<td class='center hasClickPopup' data-html='<b>SIP password:</b> " + data[i].sip_password + "'>" + data[i].id + "</td>"
-							+ "<td>" + data[i].name + "</td>"
-							+ "<td>" + unifyPhoneNo(data[i].caller_id) + "</td>"
+							+ "<td class='hasClickPopup' data-html='" + data[i].name + "'>" + data[i].name + "</td>"
+							+ "<td class='hasClickPopup' data-html='" + unifyPhoneNo(data[i].caller_id) + "'>" + unifyPhoneNo(data[i].caller_id) + "</td>"
 							+ "<td class='center'>" + toSymbol(data[i].public_name) + "</td>"
 							+ "<td class='center'>" + toSymbol(data[i].backup_number) + "</td>"
 							+ "<td class='center'>" + toSymbol(data[i].active_822) + "</td>"
@@ -1735,30 +1740,26 @@ function loadSimCards() {
 	}).done(function (data, textStatus, xhr) {
 		var outString = "";
 		for (var i = 0; i < data.length; i++) {
-			outString += '<tr>'
-							+ "<td class='center'>" + data[i].id + "</td>"
-							+ "<td>" + data[i].sim_number + "</td>"
+
+			outString += "<tr>"
+							+ "<td class='center'>" + data[i].sim_number + "<br/><i>" + data[i].id + "</i></td>"
 							+ "<td class='center'>" + toSymbol(data[i].state) + "</td>"
 							+ "<td class='center'>" + data[i].changes_in_progress + "</td>"
-							+ "<td class='right'>" + toSymbol(data[i].data_package) + "</td>"
-							+ "<td class='right'>" + toSymbol(data[i].data_package_for_next_month) + "</td>"
-							+ "<td class='number'>" + formatNumber(toSymbol(data[i].data_bought_total)) + "</td>"
-							+ "<td class='number'>" + formatNumber(toSymbol(data[i].data_used)) + "</td>"
-							+ "<td class='center'>" + toSymbol(data[i].voice_package) + "</td>"
-							+ "<td class='center'>" + toSymbol(data[i].voice_package_for_next_month) + "</td>"
-							+ "<td class='center'>" + toSymbol(data[i].package_delayed_billing) + "</td>"
-							+ "<td class='center'>" + toSymbol(data[i].package_delayed_billing_for_next_month) + "</td>"
-							+ "<td class='center' title='" + data[i].missed_calls_register + "'>" + toSymbol(data[i].missed_calls_register) + "</td>"
-							+ "<td class='center' title='" + data[i].mobile_data + "'>" + toSymbol(data[i].mobile_data) + "</td>"
-							+ "<td class='center' title='" + data[i].lte + "'>" + toSymbol(data[i].lte) + "</td>"
-							+ "<td class='center' title='" + data[i].lte_for_next_month + "'>" + toSymbol(data[i].lte_for_next_month) + "</td>"
+							+ "<td class='right'>" + toSymbol(data[i].data_package) + "<br/><i>" + toSymbol(data[i].data_package_for_next_month) + "</i></td>"
+							+ "<td class='number hasClickPopup' data-html='<b>Zbývá:</b> " + formatNumber((data[i].data_bought_total - data[i].data_used)/1024) + " kB'>" + formatNumber(data[i].data_bought_total/1048576) + "&nbsp;MB<br/><i>" + formatNumber(data[i].data_used/1048576) + "&nbsp;MB</i></td>"
+							+ "<td class='center'>" + toSymbol(data[i].voice_package) + "<br></i>" + toSymbol(data[i].voice_package_for_next_month) + "</i></td>"
+							+ "<td class='center'>" + toSymbol(data[i].package_delayed_billing) + "<br/><i>" + toSymbol(data[i].package_delayed_billing_for_next_month) + "</i></td>"
+							+ "<td class='center'>" + toSymbol(data[i].missed_calls_register) + "</td>"
+							+ "<td class='center'>" + toSymbol(data[i].mobile_data) + "</td>"
+							+ "<td class='center'>" + toSymbol(data[i].lte) + "<br/><i>" + toSymbol(data[i].lte_for_next_month) + "</i></td>"
 							+ "<td class='center'>" + data[i].roaming + "</td>"
-							+ "<td class='center' title='" + data[i].premium_services + "'>" + toSymbol(data[i].premium_services) + "</td></tr>"
+							+ "<td class='center'>" + toSymbol(data[i].premium_services) + "</td></tr>"
 		}
 		$("#simCards").html(outString);
 		refreshCredit();
-	});
 
+		$(".hasClickPopup").popup({ on: "click" });
+	});
 
 	if ($(".ui.container").css("display") == "none") {
 		$("#loadingDimmer").dimmer("hide");
