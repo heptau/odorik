@@ -242,7 +242,7 @@ paths:
       parameters:
         - name: from
           in: query
-          required: false
+          required: true
           description: počátek časového rozmezí hovorů; řetězec formátovaný jako dateTime z XML Schema
           schema:
             type: string
@@ -250,7 +250,7 @@ paths:
             example: "2023-02-01T00:00:00+01:00"
         - name: to
           in: query
-          required: false
+          required: true
           description: konec časové rozmezí hovorů; řetězec formátovaný jako dateTime z XML Schema
           schema:
             type: string

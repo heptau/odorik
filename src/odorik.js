@@ -1,42 +1,97 @@
 // coding: utf-8
 
-// NASTAVENÍ
+// --- NASTAVENÍ ---
 
-// API uživatelské jméno a heslo :: automatické přihlášení. Toto uložení jména a hesla není bezpečné - kdokoli, kdo má ke stránce přistup, si může zobrazit zdrojový kód a jméno i heslo si přečíst.
-var APIuser = "";
-var APIpass = "";
+// API uživatelské jméno a heslo
+let APIuser = "";
+let APIpass = "";
 
-// Zamknutá čísla :: čárkou oddělený seznam zkratek (klapek), které nejde editovat
-// př. var lockedNumbers = "1,7" // zakáže čísla 1 a 7
-var lockedNumbers = "";
+// Zamknutá čísla
+const lockedNumbers = ""; // např. "1,7"
 
-// Skrytí zamknutých čísel :: true = nezobrazovat vůbec, false = zobrazit, ale zakázat úpravy
-// př. var hideLockedNumbers = true // nezobrazí vůbec
-var hideLockedNumbers = true;
+// Skrytí zamknutých čísel
+const hideLockedNumbers = true;
 
-// Povolené linky :: čárkou oddělený seznam linek, které jsou uživateli dostupné
-// Pokud je pole prázdné, tak jsou všechny linky povolené
-// př. var allowedLines = "300100,300200"; // Povolí jen linku 300100 a 300200
-var allowedLines = "";
+// Povolené linky
+const allowedLines = ""; // např. "300100,300200"
 
-// Povolit animace :: true = povolit, false = zakázat
-// př. var enableAnimations = false; // zakáže animace
-var enableAnimations = true;
+// Povolit animace
+const enableAnimations = true;
 
-// Přednastavené číslo pro callback
-// př. var defaultCallbackNumber = "0085023815827"; // nastaví výchozí číslo pro callback na 0085023815827
-var defaultCallbackNumber = "";
-
-// Přednastavená linka pro callback
-// př. var defaultCallbackLine = "623400"; // nastaví výchozí linku pro callback na 623400
-var defaultCallbackLine = "";
+// Přednastavené číslo a linka pro callback
+const defaultCallbackNumber = "";
+const defaultCallbackLine = "";
 
 // Počet položek na stránku
-// př. var pageLength = 24; // nastaví počet položek na stránku na 24
-var pageLength = 100;
+const pageLength = 100;
 
+
+// --- GLOBAL VARIABLES & STATE ---
 
 let phoneDirectory = [];
+
+// Optimalizace: Mapa pro okamžité vyhledání jména podle čísla (O(1) místo O(n))
+const contactsMap = new Map();
+
+// Původní pole zachována pro zpětnou kompatibilitu a importy
+let allShortcuts = [];
+let allNumbers = [];
+let allNames = [];
+
+let page = 1;
+let totalPages = 1;
+let totalCalls = 1;
+let fromDate;
+let toDate;
+let callHistory = [];
+let smsHistory = [];
+let redirectedCalls = [];
+let statsLine = -10;
+let preload = false;
+
+// Dočasné hodnoty pro kontextová menu
+let selectedLine;
+let selectedContact;
+let selectedContactNumber;
+let selectedContactName;
+
+
+// --- HELPERS ---
+
+// Pomocná funkce pro bezpečné vkládání textu (XSS ochrana), tam kde NECHCEME HTML
+function escapeHtml(text) {
+	if (text === null || text === undefined) return "";
+	const map = {
+		'&': '&amp;',
+		'<': '&lt;',
+		'>': '&gt;',
+		'"': '&quot;',
+		"'": '&#039;'
+	};
+	return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
+}
+
+// Funkce pro bezpečné vložení řetězce do atributu onclick/oncontextmenu (escapuje uvozovky)
+function escapeJsString(text) {
+	if (!text) return "";
+	return String(text).replace(/'/g, "\\'");
+}
+
+const setDuration = enableAnimations ? 300 : 0;
+
+// Disable caching of AJAX responses
+$.ajaxSetup({ cache: false });
+
+// Incompatible browser warning
+if (window.navigator.userAgent.indexOf("MSIE") !== -1) {
+	const style = document.createElement('style');
+	style.innerHTML = '#warningIE {display:none;}';
+	document.head.appendChild(style);
+	$(document).ready(() => $("#warningIE").hide());
+}
+
+
+// --- PHONE DIRECTORY LOGIC ---
 
 async function loadPhoneDirectory() {
 	try {
@@ -52,12 +107,12 @@ async function loadPhoneDirectory() {
 }
 
 function getPhoneNumberDescription(phoneNumber) {
-	for (let entry of phoneDirectory) {
+	for (const entry of phoneDirectory) {
 		if (entry.r.test(phoneNumber)) {
 			return entry.d;
 		}
 	}
-	return ""; //Unknown
+	return "";
 }
 
 function lookupPhoneNumber() {
@@ -66,153 +121,78 @@ function lookupPhoneNumber() {
 	document.getElementById('result').innerText = result;
 }
 
-// Načtení dat při načtení stránky
 window.onload = loadPhoneDirectory;
 
 
-// Disable caching of AJAX responses (so the data is properly updated)
-$.ajaxSetup({
-	cache: false
-});
-
-// Incompatible browser warning
-if (window.navigator.userAgent.indexOf("MSIE") == -1) {
-	document.write("<style type='text/css'>#warningIE {display:none;}</style>");
-	$("#warningIE").hide();
-}
-
-// Initialize helper variables
-var number;
-var array;
-
-if (enableAnimations) {
-	var setDuration = 300;
-} else {
-	var setDuration = 0;
-}
-
-var allNumbers = [];
-var allNames = [];
-var allShortcuts = [];
-
-var page = 1;
-var totalPages = 1;
-var totalCalls = 1;
-var fromDate;
-var toDate;
-var callHistory = [];
-var smsHistory = [];
-var redirectedCalls = [];
-
-var statsLine = -10;
-
-var preload = false;
-
-
-//temporary values
-
-var selectedLine;
-var selectedContact;
-var selectedContactNumber;
-var selectedContactName
+// --- AUTH & INIT ---
 
 function isTouchDevice() {
 	return 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
 }
 
-// Detect if user is logged in
 function loggedIn() {
-	// Is the data in localStorage?
-	if (localStorage.getItem('username') !== null && localStorage.getItem('password') !== null || (APIuser != "" && APIpass != "")) {
+	if ((localStorage.getItem('username') !== null && localStorage.getItem('password') !== null) || (APIuser !== "" && APIpass !== "")) {
 		if (localStorage.getItem('username') !== null && localStorage.getItem('password') !== null) {
 			APIuser = localStorage.getItem('username');
 			APIpass = localStorage.getItem('password');
 		}
 
-		// Is the data valid?
 		$.ajax({
 			url: 'https://www.odorik.cz/api/v1/lines',
 			type: 'GET',
-			data: {
-				user: APIuser,
-				password: APIpass
-			},
-			success: function (result) {
-				// Check if there are any errors
-				if (result.indexOf("error") == -1) {
-					// No errors
-				} else {
-					// Logout and try again
+			data: { user: APIuser, password: APIpass },
+			success: function(result) {
+				if (result.indexOf("error") !== -1) {
 					logout();
 				}
 			}
 		});
 		return true;
-	} else {
-		return false;
 	}
+	return false;
 }
 
-// Show login dialog
 function logInDialog() {
-	// Initialitze helper variable
-	badlogin = false;
-	// Show the dialog
+	let badlogin = false;
 	$('#loginModal').modal({
 		closable: false,
 		duration: setDuration,
 		blurring: true,
-		onApprove: function () {
-			// Animate button
+		onApprove: function() {
 			$("#loginModal .button").addClass("loading");
-
-			// Get values from fields
 			APIuser = $('input[name="login-name"]').val();
 			APIpass = $('input[name="login-pass"]').val();
 
-			// Connect to API
 			$.ajax({
 				url: 'https://www.odorik.cz/api/v1/lines',
 				type: 'GET',
-				data: {
-					user: APIuser,
-					password: APIpass
-				},
-				success: function (result) {
-					// Stop button animation
+				data: { user: APIuser, password: APIpass },
+				success: function(result) {
 					$("#loginModal .button").removeClass("loading");
-					// Check if there are any errors
-					if (result.indexOf("error") == 0) {
-						// Show error animations
-						$("#loginModal").transition('shake', setDuration + "ms");
+					if (String(result).indexOf("error") === 0) {
+						$("#loginModal").transition('shake', `${setDuration}ms`);
 						if (badlogin)
-							$('#badLogin').transition("pulse", setDuration + "ms");
+							$('#badLogin').transition("pulse", `${setDuration}ms`);
 						else {
-							$('#badLogin').transition("fade", setDuration + "ms");
+							$('#badLogin').transition("fade", `${setDuration}ms`);
 							badlogin = true;
 						}
 					} else {
-						// Hide and log in
 						$('#loginModal').modal('hide');
 						init();
-
 						localStorage.setItem('username', APIuser);
-						//localStorage.setItem('password', APIpass); // TODO Save password is not secure
 					}
 				}
 			});
-
 			return false;
 		}
 	}).modal('show');
 }
 
-// Show logout confirmation modal
 function logoutModal() {
 	openDialog('logout-user');
 }
 
-// Log out the user
 function logout() {
 	localStorage.removeItem('username');
 	localStorage.removeItem('password');
@@ -220,80 +200,54 @@ function logout() {
 	location.reload();
 }
 
-// Initialize date
 function initDate() {
+	const rangeSpan = $('#reportrange span');
 	if (typeof localStorage.lastDate == "undefined") {
-		$('#reportrange span').html(moment().subtract(29, 'days').format('DD.MM.YYYY') + ' - ' + moment().format('DD.MM.YYYY'));
-	}
-	else {
+		rangeSpan.html(moment().subtract(29, 'days').format('DD.MM.YYYY') + ' - ' + moment().format('DD.MM.YYYY'));
+	} else {
 		if (localStorage.lastDate == "today") {
-			$('#reportrange span').html(moment().format('DD.MM.YYYY') + ' - ' + moment().format('DD.MM.YYYY'));
-		}
-		else {
-			$('#reportrange span').html(localStorage.lastDate);
+			rangeSpan.html(moment().format('DD.MM.YYYY') + ' - ' + moment().format('DD.MM.YYYY'));
+		} else {
+			rangeSpan.html(localStorage.lastDate);
 		}
 	}
 
-	fromDate = moment($('#reportrange span').text().split(" - ")[0], 'DD.MM.YYYY').toISOString();
-	toDate = moment($('#reportrange span').text().split(" - ")[1], 'DD.MM.YYYY').add(1, "days").toISOString();
+	const text = rangeSpan.text();
+	fromDate = moment(text.split(" - ")[0], 'DD.MM.YYYY').toISOString();
+	toDate = moment(text.split(" - ")[1], 'DD.MM.YYYY').add(1, "days").toISOString();
 }
 initDate();
 
-// Initialize dropdown with section selection
 function initDropdown() {
-	var firstRun = true;
+	let firstRun = true;
 	$('.ui.dropdown').dropdown();
 	$("#statistics-line").dropdown({
-		onChange: function (value, text, $selectedItem) {
-			if (value != "all") {
-				statsLine = value;
-			}
-			else {
-				statsLine = -10;
-			}
+		onChange: function(value) {
+			statsLine = (value != "all") ? value : -10;
 			loadStatistics();
 		}
 	});
 	$('#categorySelector').dropdown({
-		onChange: function (value, text, $selectedItem) {
+		onChange: function(value) {
 			if (!firstRun) {
-
 				if (value == "logout") {
 					logoutModal();
-
 					$(".ui.dropdown").dropdown("set selected", localStorage.prevCategory);
-
 				} else {
 					localStorage.setItem("prevCategory", value);
 					$('#categorySelector').addClass("loading");
 				}
 				switch (value) {
-					case "speedDials":
-						loadContacts();
-						break;
-					case "callHistory":
-						loadCalls();
-						break;
-					case "smsHistory":
-						loadSms();
-						break;
-					case "activeCalls":
-						loadActiveCalls();
-						break
-					case "lines":
-						loadLines();
-						break;
-					case "simCards":
-						loadSimCards();
-						break;
-					case "mobileData":
-						loadMobileData();
-						break;
-					case "statistics":
-						loadStatistics();
+					case "speedDials": loadContacts(); break;
+					case "callHistory": loadCalls(); break;
+					case "smsHistory": loadSms(); break;
+					case "activeCalls": loadActiveCalls(); break;
+					case "lines": loadLines(); break;
+					case "simCards": loadSimCards(); break;
+					case "mobileData": loadMobileData(); break;
+					case "statistics": loadStatistics(); break;
 				}
-			}
-			else {
+			} else {
 				firstRun = false;
 			}
 		}
@@ -303,28 +257,24 @@ initDropdown();
 
 if (typeof localStorage.order == "undefined") {
 	$("select[name=call-order]").val("newest");
-	localStorage.order = "newest"
+	localStorage.order = "newest";
 }
 
 if (localStorage.order == "newest") {
 	$("select[name=call-order]").val("newest");
-}
-else {
+} else {
 	$("select[name=call-order]").val("oldest");
 }
 
-// Is user logged in?
 if (loggedIn()) {
-	init(); // Load page
+	init();
 } else {
-	logInDialog(); // Show login dialog
+	logInDialog();
 }
 
-// Initialization
 function init() {
 	$("#loadingDimmer").dimmer("show");
 	refreshCredit(true);
-
 	updateLines();
 	$("input[name=call-number]").val(defaultCallbackNumber);
 
@@ -332,170 +282,153 @@ function init() {
 		localStorage.setItem("prevCategory", "speedDials");
 	}
 
-	// Load contacts/calls
-
 	preload = true;
 	loadContacts();
 
 	$(".ui.dropdown").dropdown("set selected", localStorage.prevCategory);
 	$("." + localStorage.prevCategory + "Content").show();
 
+	// Načtení konkrétní kategorie
 	switch (localStorage.prevCategory) {
-		case "speedDials":
-			loadContacts();
-			break;
-		case "statistics":
-			loadStatistics();
-			break;
-		case "smsHistory":
-			loadSms();
-			break;
-		case "activeCalls":
-			loadActiveCalls();
-			break;
-		case "lines":
-			loadLines();
-			break;
-		case "simCards":
-			loadSimCards();
-			break;
-		case "mobileData":
-			loadMobileData();
-			break;
+		case "speedDials": loadContacts(); break;
+		case "statistics": loadStatistics(); break;
+		case "smsHistory": loadSms(); break;
+		case "activeCalls": loadActiveCalls(); break;
+		case "lines": loadLines(); break;
+		case "simCards": loadSimCards(); break;
+		case "mobileData": loadMobileData(); break;
 		default:
 			$(".callHistoryContent").show();
 			loadCalls();
 	}
 }
 
-var lastCreditUpdated = 0;
+let lastCreditUpdated = 0;
 
 function refreshCredit(forceUpdate) {
-	var currentTime = new Date().getTime();
-	var timeDiff = currentTime - lastCreditUpdated;
-	var shouldUpdate = forceUpdate || timeDiff >= 9 * 60 * 1000; // 9 minutes in milliseconds
+	const currentTime = new Date().getTime();
+	const timeDiff = currentTime - lastCreditUpdated;
+	const shouldUpdate = forceUpdate || timeDiff >= 9 * 60 * 1000;
 
-	if (!shouldUpdate) {
-		return; // Skip update if not enough time has passed and forceUpdate is not true
-	}
+	if (!shouldUpdate) return;
 
 	$.ajax({
 		url: 'https://www.odorik.cz/api/v1/balance',
 		type: 'GET',
-		data: {
-			user: APIuser,
-			password: APIpass
-		}
-	}).done(function (data, textStatus, xhr) {
-		$("#credit").html("<b>Kredit: </b>" + data + "&nbsp;Kč");
-		lastCreditUpdated = new Date().getTime(); // Update the last update timestamp
+		data: { user: APIuser, password: APIpass }
+	}).done(function(data) {
+		// Zde musí být .html(), protože data můžou obsahovat formátování,
+		// ale data z API (číslo) jsou bezpečná.
+		$("#credit").html(`<b>Kredit: </b>${data}&nbsp;Kč`);
+		lastCreditUpdated = new Date().getTime();
 	});
 }
 
-
-// Shows the "dimmer" element - for displaying error messages
 function dim(status, text) {
-	$('#dimmer h1 i').removeClass("warning sign checkmark");
-	if (status == true) {
-		$('#dimmer h1 i').addClass("checkmark");
+	const h1Icon = $('#dimmer h1 i');
+	h1Icon.removeClass("warning sign checkmark");
+	if (status === true) {
+		h1Icon.addClass("checkmark");
 	} else {
-		$('#dimmer h1 i').addClass("warning sign");
+		h1Icon.addClass("warning sign");
 	}
+	// Zde necháváme .html(text), aby se vykreslilo případné formátování chybové hlášky
 	$('#dimmer small').html(text);
-	setTimeout("$('#dimmer').dimmer('show');", 800)
-	setTimeout("$('#dimmer').dimmer('hide');", 2100);
+	setTimeout(() => $('#dimmer').dimmer('show'), 800);
+	setTimeout(() => $('#dimmer').dimmer('hide'), 2100);
 }
 
 
-// CONTACTS SECTION
+// --- CONTACTS SECTION ---
 
-// Reload list
 function loadContacts() {
 	allShortcuts = [];
 	allNumbers = [];
 	allNames = [];
+	contactsMap.clear();
 
 	$.ajax({
 		url: 'https://www.odorik.cz/api/v1/speed_dials.json',
 		type: 'GET',
-		data: {
-			user: APIuser,
-			password: APIpass
-		},
-		success: function (result) {
-			outstring = "";
-			for (var i = 0; i < result.length; i++) {
-				allNumbers.push(result[i].number);
-				allShortcuts.push(result[i].shortcut);
-				allNames.push(result[i].name);
+		data: { user: APIuser, password: APIpass },
+		success: function(result) {
+			let outstring = "";
+			for (let i = 0; i < result.length; i++) {
+				const item = result[i];
+				const unifiedNum = unifyPhoneNo(item.number);
 
-				if (editableLine("main", result[i].shortcut)) {
-					outstring
-						+= '<tr ontouchstart="handleTouchStart(event)" ontouchend="handleTouchEnd(event)" ontouchcancel="handleTouchCancel(event)" oncontextmenu="contactContextMenu(event, \'' + result[i].shortcut + '\', \'' + result[i].number + '\', \'' + result[i].name + '\'); return false;">'
-						+ '<td class="table-name-' + result[i].shortcut + '">' + result[i].name + '</td>'
-						+ '<td class="table-num-' + result[i].shortcut + '">' + getFlagFromPhoneNumber(unifyPhoneNo(result[i].number)) + ' ' + unifyPhoneNo(result[i].number) + '</td>'
-						+ '<td class="center table-short-' + result[i].shortcut + '">' + result[i].shortcut + '</td>'
-						+ '<td>'
-						+ '</td></tr>';
-				} else {
-					if (hideLockedNumbers == false) {
-						outstring
-							+= '<tr>'
-							+ '<td class="table-name-' + result[i].shortcut + '">' + result[i].name + '</td>'
-							+ '<td class="table-num-' + result[i].shortcut + '">' + unifyPhoneNo(result[i].number) + '</td>'
-							+ '<td class="center table-short-' + result[i].shortcut + '">' + result[i].shortcut + '</td>'
-							+ '<td>'
-							+ '</td></tr>';
-					}
+				// Naplnění polí pro legacy funkce
+				allNumbers.push(item.number);
+				allShortcuts.push(item.shortcut);
+				allNames.push(item.name);
+
+				// Naplnění mapy pro rychlé vyhledávání
+				// Ukládáme originální jméno (s HTML tagy)
+				contactsMap.set(item.number, { name: item.name, unified: unifiedNum });
+				// Volitelně můžeme mapovat i unifikované číslo, pokud API historie vrací jiný formát
+				if (item.number !== unifiedNum) {
+					 contactsMap.set(unifiedNum, { name: item.name, unified: unifiedNum });
+				}
+
+				const touchEvents = `ontouchstart="handleTouchStart(event)" ontouchend="handleTouchEnd(event)" ontouchcancel="handleTouchCancel(event)"`;
+				// DŮLEŽITÉ: Pro JS události musíme jméno escapovat (kvůli uvozovkám)
+				const jsSafeName = escapeJsString(item.name);
+				const contextMenu = `oncontextmenu="contactContextMenu(event, '${item.shortcut}', '${item.number}', '${jsSafeName}'); return false;"`;
+
+				// DŮLEŽITÉ: Zde NEPOUŽÍVÁME escapeHtml(item.name), protože Odorik používá <b> a <i> v názvu pro formátování.
+				// Ponecháváme item.name "raw", aby se renderovalo tučné písmo, stejně jako v originálu.
+
+				if (editableLine("main", item.shortcut)) {
+					outstring += `<tr ${touchEvents} ${contextMenu}>
+						<td class="table-name-${item.shortcut}">${item.name}</td>
+						<td class="table-num-${item.shortcut}">${getFlagFromPhoneNumber(unifiedNum)} ${escapeHtml(unifiedNum)}</td>
+						<td class="center table-short-${item.shortcut}">${escapeHtml(item.shortcut)}</td>
+						<td></td></tr>`;
+				} else if (!hideLockedNumbers) {
+					outstring += `<tr>
+						<td class="table-name-${item.shortcut}">${item.name}</td>
+						<td class="table-num-${item.shortcut}">${escapeHtml(unifiedNum)}</td>
+						<td class="center table-short-${item.shortcut}">${escapeHtml(item.shortcut)}</td>
+						<td></td></tr>`;
 				}
 			}
 			$("#tableContacts").html(outstring);
 			refreshCredit();
 
-
-			if (preload == false) {
+			if (preload === false) {
 				if ($(".ui.container").css("display") == "none") {
 					$("#loadingDimmer").dimmer("hide");
 					$("#loadingDimmer").remove();
-					$(".ui.container").transition("fade", setDuration + "ms");
+					$(".ui.container").transition("fade", `${setDuration}ms`);
 				}
-
 				$('#categorySelector').removeClass("loading");
-
 				$("section").hide();
 				$(".dynamic").hide();
 				$(".speedDialsContent").show();
-			}
-			else {
+			} else {
 				preload = false;
 			}
 		}
 	});
 }
 
-
-// Remove Contact
 function deleteContactModal(line, id) {
 	selectedContact = id;
 	selectedLine = line;
 	openDialog('delete-contact');
 }
 
-
 function positionDialog(dialog, event) {
-	var mouseX = event.clientX;
-	var mouseY = event.clientY;
+	const mouseX = event.clientX;
+	const mouseY = event.clientY;
+	const dialogWidth = dialog.offsetWidth;
+	const dialogHeight = dialog.offsetHeight;
+	const windowWidth = window.innerWidth;
+	const windowHeight = window.innerHeight;
 
-	var dialogWidth = dialog.offsetWidth;
-	var dialogHeight = dialog.offsetHeight;
+	let dialogLeft = 2 * ((windowWidth / 2) - windowWidth + mouseX);
+	let dialogTop = 2 * ((windowHeight / 2) - windowHeight + mouseY);
 
-	var windowWidth = window.innerWidth;
-	var windowHeight = window.innerHeight;
-
-	var dialogLeft = 2 * ((windowWidth / 2) - windowWidth + mouseX);
-	var dialogTop = 2 * ((windowHeight / 2) - windowHeight + mouseY);
-
-	// Omezení pozicování dialogu, aby zůstal uvnitř okna
 	if (dialogLeft < 2 * ((windowWidth / 2) - windowWidth) + dialogWidth + 40) {
 		dialogLeft = 2 * ((windowWidth / 2) - windowWidth) + dialogWidth + 40;
 	} else if (dialogLeft + dialogWidth + 40 > windowWidth) {
@@ -512,21 +445,16 @@ function positionDialog(dialog, event) {
 	dialog.style.top = dialogTop + 'px';
 }
 
-
 function activeContextMenu(event, id) {
 	openDialog('activeContextMenu');
-	var dialog = document.getElementById('activeContextMenu');
-	positionDialog(dialog, event);
+	positionDialog(document.getElementById('activeContextMenu'), event);
 }
-
 
 function lineContextMenu(event, number, name) {
 	selectedContactNumber = number;
 	selectedContactName = name;
 	openDialog('lineContextMenu');
-
-	var dialog = document.getElementById('lineContextMenu');
-	positionDialog(dialog, event);
+	positionDialog(document.getElementById('lineContextMenu'), event);
 }
 
 function contactContextMenu(event, shortcut, number, name) {
@@ -534,75 +462,60 @@ function contactContextMenu(event, shortcut, number, name) {
 	selectedContactNumber = number;
 	selectedContactName = name;
 	openDialog('contactContextMenu');
-
-	var dialog = document.getElementById('contactContextMenu');
-	positionDialog(dialog, event);
+	positionDialog(document.getElementById('contactContextMenu'), event);
 }
 
 function deleteContact() {
-	if (selectedLine == "main") {
-		requestURL = 'https://www.odorik.cz/api/v1/speed_dials/' + selectedContact + '.json';
-	} else {
-		requestURL = "https://www.odorik.cz/api/v1/lines/" + selectedLine + '/speed_dials/' + selectedContact + '.json';
-	}
+	let requestURL = (selectedLine == "main")
+		? `https://www.odorik.cz/api/v1/speed_dials/${selectedContact}.json`
+		: `https://www.odorik.cz/api/v1/lines/${selectedLine}/speed_dials/${selectedContact}.json`;
 
 	document.getElementById("delete-contact").close();
 
 	$.ajax({
 		url: requestURL,
 		type: 'DELETE',
-		data: {
-			user: APIuser,
-			password: APIpass
-		},
-		success: function (result) {
-			if (typeof result.errors != "undefined") {
-				parseErrors(result);
-			}
-			setTimeout("loadContacts();", 500);
+		data: { user: APIuser, password: APIpass },
+		success: function(result) {
+			if (typeof result.errors != "undefined") parseErrors(result);
+			setTimeout(() => loadContacts(), 500);
 		}
 	});
 }
 
-
 function splitContactName(fullname) {
-	var name = (fullname.match(/^([^<]*)/)?.[1]?.trim()) || '';
-	var surname = (fullname.match(/<b>(.*?)<\/b>/)?.[1]) || '';
-	var note = (fullname.match(/<i>(.*?)<\/i>/)?.[1]) || '';
-	return {
-		name: name,
-		surname: surname,
-		note: note
-	};
+	const name = (fullname.match(/^([^<]*)/)?.[1]?.trim()) || '';
+	const surname = (fullname.match(/<b>(.*?)<\/b>/)?.[1]) || '';
+	const note = (fullname.match(/<i>(.*?)<\/i>/)?.[1]) || '';
+	return { name, surname, note };
 }
 
-// Edit Contact
 function editContact(line, id, name, number) {
+	const split = splitContactName(name);
 	$('#edit-shortcut').val(id);
-	$('#edit-name').val(splitContactName(name).name);
-	$('#edit-surname').val(splitContactName(name).surname);
-	$('#edit-note').val(splitContactName(name).note);
+	$('#edit-name').val(split.name);
+	$('#edit-surname').val(split.surname);
+	$('#edit-note').val(split.note);
 	$('#edit-number').val(unifyPhoneNo(number));
 
 	$('#editModal').modal({
 		duration: setDuration,
 		blurring: true,
-		onApprove: function () {
-			if (line == "main") {
-				requestURL = 'https://www.odorik.cz/api/v1/speed_dials/' + id + '.json';
-			} else {
-				requestURL = "https://www.odorik.cz/api/v1/lines/" + line + '/speed_dials/' + id + '.json';
-			}
+		onApprove: function() {
+			let requestURL = (line == "main")
+				? `https://www.odorik.cz/api/v1/speed_dials/${id}.json`
+				: `https://www.odorik.cz/api/v1/lines/${line}/speed_dials/${id}.json`;
 
-			var name = $('#edit-name').val().trim();
-			var surname = $('#edit-surname').val().trim();
-			var note = $('#edit-note').val().trim();
+			const n = $('#edit-name').val().trim();
+			const s = $('#edit-surname').val().trim();
+			const nt = $('#edit-note').val().trim();
 
-			var fullname = (
-					(name !== '' ? name : '')
-					+ (surname !== '' ? ' <b>' + surname + '</b>' : '')
-					+ (note !== '' ? ' <i>' + note + '</i>' : '')
-				).trim();
+			// Rekonstrukce formátu jména pro Odorik (zachování HTML)
+			const fullname = (
+				(n !== '' ? n : '') +
+				(s !== '' ? ` <b>${s}</b>` : '') +
+				(nt !== '' ? ` <i>${nt}</i>` : '')
+			).trim();
 
 			$.ajax({
 				url: requestURL,
@@ -614,37 +527,32 @@ function editContact(line, id, name, number) {
 					name: fullname,
 					number: sipPhoneNo($('#edit-number').val())
 				},
-				success: function (result) {
-					if (typeof result.errors != "undefined") {
-						parseErrors(result);
-					}
-					setTimeout("loadContacts();", 500);
+				success: function(result) {
+					if (typeof result.errors != "undefined") parseErrors(result);
+					setTimeout(() => loadContacts(), 500);
 				}
 			});
 		}
 	}).modal('show');
 }
 
-// Add Contact
 function addContact() {
 	$('#addModal').modal({
 		duration: setDuration,
 		blurring: true,
-		onApprove: function () {
-			requestURL = 'https://www.odorik.cz/api/v1/speed_dials.json';
+		onApprove: function() {
+			const n = $('#add-name').val().trim();
+			const s = $('#add-surname').val().trim();
+			const nt = $('#add-note').val().trim();
 
-			var name = $('#add-name').val().trim();
-			var surname = $('#add-surname').val().trim();
-			var note = $('#add-note').val().trim();
-
-			var fullname = (
-					(name !== '' ? name : '')
-					+ (surname !== '' ? ' <b>' + surname + '</b>' : '')
-					+ (note !== '' ? ' <i>' + note + '</i>' : '')
-				).trim();
+			const fullname = (
+				(n !== '' ? n : '') +
+				(s !== '' ? ` <b>${s}</b>` : '') +
+				(nt !== '' ? ` <i>${nt}</i>` : '')
+			).trim();
 
 			$.ajax({
-				url: requestURL,
+				url: 'https://www.odorik.cz/api/v1/speed_dials.json',
 				type: 'POST',
 				data: {
 					user: APIuser,
@@ -653,81 +561,61 @@ function addContact() {
 					name: fullname,
 					number: sipPhoneNo($('#add-number').val())
 				},
-				success: function (result) {
-					if (typeof result.errors != "undefined") {
-						parseErrors(result);
-					}
-					setTimeout("loadContacts();", 500);
+				success: function(result) {
+					if (typeof result.errors != "undefined") parseErrors(result);
+					setTimeout(() => loadContacts(), 500);
 				}
 			});
 		}
 	}).modal('show');
 }
 
-// Parse errors
 function parseErrors(resp) {
-	var error = resp.errors[0];
-	if (error.indexOf("unauthorized") >= 0) {
-		showError("Nejste autorizováni k provedení této operace.");
-	}
-	if (error.indexOf("invalid_number") >= 0) {
-		showError("Neplatné číslo.");
-	}
-	if (error.indexOf("invalid_shortcut") >= 0) {
-		showError("Neplatná zkratka.");
-	}
-	if (error.indexOf("name_too_long") >= 0) {
-		showError("Název je příliš dlouhý.");
-	}
-	if (error.indexOf("shortcut_already_used") >= 0) {
-		showError("Zkratka je již použita.");
-	}
-	if (error.indexOf("speed_dials_full") >= 0) {
-		showError("Rychlé kontakty jsou už plné.");
-	}
+	const error = resp.errors[0];
+	if (error.indexOf("unauthorized") >= 0) showError("Nejste autorizováni k provedení této operace.");
+	if (error.indexOf("invalid_number") >= 0) showError("Neplatné číslo.");
+	if (error.indexOf("invalid_shortcut") >= 0) showError("Neplatná zkratka.");
+	if (error.indexOf("name_too_long") >= 0) showError("Název je příliš dlouhý.");
+	if (error.indexOf("shortcut_already_used") >= 0) showError("Zkratka je již použita.");
+	if (error.indexOf("speed_dials_full") >= 0) showError("Rychlé kontakty jsou už plné.");
 }
 
-// Display errors
 function showError(message) {
 	dim(false, message);
 }
 
-// Detect uneditable lines
 function editableLine(line, number) {
-	return $.inArray(number + "", lockedNumbers.split(",")) == -1;
+	// Použití includes místo inArray (moderní JS)
+	return !lockedNumbers.split(",").includes(String(number));
 }
 
 function inlineEdit(id) {
-	$(".edited").each(function () {
+	$(".edited").each(function() {
 		$(this).text($(this).find("input").val());
 	});
-	//console.log($('.table-name-' + id).text());
 	$(".edited").removeClass("edited");
 	$.ajax({
-		url: 'https://www.odorik.cz/api/v1/speed_dials/' + id + '.json',
+		url: `https://www.odorik.cz/api/v1/speed_dials/${id}.json`,
 		type: 'PUT',
 		data: {
 			user: APIuser,
 			password: APIpass,
-			shortcut: $('.table-short-' + id).text(),
-			name: $('.table-name-' + id).text(),
-			number: $('.table-num-' + id).text()
+			shortcut: $(`.table-short-${id}`).text(),
+			name: $(`.table-name-${id}`).text(),
+			number: $(`.table-num-${id}`).text()
 		},
-		success: function (result) {
-			if (typeof result.errors != "undefined") {
-				parseErrors(result);
-			}
-			setTimeout("loadContacts();", 500);
+		success: function(result) {
+			if (typeof result.errors != "undefined") parseErrors(result);
+			setTimeout(() => loadContacts(), 500);
 		}
 	});
 }
 
-// Call back
 function callBack(number, shortcut, name) {
 	if (typeof shortcut !== "undefined") {
-		$('input[name="call-target"]').val(number
-			+ " - zk. " + shortcut
-			+ " (" + (splitContactName(name).name + ' ' + splitContactName(name).surname + ' ' + splitContactName(name).note).trim() + ")");
+		const split = splitContactName(name);
+		const plainName = `${split.name} ${split.surname} ${split.note}`.trim();
+		$('input[name="call-target"]').val(`${number} - zk. ${shortcut} (${plainName})`);
 	} else {
 		$('input[name="call-target"]').val(number);
 	}
@@ -739,121 +627,83 @@ function callBack(number, shortcut, name) {
 	$('#callModal').modal({
 		duration: setDuration,
 		blurring: true,
-		onApprove: function () {
+		onApprove: function() {
 			$('#callModal form').submit();
-			//Return false as to not close modal dialog
 			return false;
 		}
 	}).modal('show');
 
-	//form validation and submit
 	$('#callModal form').form({
 		fields: {
 			callNumber: {
 				identifier: 'call-number',
-				rules: [{
-					type: 'regExp[/^((\\*[0-9]{6})|([0-9]{2,3})|([0-9]{9,16}))$/]'
-				}]
+				rules: [{ type: 'regExp[/^((\\*[0-9]{6})|([0-9]{2,3})|([0-9]{9,16}))$/]' }]
 			}
 		}
-	})
-		.api({
-			url: 'https://www.odorik.cz/api/v1/callback',
-			method: 'POST',
-			data: {
-				user: APIuser,
-				password: APIpass,
-				recipient: number,
-			},
-			beforeSend: function (settings) {
-				settings.data.caller = $('input[name="call-number"]').val()
-				if ($('select[name="call-line"]').val() != "none") {
-					settings.data.line = $('select[name="call-line"]').val();
-				}
-				return settings;
-			},
-			onComplete: function (response) {
-				$('#callModal').modal('hide');
-				if (response && response.indexOf("error") != 0) dim(true, "Callback objednán");
-				else if (response) dim(false, "Došlo k chybě. Zkontrolujte zadané číslo.");
-				else dim(false, "Došlo k chybě. Nelze se připojit k Odorik API.");
-			},
-		});
+	}).api({
+		url: 'https://www.odorik.cz/api/v1/callback',
+		method: 'POST',
+		data: { user: APIuser, password: APIpass, recipient: number },
+		beforeSend: function(settings) {
+			settings.data.caller = $('input[name="call-number"]').val();
+			if ($('select[name="call-line"]').val() != "none") {
+				settings.data.line = $('select[name="call-line"]').val();
+			}
+			return settings;
+		},
+		onComplete: function(response) {
+			$('#callModal').modal('hide');
+			if (response && response.indexOf("error") != 0) dim(true, "Callback objednán");
+			else if (response) dim(false, "Došlo k chybě. Zkontrolujte zadané číslo.");
+			else dim(false, "Došlo k chybě. Nelze se připojit k Odorik API.");
+		},
+	});
 }
 
-// Quick Callback input box
-$("input[name=quick-input]").keypress(function (e) {
-	if (e.which == 13) {
-		callBack($("input[name=quick-input]").val());
-	}
+// Quick Callback
+$("input[name=quick-input]").keypress(function(e) {
+	if (e.which == 13) callBack($("input[name=quick-input]").val());
 });
-$("#quick-button").click(function (event) {
-	callBack($("input[name=quick-input]").val());
-});
+$("#quick-button").click(() => callBack($("input[name=quick-input]").val()));
 
-var textFile = null,
-	makeTextFile = function (text) {
-		var data = new Blob([text], { type: 'text/plain' });
+let textFile = null;
+const makeTextFile = function(text) {
+	const data = new Blob([text], { type: 'text/plain' });
+	if (textFile !== null) window.URL.revokeObjectURL(textFile);
+	textFile = window.URL.createObjectURL(data);
+	return textFile;
+};
 
-		// If we are replacing a previously generated file we need to
-		// manually revoke the object URL to avoid memory leaks.
-		if (textFile !== null) {
-			window.URL.revokeObjectURL(textFile);
-		}
-
-		textFile = window.URL.createObjectURL(data);
-
-		// returns a URL you can use as a href
-		return textFile;
-	};
-
-// Import/Export modal
 function importExportModal() {
 	$.ajax({
 		url: 'https://www.odorik.cz/api/v1/speed_dials.json',
 		type: 'GET',
-		data: {
-			user: APIuser,
-			password: APIpass
-		},
-		success: function (result) {
-			array = result;
-			outstring = '\ufeff'; // EF BB BF = BOM
-			for (var i = 0; i < result.length; i++) {
-				outstring += "BEGIN:VCARD\r\n";
-				outstring += "VERSION:3.0\r\n";
-				outstring += "FN:" + result[i].name + "\r\n";
-				outstring += "TEL;TYPE=CELL:" + result[i].number + "\r\n";
-				outstring += "NOTE:" + result[i].shortcut + "\r\n";
-				outstring += "END:VCARD\r\n";
+		data: { user: APIuser, password: APIpass },
+		success: function(result) {
+			let outstring = '\ufeff'; // BOM
+			for (let i = 0; i < result.length; i++) {
+				// remove HTML tags for export
+				const cleanName = result[i].name.replace(/<[^>]*>/g, " ").replace(/\s\s+/g, ' ').trim();
+				outstring += `BEGIN:VCARD\r\nVERSION:3.0\r\nFN:${cleanName}\r\nTEL;TYPE=CELL:${result[i].number}\r\nNOTE:${result[i].shortcut}\r\nEND:VCARD\r\n`;
 			}
 			$("#exportButton").attr("href", makeTextFile(outstring));
 		}
 	});
 
-	$('#importExportModal').modal({
-		duration: setDuration,
-		blurring: true
-	}).modal('show');
+	$('#importExportModal').modal({ duration: setDuration, blurring: true }).modal('show');
 }
 
-// Read file
-$("#importButton").click(function () {
+$("#importButton").click(function() {
 	$("#importButton").addClass("loading");
 	$("#fileinput").trigger("click");
 	if (window.File && window.FileReader && window.FileList && window.Blob) {
-		$("#fileinput").change(function (event) {
-			var reader = new FileReader();
-			reader.onload = function (e) {
-				var text = reader.result;
-				if (text.indexOf("VCARD") > 0) {
-					importVCard(text);
-				}
-				else {
-					alert("Toto není platný soubor vCard");
-				}
+		$("#fileinput").change(function(event) {
+			const reader = new FileReader();
+			reader.onload = function(e) {
+				const text = reader.result;
+				if (text.indexOf("VCARD") > 0) importVCard(text);
+				else alert("Toto není platný soubor vCard");
 			}
-
 			reader.readAsText(event.target.files[0], "utf-8");
 		});
 	} else {
@@ -861,16 +711,14 @@ $("#importButton").click(function () {
 	}
 });
 
-// Parse vCard
 function parse(input) {
-	var Re1 = /^(version|fn|title|org|note):(.+)$/i;
-	var Re2 = /^([^:;]+);([^:]+):(.+)$/;
-	var ReKey = /item\d{1,2}\./;
-	var fields = {};
+	const Re1 = /^(version|fn|title|org|note):(.+)$/i;
+	const Re2 = /^([^:;]+);([^:]+):(.+)$/;
+	const ReKey = /item\d{1,2}\./;
+	const fields = {};
 
-	input.split(/\r\n|\r|\n/).forEach(function (line) {
-		var results, key;
-
+	input.split(/\r\n|\r|\n/).forEach(function(line) {
+		let results, key;
 		if (Re1.test(line)) {
 			results = line.match(Re1);
 			key = results[1].toLowerCase();
@@ -878,54 +726,31 @@ function parse(input) {
 		} else if (Re2.test(line)) {
 			results = line.match(Re2);
 			key = results[1].replace(ReKey, '').toLowerCase();
-
-			var meta = {};
-			results[2].split(';')
-				.map(function (p, i) {
-					var match = p.match(/([a-z]+)=(.*)/i);
-					if (match) {
-						return [match[1], match[2]];
-					} else {
-						return ["TYPE" + (i === 0 ? "" : i), p];
-					}
-				})
-				.forEach(function (p) {
-					meta[p[0]] = p[1];
-				});
+			const meta = {};
+			results[2].split(';').map((p, i) => {
+				const match = p.match(/([a-z]+)=(.*)/i);
+				return match ? [match[1], match[2]] : ["TYPE" + (i === 0 ? "" : i), p];
+			}).forEach(p => meta[p[0]] = p[1]);
 
 			if (!fields[key]) fields[key] = [];
-
-			fields[key].push({
-				meta: meta,
-				value: results[3].split(';')
-			})
+			fields[key].push({ meta: meta, value: results[3].split(';') });
 		}
 	});
-
 	return fields;
-};
+}
 
-// Helper function for replacing strings
 function replaceAll(find, replace, str) {
 	return str.replace(new RegExp(find, 'g'), replace);
 }
 
-// Unify phone number formats
 function unifyPhoneNo(phoneNumber) {
 	const regexPattern = /^(\+|00)(2[1-69][0-9]|3[578][0-9]|42[0-9]|5[09][0-9]|6[7-9][0-9]|8[0578][0-9]|9[679][0-9]|[2-689][0-9]|[017])(.*)$/;
 	const replaced = phoneNumber.trim().replace(/\t/g, ' ');
-	const result = replaced.replace(regexPattern, '+$2 $3');
-	return result;
+	return replaced.replace(regexPattern, '+$2 $3');
 }
 
 function sipPhoneNo(phoneNumber) {
-	// Odstranění bílých znaků
-	phoneNumber = phoneNumber.replace(/\s/g, '');
-	// Převod "+" na "00" na začátku
-	phoneNumber = phoneNumber.replace(/^\+/, '00');
-	// Ponechání pouze číselných znaků
-	phoneNumber = phoneNumber.replace(/\D/g, '');
-	// Doplnění "00420" na začátek (pokud nezačíná "00")
+	phoneNumber = phoneNumber.replace(/\s/g, '').replace(/^\+/, '00').replace(/\D/g, '');
 	if (!phoneNumber.startsWith('00')) {
 		phoneNumber = '00420' + phoneNumber;
 	}
@@ -933,94 +758,61 @@ function sipPhoneNo(phoneNumber) {
 }
 
 function emailToSymbol(email, fallback) {
-  if (email && typeof email === 'string' && email.includes('@')) {
-    return '✉️';
-  } else if (fallback !== undefined) {
-    return fallback;
-  } else {
-    return '❌';
-  }
+	if (email && typeof email === 'string' && email.includes('@')) return '✉️';
+	return fallback !== undefined ? fallback : '❌';
 }
 
 function toSymbol(str) {
 	switch (String(str).toLowerCase()) {
-		case "active":
-		case "true":
-		case "yes":
-		case "on":
-			return "✅";
-		case "inactive":
-		case "false":
-		case "no":
-		case "off":
-			return "❌";
-		case "warning":
-			return "⚠️";
-		case "error":
-			return "❗️";
-		case "info":
-			return "ℹ️";
-		case "blocked":
-			return "⛔";
-		case "null":
-		case "none":
-		case "undefined":
-	 		return "🔹"; //➖
-		default:
-			return str;
+		case "active": case "true": case "yes": case "on": return "✅";
+		case "inactive": case "false": case "no": case "off": return "❌";
+		case "warning": return "⚠️";
+		case "error": return "❗️";
+		case "info": return "ℹ️";
+		case "blocked": return "⛔";
+		case "null": case "none": case "undefined": return "🔹";
+		default: return str;
 	}
 }
 
 function formatNumber(number) {
 	let num = parseInt(number);
-	if (isNaN(num)) {
-		return "<span>0</span>";
-	}
-
+	if (isNaN(num)) return "<span>0</span>";
 	const str = num.toString();
 	const parts = [];
-
 	for (let i = str.length; i > 0; i -= 3) {
 		parts.unshift(str.substring(Math.max(0, i - 3), i));
 	}
-
-	const formattedParts = parts.map(part => `<span>${part}</span>`);
-	return formattedParts.join(" ");
+	return parts.map(part => `<span>${part}</span>`).join(" ");
 }
 
 function removeNonUCS2Chars(text) {
-	var cleanedText = '';
-	for (var i = 0; i < text.length; i++) {
-		var charCode = text.charCodeAt(i);
-
-		// Kontrola surrogátních párů UTF-16
-		if (charCode < 0xD800 || charCode > 0xDFFF) {
-		cleanedText += text[i];
-		}
+	let cleanedText = '';
+	for (let i = 0; i < text.length; i++) {
+		const charCode = text.charCodeAt(i);
+		if (charCode < 0xD800 || charCode > 0xDFFF) cleanedText += text[i];
 	}
 	return cleanedText;
 }
 
 function optimiseSMS(sms) {
-	var smsPreview = '';
-	sms = removeNonUCS2Chars(sms);
-	if (sms.normalize("NFD").replace(/[\u0300-\u036f]/g, "").length <= 70) {
-		smsPreview = sms; //removeNonUCS2Chars(sms)
-		var smsLength = sms.normalize("NFD").replace(/[\u0300-\u036f]/g, "").length;
-	}
-	else {
-		sms = sms.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-		var GSMCharset = "@£$¥èéùìòÇØøÅå\u0394_Øø\u03A6ÆæßÉ !\"#¤%&amp;'()*+,-./0123456789:;<=>?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ§¿abcdefghijklmnopqrstuvwxyzäöñüà€{}|~[]\\^\n";
+	let smsPreview = '';
+	let smsLength = 0;
 
-		for (var i = 0; i < sms.length; i++) {
-			var char = sms.charAt(i);
-			var charIndex = GSMCharset.indexOf(char);
-			if (charIndex !== -1) {
-				//smsPreview += String.fromCharCode(charIndex);
+	const normalized = removeNonUCS2Chars(sms).normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+	if (normalized.length <= 70) {
+		smsPreview = removeNonUCS2Chars(sms);
+		smsLength = normalized.length;
+	} else {
+		const GSMCharset = "@£$¥èéùìòÇØøÅå\u0394_Øø\u03A6ÆæßÉ !\"#¤%&amp;'()*+,-./0123456789:;<=>?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ§¿abcdefghijklmnopqrstuvwxyzäöñüà€{}|~[]\\^\n";
+		sms = normalized;
+		for (let i = 0; i < sms.length; i++) {
+			if (GSMCharset.indexOf(sms.charAt(i)) !== -1) {
 				smsPreview += sms[i];
 			}
 		}
-		var smsLength = smsPreview.length + smsPreview.replace(/[^€{}|~[\]\\^]/g, '').length;
+		smsLength = smsPreview.length + smsPreview.replace(/[^€{}|~[\]\\^]/g, '').length;
 	}
 
 	document.getElementById('sms-preview').value = smsPreview;
@@ -1029,124 +821,107 @@ function optimiseSMS(sms) {
 }
 
 function sendSMS() {
-	var sms = document.getElementById('sms-preview').value;
-	var recipient = sipPhoneNo(document.getElementById('sms-recipient').value);
-	//var sender = document.getElementById('sms-sender').value;
+	const sms = document.getElementById('sms-preview').value;
+	const recipient = sipPhoneNo(document.getElementById('sms-recipient').value);
 
 	$.ajax({
 		url: 'https://www.odorik.cz/api/v1/sms',
 		type: 'POST',
-		data: {
-			user: APIuser,
-			password: APIpass,
-			recipient: recipient,
-			message: sms
-		},
-		success: function (result) {
-			if (typeof result.errors != "undefined") {
-				//alert(result);
-				parseErrors(result);
-			} else {
+		data: { user: APIuser, password: APIpass, recipient: recipient, message: sms },
+		success: function(result) {
+			if (typeof result.errors != "undefined") parseErrors(result);
+			else {
 				document.getElementById("compose-sms").close();
 				reloadSms();
 				refreshCredit(true);
 			}
 		}
-	})
+	});
 }
 
-// Separate into individual contacts
 function separate(input) {
-	card = [];
-	array = input.split("END:VCARD");
-	for (i = 0; i < array.length; i++) {
+	const array = input.split("END:VCARD");
+	const card = [];
+	for (let i = 0; i < array.length; i++) {
 		card[i] = parse(array[i] + "END:VCARD");
 	}
 	return card;
 }
 
-// Import Wizard modal
 function importVCard(input) {
-	// Clear table
 	$("#tableImport").html("");
-	// Initialize helper variables
-	var usedShortcuts = [];
-	var usedNumbers = [];
-	var contacts = separate(replaceAll("TEL:", "TEL;TYPE=HOME:", input));
-	var totalCount = 0;
-	// Loop through individual contacts
-	for (i = 0; i < contacts.length; i++) {
-		contact = contacts[i];
-		// Check if number and name is set
+	const usedShortcuts = [];
+	const usedNumbers = [];
+	const contacts = separate(replaceAll("TEL:", "TEL;TYPE=HOME:", input));
+	let totalCount = 0;
+
+	for (let i = 0; i < contacts.length; i++) {
+		const contact = contacts[i];
 		if (typeof contact.tel != "undefined" && typeof contact.fn != "undefined") {
-			// Loop through specific phone numbers
-			for (a = 0; a < contact.tel.length; a++) {
-				if ($.inArray(unifyPhoneNo(contact.tel[a].value[0]), usedNumbers) == -1) {
-					usedNumbers.push(unifyPhoneNo(contact.tel[a].value[0]));
+			for (let a = 0; a < contact.tel.length; a++) {
+				const uniNum = unifyPhoneNo(contact.tel[a].value[0]);
+				if (!usedNumbers.includes(uniNum)) {
+					usedNumbers.push(uniNum);
 					totalCount += 1;
-					var shortcut = "";
-					// Check if the shortcut is defined and if not, define it
+					let shortcut = "";
 					if (typeof contact.note == "undefined" || isNaN(contact.note)) {
 						shortcut = totalCount;
-						while ($.inArray(shortcut, allShortcuts) > -1 || $.inArray(shortcut, usedShortcuts) > -1 || shortcut < 200 && shortcut > 99) {
+						// Použití Array.includes pro moderní syntaxi, ale stále kontrola pole
+						while (allShortcuts.includes(shortcut) || usedShortcuts.includes(shortcut) || (shortcut < 200 && shortcut > 99)) {
 							shortcut = shortcut + 1;
 						}
 					} else {
 						shortcut = contact.note;
 					}
 					usedShortcuts.push(shortcut);
-					// Add a description
-					var type = "";
+
+					let type = "";
 					if (contact.tel.length > 1) {
-						//console.log("multiple");
-						//console.log(contact.tel[a].meta);
 						switch (contact.tel[a].meta.TYPE) {
-							case "HOME":
-								type = " (domů)";
-								break;
-							case "WORK":
-								type = " (práce)";
-								break;
-							case "CELL":
-								type = " (mobil)";
-								break;
-							case "FAX":
-								type = " (fax)";
-								break;
+							case "HOME": type = " (domů)"; break;
+							case "WORK": type = " (práce)"; break;
+							case "CELL": type = " (mobil)"; break;
+							case "FAX": type = " (fax)"; break;
 						}
 					}
-					// Warn against conflicts in shortcuts
-					var warning = "";
-					if ($.inArray(Number(shortcut), allShortcuts) > -1) {
-						warning = "error";
-					}
-					// Append to table
-					$("#tableImport").append("<tr class='" + warning + "'><td><div class='ui transparent left icon fluid " + warning + " input'><i style='display: none' class='remove icon'></i><input class='shortuctImport' id='import-shortuct" + i + "' type='number' min='1' value='" + shortcut + "'></div></td>" + "<td><div class='ui transparent fluid input'><input id='import-name" + i + "' value='" + contact.fn + type + "'></div></td>" + "<td><div class='ui transparent fluid input'><input id='import-number" + i + "' type='tel' value='" + unifyPhoneNo(contact.tel[a].value[0]) + "'></div></td></tr>");
+
+					const warning = (allShortcuts.includes(Number(shortcut))) ? "error" : "";
+					const safeName = escapeHtml(contact.fn + type);
+
+					$("#tableImport").append(
+						`<tr class='${warning}'>
+							<td><div class='ui transparent left icon fluid ${warning} input'>
+								<i style='display: none' class='remove icon'></i>
+								<input class='shortuctImport' id='import-shortuct${i}' type='number' min='1' value='${shortcut}'>
+							</div></td>
+							<td><div class='ui transparent fluid input'><input id='import-name${i}' value='${safeName}'></div></td>
+							<td><div class='ui transparent fluid input'><input id='import-number${i}' type='tel' value='${uniNum}'></div></td>
+						</tr>`
+					);
 				}
 			}
-			// Check for change in shortcuts and hide conflict warnings
-			$(".shortuctImport").change(function () {
-				if ($.inArray(Number($(this).val()), allShortcuts) == -1) {
-					$(this).parent().removeClass("error");
-					$(this).parent().parent().removeClass("error");
-					$(this).parent().parent().find("i").hide();
-				}
-				else {
-					$(this).parent().addClass("error");
-					$(this).parent().parent().addClass("error");
-					$(this).parent().parent().find("i").show();
-				}
-			});
 		}
 	}
-	$("#importButton").removeClass("loading");
-	// Show modal with table
 
+	$(".shortuctImport").change(function() {
+		const parent = $(this).parent();
+		const tr = parent.parent();
+		if (!allShortcuts.includes(Number($(this).val()))) {
+			parent.removeClass("error");
+			tr.removeClass("error");
+			tr.find("i").hide();
+		} else {
+			parent.addClass("error");
+			tr.addClass("error");
+			tr.find("i").show();
+		}
+	});
+
+	$("#importButton").removeClass("loading");
 	$("#importWizardModal").modal({
 		duration: setDuration,
-		onApprove: function () {
-			// Loop through entries and save them
-			for (i = 0; i < contacts.length; i++) {
+		onApprove: function() {
+			for (let i = 0; i < contacts.length; i++) {
 				if (typeof $("#import-shortuct" + i).val() != "undefined") {
 					$.ajax({
 						url: 'https://www.odorik.cz/api/v1/speed_dials.json',
@@ -1161,64 +936,42 @@ function importVCard(input) {
 					});
 				}
 			}
-			setTimeout("loadContacts();", 1200);
+			setTimeout(() => loadContacts(), 1200);
 		}
 	}).modal("show");
 }
 
-$("#addModal input").keypress(function (e) {
+$("#addModal input, #editModal input, #loginModal input").keypress(function(e) {
 	if (e.which == 13) {
-		$("#addModal .positive").click();
-	}
-});
-
-$("#editModal input").keypress(function (e) {
-	if (e.which == 13) {
-		$("#editModal .positive").click();
-	}
-});
-
-$("#loginModal input").keypress(function (e) {
-	if (e.which == 13) {
-		$("#loginModal .positive").click();
+		$(this).closest('.modal').find('.positive').click();
 	}
 });
 
 
-// CALL HISTORY SECTION
+// --- CALL HISTORY SECTION ---
 
-var cb = function (start, end, label) {
+const cb = function(start, end, label) {
 	fromDate = start.toISOString();
 	toDate = end.toISOString();
 	$('#reportrange span').html(start.format('DD.MM.YYYY') + ' - ' + end.format('DD.MM.YYYY'));
 	if (moment().format('DD.MM.YYYY') == start.format('D.MM.YYYY')) {
 		localStorage.setItem("lastDate", "today");
-	}
-	else {
+	} else {
 		localStorage.setItem("lastDate", start.format('DD.MM.YYYY') + ' - ' + end.format('DD.MM.YYYY'));
 	}
-	if (localStorage.prevCategory == "statistics") {
-		loadStatistics();
-	}
-	else if (localStorage.prevCategory == "smsHistory") {
-		loadSms();
-	}
-	else {
-		loadCalls();
-	}
+
+	if (localStorage.prevCategory == "statistics") loadStatistics();
+	else if (localStorage.prevCategory == "smsHistory") loadSms();
+	else loadCalls();
 };
 
-var optionSet = {
+const optionSet = {
 	startDate: moment($('#reportrange span').text().split(" - ")[0], 'DD.MM.YYYY'),
 	endDate: moment($('#reportrange span').text().split(" - ")[1], 'DD.MM.YYYY'),
-	dateLimit: {
-		days: 60
-	},
+	dateLimit: { days: 60 },
 	showDropdowns: true,
 	showWeekNumbers: true,
 	timePicker: false,
-	timePickerIncrement: 1,
-	timePicker12Hour: true,
 	ranges: {
 		'Dnes': [moment(), moment()],
 		'Včera': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
@@ -1250,131 +1003,114 @@ var optionSet = {
 
 $('#reportrange').daterangepicker(optionSet, cb);
 
-Array.prototype.diff = function (a) {
-	return this.filter(function (i) { return a.indexOf(i) < 0; });
+Array.prototype.diff = function(a) {
+	return this.filter(i => a.indexOf(i) < 0);
 };
 
-// Reload Calls
 function reloadCalls() {
-	if (page < 1) {
-		page = 1;
-	}
-
-	var startRange = Number((page - 1) * pageLength);
-	var endRange = page * pageLength;
-	var data = callHistory.slice(startRange, endRange);
+	if (page < 1) page = 1;
+	const startRange = Number((page - 1) * pageLength);
+	const endRange = page * pageLength;
+	const data = callHistory.slice(startRange, endRange);
 
 	$("#nextPage").toggleClass("disabled", data.length != pageLength);
 	$("#prevPage").toggleClass("disabled", page <= 1);
-
 	populateCallsTable(data);
 }
 
 function loadCalls() {
 	callHistory = [];
-	callsAmount(function (data, textStatus, xhr) {
+	callsAmount(function(data, textStatus, xhr) {
 		totalCalls = xhr.getResponseHeader('Odorik-Pages');
-		var dataSet = {
+		const dataSet = {
 			user: APIuser,
 			password: APIpass,
 			from: fromDate,
 			to: toDate,
 			page_size: 5000
 		};
-		if ($("select[name=line-filter]").val() != "all") {
-			dataSet.line = $("select[name=line-filter]").val();
-		}
-		if ($("select[name=state-filter]").val() != "all") {
-			dataSet.status = $("select[name=state-filter]").val();
-		}
-		if ($("select[name=direction-filter]").val() != "all") {
-			dataSet.direction = $("select[name=direction-filter]").val();
-		}
-		if ($("select[name=price-filter]").val() != "all") {
-			if ($("select[name=price-filter]").val() == "free") {
-				dataSet.min_price = "0";
-				dataSet.max_price = "0";
-			}
-			else {
-				dataSet.min_price = "0";
-				dataSet.max_price = "1000";
-			}
+		const lF = $("select[name=line-filter]").val(); if (lF != "all") dataSet.line = lF;
+		const sF = $("select[name=state-filter]").val(); if (sF != "all") dataSet.status = sF;
+		const dF = $("select[name=direction-filter]").val(); if (dF != "all") dataSet.direction = dF;
+		const pF = $("select[name=price-filter]").val();
+		if (pF != "all") {
+			dataSet.min_price = "0";
+			dataSet.max_price = (pF == "free") ? "0" : "1000";
 		}
 
 		$.ajax({
 			url: 'https://www.odorik.cz/api/v1/calls.json',
 			type: 'GET',
 			data: dataSet
-		}).done(function (data, textStatus, xhr) {
+		}).done(function(data) {
 			if ($("select[name=call-order]").val() == "newest") {
-				try {
-					data = data.reverse();
-				}
-				catch (err) {
-					// data jsou nulová - neobrátíme je
-				}
+				try { data = data.reverse(); } catch (err) {}
 			}
 
-			var finalData = [];
-
-			for (var i = 0; i < data.length; i++) {
-				if ($.inArray(data[i].line + "", allowedLines.split(",")) != -1 || allowedLines == "") {
+			const finalData = [];
+			const allowedArr = allowedLines.split(",");
+			for (let i = 0; i < data.length; i++) {
+				if (allowedArr.includes(String(data[i].line)) || allowedLines == "") {
 					if (data[i].direction != "redirected") {
 						finalData.push(data[i]);
-					}
-					else {
-						if ($.inArray(data[i].redirection_parent_id, redirectedCalls) == -1) {
+					} else {
+						if (!redirectedCalls.includes(data[i].redirection_parent_id)) {
 							redirectedCalls.push(data[i].redirection_parent_id);
 						}
 					}
 				}
 			}
 
-			data = finalData;
-
-			callHistory = callHistory.concat(data);
+			callHistory = callHistory.concat(finalData);
 
 			if ($(".ui.container").css("display") == "none") {
 				$("#loadingDimmer").dimmer("hide");
 				$("#loadingDimmer").remove();
-				$(".ui.container").transition("fade", setDuration + "ms");
+				$(".ui.container").transition("fade", `${setDuration}ms`);
 			}
 
 			$('#categorySelector').removeClass("loading");
 			$("section").hide();
 			$(".dynamic").hide();
 			$(".callHistoryContent").show();
-
 			reloadCalls();
 		});
 	});
 }
 
 function populateCallsTable(result) {
-	outstring = "";
-	for (var i = 0; i < result.length; i++) {
-		outstring += '<tr class="' + (result[i].status == "missed" ? "error" : "") + '" data-id="' + result[i].id + '"' + (result[i].redirection_parent_id != "" && typeof result[i].redirection_parent_id != "undefined" ? ' data-redirection-id="' + result[i].redirection_parent_id + '"' : '') + '>'
-						+ '<td>'
-							+ ($.inArray(result[i].id.toString(), redirectedCalls) != -1 ? '<a onclick="redirectionsModal(' + "'" + result[i].id + "','" + result[i].date + "'" + ');" class="ui teal ribbon label"><i class="forward mail icon"></i></a>' : '')
-							+ '<span class="hasClickPopup" data-html="<b>ID:</b> ' + result[i].id + '">'
-								+ (result[i].direction === "redirected" ? '<i class="forward mail icon"></i>Přesměrovaný'
-									: result[i].direction === "in" ? '<i class="sign in icon"></i>Příchozí'
-									: result[i].direction === "out" ? '<i class="sign out icon"></i>Odchozí'
-									: '');
-								+ (result[i].status === "missed" ? " nepřijatý" : '')
-							+ '</span> ';
+	let outstring = "";
+	for (let i = 0; i < result.length; i++) {
+		const item = result[i];
+		const isMissed = item.status == "missed" ? "missed" : "";
+		const redirAttr = (item.redirection_parent_id && item.redirection_parent_id !== "") ? `data-redirection-id="${item.redirection_parent_id}"` : "";
+		const redirIcon = redirectedCalls.includes(String(item.id)) ? `<a onclick="redirectionsModal('${item.id}','${item.date}');" class="ui teal ribbon label"><i class="forward mail icon"></i></a>` : "";
 
-		var price = result[i].price.toString().substr(0, result[i].price.toString().indexOf(".") + 3);
-		var callLength = ~~(result[i].length / 60) + "&nbsp;min " + (result[i].length % 60) + "&nbsp;s";
-		if (result[i].length < 60)
-			callLength = (result[i].length % 60) + "&nbsp;s";
-		outstring += '</td>'
-						+ '<td class="hasClickPopup" data-html="' + moment(result[i].date).format("DD.MM.YYYY H:mm:ss") + '">' + moment(result[i].date).format("DD.MM.YYYY H:mm:ss") + '</td>'
-						+ '<td>' + getSpeedDialName(result[i].source_number) + '</td>'
-						+ '<td class="hasPopup" data-html="<b>Podrobnosti:</b> ' + getFlagFromPhoneNumber(unifyPhoneNo(result[i].destination_number)) + ' ' + result[i].destination_name + '">' + getSpeedDialName(result[i].destination_number) + '</td>'
-						+ '<td class="right hasPopup" data-html="<b>Délka vyzvánění:</b> ' + result[i].ringing_length + '&nbsp;s">' + callLength + '</td>'
-						+ '<td class="right hasPopup" data-html="<b>Minutová sazba:</b> ' + result[i].price_per_minute + '&nbsp;Kč<br><b>Zbylý kredit:</b> ' + result[i].balance_after + '&nbsp;Kč">' + price + '&nbsp;Kč</td>'
-						+ '<td class="center">' + result[i].line + '</td></tr>';
+		let dirIcon = "";
+		if (item.direction === "redirected") dirIcon = '<i class="forward mail icon"></i>Přesměrovaný';
+		else if (item.direction === "in") dirIcon = '<i class="sign in icon"></i>Příchozí';
+		else if (item.direction === "out") dirIcon = '<i class="sign out icon"></i>Odchozí';
+
+		const missedText = item.status === "missed" ? " nepřijatý" : "";
+		const price = item.price.toString().substr(0, item.price.toString().indexOf(".") + 3);
+		const callLength = (item.length < 60) ? `${item.length % 60}&nbsp;s` : `${Math.floor(item.length / 60)}&nbsp;min ${item.length % 60}&nbsp;s`;
+		const dateTime = moment(item.date).format("DD.MM.YYYY H:mm:ss");
+
+		outstring += `<tr class="${isMissed}" data-id="${item.id}" ${redirAttr}>
+			<td>${redirIcon}
+				<span class="hasClickPopup" data-html="<b>ID:</b> ${item.id}">
+					${dirIcon}${missedText}
+				</span>
+			</td>
+			<td class="hasClickPopup" data-html="${dateTime}">${dateTime}</td>
+			<td>${getSpeedDialName(item.source_number)}</td>
+			<td class="hasPopup" data-html="<b>Podrobnosti:</b> ${getFlagFromPhoneNumber(unifyPhoneNo(item.destination_number))} ${escapeHtml(item.destination_name)}">
+				${getSpeedDialName(item.destination_number)}
+			</td>
+			<td class="right hasPopup" data-html="<b>Délka vyzvánění:</b> ${item.ringing_length}&nbsp;s">${callLength}</td>
+			<td class="right hasPopup" data-html="<b>Minutová sazba:</b> ${item.price_per_minute}&nbsp;Kč<br><b>Zbylý kredit:</b> ${item.balance_after}&nbsp;Kč">${price}&nbsp;Kč</td>
+			<td class="center">${item.line}</td>
+		</tr>`;
 	}
 	$("#tableCalls").html(outstring);
 	$(".hasClickPopup").popup({ on: "click" });
@@ -1382,17 +1118,15 @@ function populateCallsTable(result) {
 	$("#pageNumber").text(page + " z " + Math.ceil(callHistory.length / pageLength));
 }
 
-// Get name of the contact
 function getSpeedDialName(number) {
-	if ($.inArray(number, allNumbers) != -1) {
-		return allNames[$.inArray(number, allNumbers)] + " (" + unifyPhoneNo(number) + ")";
+	// Optimalizované vyhledávání přes Mapu
+	const contact = contactsMap.get(number);
+	if (contact) {
+		return `${contact.name} (${contact.unified})`;
 	}
-	else {
-		return unifyPhoneNo(number);
-	}
+	return unifyPhoneNo(number);
 }
 
-// Redirections dialog
 function redirectionsModal(id, time) {
 	$.ajax({
 		url: 'https://www.odorik.cz/api/v1/calls.json',
@@ -1404,77 +1138,59 @@ function redirectionsModal(id, time) {
 			to: moment(time).add(2, "hours").toISOString(),
 			direction: "redirected"
 		}
-	}).done(function (data, textStatus, xhr) {
-		outstring = "";
-		var result = data;
-		for (var i = 0; i < result.length; i++) {
-			if (result[i].redirection_parent_id == id) {
-				outstring += '<tr class="' + (result[i].status == "missed" ? "error" : "") + '">'
-								+ '<td class="hasPopup" data-html="' + moment(result[i].date).format("DD.MM.YYYY H:mm:ss") + '">' + moment(result[i].date).format("DD.MM.YYYY H:mm:ss") + '</td>'
-								+ '<td>' + getSpeedDialName(result[i].source_number) + '</td>'
-								+ '<td class="hasPopup" data-html="<b>Podrobnosti:</b>' + result[i].destination_name + '">' + getSpeedDialName(result[i].destination_number) + '</td>'
-								+ '<td class="right hasPopup" data-html="<b>Délka vyzvánění:</b> ' + result[i].ringing_length + '&nbsp;s">' + result[i].length + '&nbsp;s</td>'
-								+ '<td class="right hasPopup" data-html="<b>Minutová sazba:</b> ' + result[i].price_per_minute + '&nbsp;Kč<br><b>Zbylý kredit:</b> ' + result[i].balance_after + '&nbsp;Kč">' + result[i].price + '&nbsp;Kč</td>'
-								+ '<td class="center">' + result[i].line + '</td></tr>';
+	}).done(function(data) {
+		let outstring = "";
+		for (let i = 0; i < data.length; i++) {
+			const item = data[i];
+			if (item.redirection_parent_id == id) {
+				outstring += `<tr class="${item.status == "missed" ? "missed" : ""}">
+					<td class="hasPopup" data-html="${moment(item.date).format("DD.MM.YYYY H:mm:ss")}">${moment(item.date).format("DD.MM.YYYY H:mm:ss")}</td>
+					<td>${getSpeedDialName(item.source_number)}</td>
+					<td class="hasPopup" data-html="<b>Podrobnosti:</b>${escapeHtml(item.destination_name)}">${getSpeedDialName(item.destination_number)}</td>
+					<td class="right hasPopup" data-html="<b>Délka vyzvánění:</b> ${item.ringing_length}&nbsp;s">${item.length}&nbsp;s</td>
+					<td class="right hasPopup" data-html="<b>Minutová sazba:</b> ${item.price_per_minute}&nbsp;Kč<br><b>Zbylý kredit:</b> ${item.balance_after}&nbsp;Kč">${item.price}&nbsp;Kč</td>
+					<td class="center">${item.line}</td>
+				</tr>`;
 			}
 		}
-
 		$("#tableRedirects").html(outstring);
 		refreshCredit();
-
 		$(".hasPopup").popup();
-		$("#redirectionsModal").modal({
-			duration: setDuration,
-			blurring: true
-		}).modal('show');
+		$("#redirectionsModal").modal({ duration: setDuration, blurring: true }).modal('show');
 	});
 }
 
-// Filter dialog
 function filterModal() {
 	$("#filterModal").modal({
 		duration: setDuration,
 		blurring: true,
-		onApprove: function () {
+		onApprove: function() {
 			localStorage.setItem("order", $("select[name=call-order]").val());
-
-			if (localStorage.prevCategory == "smsHistory") {
-				loadSms();
-			}
-			else {
-				loadCalls();
-			}
-
+			if (localStorage.prevCategory == "smsHistory") loadSms();
+			else loadCalls();
 		}
 	}).modal('show');
 }
 
-// Update lines
 function updateLines() {
-	if (allowedLines != "") {
-		$("select[name=line-filter]").parent().addClass("disabled");
-	}
+	if (allowedLines != "") $("select[name=line-filter]").parent().addClass("disabled");
 	$.ajax({
 		url: 'https://www.odorik.cz/api/v1/lines.json',
 		type: 'GET',
-		data: {
-			user: APIuser,
-			password: APIpass,
-		},
-		success: function (result) {
-			array = result;
-			for (var i = 0; i < result.length; i++) {
-				$("select[name=line-filter]").append('<option value="' + result[i].id + '">' + result[i].id + ': ' + result[i].name + '</option>');
-				$("select[name=call-line]").append('<option value="' + result[i].id + '">' + result[i].id + ': ' + result[i].name + '</option>');
-				$("#statistics-line .menu").append('<div class="item" data-value="' + result[i].id + '">' + result[i].id + ': ' + result[i].name + '</div>');
+		data: { user: APIuser, password: APIpass },
+		success: function(result) {
+			for (let i = 0; i < result.length; i++) {
+				const opt = `<option value="${result[i].id}">${result[i].id}: ${escapeHtml(result[i].name)}</option>`;
+				$("select[name=line-filter]").append(opt);
+				$("select[name=call-line]").append(opt);
+				$("#statistics-line .menu").append(`<div class="item" data-value="${result[i].id}">${result[i].id}: ${escapeHtml(result[i].name)}</div>`);
 			}
 		}
 	});
 }
 
-// Get total amount of calls
 function callsAmount(finishedFunction) {
-	var dataSet = {
+	const dataSet = {
 		user: APIuser,
 		password: APIpass,
 		from: fromDate,
@@ -1482,15 +1198,10 @@ function callsAmount(finishedFunction) {
 		page_size: 1,
 		page: page
 	};
-	if ($("select[name=line-filter]").val() != "all") {
-		dataSet.line = $("select[name=line-filter]").val();
-	}
-	if ($("select[name=state-filter]").val() != "all") {
-		dataSet.status = $("select[name=state-filter]").val();
-	}
-	if ($("select[name=direction-filter]").val() != "all") {
-		dataSet.direction = $("select[name=direction-filter]").val();
-	}
+	if ($("select[name=line-filter]").val() != "all") dataSet.line = $("select[name=line-filter]").val();
+	if ($("select[name=state-filter]").val() != "all") dataSet.status = $("select[name=state-filter]").val();
+	if ($("select[name=direction-filter]").val() != "all") dataSet.direction = $("select[name=direction-filter]").val();
+
 	$.ajax({
 		url: 'https://www.odorik.cz/api/v1/calls.json',
 		type: 'GET',
@@ -1499,141 +1210,104 @@ function callsAmount(finishedFunction) {
 }
 
 
-// SMS HISTORY
+// --- SMS HISTORY ---
 
-// Reload SMS
 function reloadSms() {
-	if (page < 1) {
-		page = 1;
-	}
-
-	var startRange = Number((page - 1) * pageLength);
-	var endRange = page * pageLength;
-	var data = smsHistory.slice(startRange, endRange);
+	if (page < 1) page = 1;
+	const startRange = Number((page - 1) * pageLength);
+	const endRange = page * pageLength;
+	const data = smsHistory.slice(startRange, endRange);
 
 	$("#nextSmsPage").toggleClass("disabled", data.length != pageLength);
 	$("#prevSmsPage").toggleClass("disabled", page <= 1);
-
 	populateSmsTable(data);
 }
 
 function loadSms() {
 	smsHistory = [];
-	callsAmount(function (data, textStatus, xhr) {
+	callsAmount(function(data, textStatus, xhr) {
 		totalCalls = xhr.getResponseHeader('Odorik-Pages');
-		var dataSet = {
+		const dataSet = {
 			user: APIuser,
 			password: APIpass,
 			from: fromDate,
 			to: toDate,
 			page_size: 5000
 		};
-		if ($("select[name=line-filter]").val() != "all") {
-			dataSet.line = $("select[name=line-filter]").val();
-		}
-		if ($("select[name=state-filter]").val() != "all") {
-			dataSet.status = $("select[name=state-filter]").val();
-		}
-		if ($("select[name=direction-filter]").val() != "all") {
-			dataSet.direction = $("select[name=direction-filter]").val();
-		}
-		if ($("select[name=price-filter]").val() != "all") {
-			if ($("select[name=price-filter]").val() == "free") {
-				dataSet.min_price = "0";
-				dataSet.max_price = "0";
-			}
-			else {
-				dataSet.min_price = "0";
-				dataSet.max_price = "1000";
-			}
+		const lF = $("select[name=line-filter]").val(); if (lF != "all") dataSet.line = lF;
+		const sF = $("select[name=state-filter]").val(); if (sF != "all") dataSet.status = sF;
+		const dF = $("select[name=direction-filter]").val(); if (dF != "all") dataSet.direction = dF;
+		const pF = $("select[name=price-filter]").val();
+		if (pF != "all") {
+			dataSet.min_price = "0";
+			dataSet.max_price = (pF == "free") ? "0" : "1000";
 		}
 
 		$.ajax({
 			url: 'https://www.odorik.cz/api/v1/sms.json',
 			type: 'GET',
 			data: dataSet
-		}).done(function (data, textStatus, xhr) {
+		}).done(function(data) {
 			if ($("select[name=call-order]").val() == "newest") {
-				try {
-					data = data.reverse();
-				}
-				catch (err) {
-					// data jsou nulová - neobrátíme je
-				}
+				try { data = data.reverse(); } catch (err) {}
 			}
-
-			var finalData = [];
-
-			for (var i = 0; i < data.length; i++) {
-				if ($.inArray(data[i].line + "", allowedLines.split(",")) != -1 || allowedLines == "") {
+			const finalData = [];
+			const allowedArr = allowedLines.split(",");
+			for (let i = 0; i < data.length; i++) {
+				if (allowedArr.includes(String(data[i].line)) || allowedLines == "") {
 					if (data[i].direction != "redirected") {
 						finalData.push(data[i]);
-					}
-					else {
-						if ($.inArray(data[i].redirection_parent_id, redirectedCalls) == -1) {
+					} else {
+						if (!redirectedCalls.includes(data[i].redirection_parent_id)) {
 							redirectedCalls.push(data[i].redirection_parent_id);
 						}
 					}
 				}
 			}
 
-			data = finalData;
-
-			smsHistory = smsHistory.concat(data);
+			smsHistory = smsHistory.concat(finalData);
 
 			if ($(".ui.container").css("display") == "none") {
 				$("#loadingDimmer").dimmer("hide");
 				$("#loadingDimmer").remove();
-				$(".ui.container").transition("fade", setDuration + "ms");
+				$(".ui.container").transition("fade", `${setDuration}ms`);
 			}
-
 			$('#categorySelector').removeClass("loading");
 			$("section").hide();
 			$(".dynamic").hide();
 			$(".smsHistoryContent").show();
-
 			reloadSms();
 		});
 	});
 }
 
 function populateSmsTable(result) {
-	outstring = "";
-	for (var i = 0; i < result.length; i++) {
-		outstring += '<tr data-id="' + result[i].id + '" ';
-		if (result[i].redirection_parent_id != "" && typeof result[i].redirection_parent_id != "undefined") {
-			outstring += ' data-redirection-id="' + result[i].redirection_parent_id + '"';
-		}
-		outstring += '><td>';
+	let outstring = "";
+	for (let i = 0; i < result.length; i++) {
+		const item = result[i];
+		const redirAttr = (item.redirection_parent_id) ? `data-redirection-id="${item.redirection_parent_id}"` : "";
 
-		if ($.inArray(result[i].id.toString(), redirectedCalls) != -1) {
-			outstring += '<a onclick="redirectionsModal(' + "'" + result[i].id + "'" + ',' + "'" + result[i].date + "'" + ');" class="ui teal ribbon label"><i class="forward mail icon"></i></a>';
+		let ribbon = "";
+		if (redirectedCalls.includes(String(item.id))) {
+			ribbon = `<a onclick="redirectionsModal('${item.id}','${item.date}');" class="ui teal ribbon label"><i class="forward mail icon"></i></a>`;
 		}
 
-		outstring += '<span class="hasClickPopup" data-html="<b>ID:</b> ' + result[i].id + '">';
+		let dirIcon = "";
+		if (item.direction == "redirected") dirIcon = '<i class="forward mail icon"></i>Přesměrovaný';
+		else if (item.direction == "in") dirIcon = '<i class="sign in icon"></i>Příchozí';
+		else if (item.direction == "out") dirIcon = '<i class="sign out icon"></i>Odchozí';
 
-		if (result[i].direction == "redirected") {
-			outstring += '<i class="forward mail icon"></i>Přesměrovaný';
-		}
-		else if (result[i].direction == "in") {
-			outstring += '<i class="sign in icon"></i>Příchozí';
-		}
-		else if (result[i].direction == "out") {
-			outstring += '<i class="sign out icon"></i>Odchozí';
-		}
+		const price = item.price.toString().substr(0, item.price.toString().indexOf(".") + 3);
+		const dateTime = moment(item.date).format("DD.MM.YYYY H:mm:ss");
 
-
-		outstring += '</span> ';
-		var price = result[i].price.toString().substr(0, result[i].price.toString().indexOf(".") + 3);
-		var callLength = ~~(result[i].length / 60) + "&nbsp;min " + (result[i].length % 60) + "&nbsp;s";
-		if (result[i].length < 60)
-			callLength = (result[i].length % 60) + "&nbsp;s";
-		outstring += '</td><td class="hasClickPopup" data-html="' + moment(result[i].date).format("DD.MM.YYYY H:mm:ss") + '">' + moment(result[i].date).format("DD.MM.YYYY H:mm:ss") + '</td><td>'
-			+ getSpeedDialName(result[i].source_number) + '</td><td class="hasPopup" data-html="<b>Podrobnosti:</b> ' + getFlagFromPhoneNumber(unifyPhoneNo(result[i].destination_number)) + '">'
-			+ getSpeedDialName(result[i].destination_number) + '</span></td><td class="right hasPopup" data-html="'
-			+ '<b>Zbylý kredit:</b> '
-			+ result[i].balance_after + '&nbsp;Kč">'
-			+ price + '&nbsp;Kč</td><td class="center">' + result[i].line + '</td></tr>';
+		outstring += `<tr data-id="${item.id}" ${redirAttr}>
+			<td>${ribbon}<span class="hasClickPopup" data-html="<b>ID:</b> ${item.id}">${dirIcon}</span></td>
+			<td class="hasClickPopup" data-html="${dateTime}">${dateTime}</td>
+			<td>${getSpeedDialName(item.source_number)}</td>
+			<td class="hasPopup" data-html="<b>Podrobnosti:</b> ${getFlagFromPhoneNumber(unifyPhoneNo(item.destination_number))}">${getSpeedDialName(item.destination_number)}</td>
+			<td class="right hasPopup" data-html="<b>Zbylý kredit:</b> ${item.balance_after}&nbsp;Kč">${price}&nbsp;Kč</td>
+			<td class="center">${item.line}</td>
+		</tr>`;
 	}
 	$("#tableSms").html(outstring);
 	$(".hasClickPopup").popup({ on: "click" });
@@ -1641,36 +1315,35 @@ function populateSmsTable(result) {
 	$("#pageSmsNumber").text(page + " z " + Math.ceil(smsHistory.length / pageLength));
 }
 
-
 function loadActiveCalls() {
 	$.ajax({
 		url: 'https://www.odorik.cz/api/v1/active_calls.json',
 		type: 'GET',
-		data: {
-			user: APIuser,
-			password: APIpass
-		}
-	}).done(function (data, textStatus, xhr) {
-		var outString = "";
-		for (var i = 0; i < data.length; i++) {
-			outString += '<tr ontouchstart="handleTouchStart(event)" ontouchend="handleTouchEnd(event)" ontouchcancel="handleTouchCancel(event)" oncontextmenu="activeContextMenu(event, \'' + data[i].id + '\'); return false;">'
-							+ "<td class='center'>" + data[i].id + "</td>"
-							+ "<td>" + unifyPhoneNo(data[i].source_number) + "</td>"
-							+ "<td>" + unifyPhoneNo(data[i].destination_number) + "</td>"
-							+ "<td>" + data[i].destination_name + "</td>"
-							+ "<td>" + moment(data[i].start_date).format("DD.MM.YYYY H:mm:ss") + "</td>"
-							+ "<td>" + moment(data[i].answer_date).format("DD.MM.YYYY H:mm:ss") + "</td>"
-							+ "<td class='right'>" + data[i].price_per_minute + "</td>"
-							+ "<td class='center'>" + data[i].line + "</td></tr>"
+		data: { user: APIuser, password: APIpass }
+	}).done(function(data) {
+		let outString = "";
+		for (let i = 0; i < data.length; i++) {
+			const item = data[i];
+			const touch = `ontouchstart="handleTouchStart(event)" ontouchend="handleTouchEnd(event)" ontouchcancel="handleTouchCancel(event)"`;
+			const ctx = `oncontextmenu="activeContextMenu(event, '${item.id}'); return false;"`;
+			outString += `<tr ${touch} ${ctx}>
+				<td class='center'>${item.id}</td>
+				<td>${unifyPhoneNo(item.source_number)}</td>
+				<td>${unifyPhoneNo(item.destination_number)}</td>
+				<td>${escapeHtml(item.destination_name)}</td>
+				<td>${moment(item.start_date).format("DD.MM.YYYY H:mm:ss")}</td>
+				<td>${moment(item.answer_date).format("DD.MM.YYYY H:mm:ss")}</td>
+				<td class='right'>${item.price_per_minute}</td>
+				<td class='center'>${item.line}</td>
+			</tr>`;
 		}
 		$("#activeCalls").html(outString);
 		refreshCredit();
 	});
-
 	if ($(".ui.container").css("display") == "none") {
 		$("#loadingDimmer").dimmer("hide");
 		$("#loadingDimmer").remove();
-		$(".ui.container").transition("fade", setDuration + "ms");
+		$(".ui.container").transition("fade", `${setDuration}ms`);
 	}
 	$('#categorySelector').removeClass("loading");
 	$("section").hide();
@@ -1678,49 +1351,48 @@ function loadActiveCalls() {
 	$(".activeCallsContent").show();
 }
 
-
 function loadLines() {
 	$.ajax({
 		url: 'https://www.odorik.cz/api/v1/lines.json',
 		type: 'GET',
-		data: {
-			user: APIuser,
-			password: APIpass
-		}
-	}).done(function (data, textStatus, xhr) {
-		var outString = "";
-		for (var i = 0; i < data.length; i++) {
-			outString += '<tr ontouchstart="handleTouchStart(event)" ontouchend="handleTouchEnd(event)" ontouchcancel="handleTouchCancel(event)" oncontextmenu="lineContextMenu(event, \'' + data[i].caller_id + '\', \'' + data[i].name + '\'); return false;">'
-							+ "<td class='center hasClickPopup' data-html='<b>SIP password:</b> " + data[i].sip_password + "'>" + data[i].id + "</td>"
-							+ "<td class='hasClickPopup' data-html='" + data[i].name + "'>" + data[i].name + "</td>"
-							+ "<td class='hasClickPopup' data-html='" + unifyPhoneNo(data[i].caller_id) + "'>" + unifyPhoneNo(data[i].caller_id) + "</td>"
-							+ "<td class='center'>" + toSymbol(data[i].public_name) + "</td>"
-							+ "<td class='center'>" + toSymbol(data[i].backup_number) + "</td>"
-							+ "<td class='center'>" + toSymbol(data[i].active_822) + "</td>"
-							+ "<td class='center'>" + toSymbol(data[i].active_cz_restriction) + "</td>"
-							+ "<td class='center'>" + toSymbol(data[i].active_iax) + "</td>"
-							+ "<td class='center'>" + toSymbol(data[i].active_password) + "</td>"
-							+ "<td class='center'>" + toSymbol(data[i].active_pin) + "</td>"
-							+ "<td class='center'>" + toSymbol(data[i].active_ping) + "</td>"
-							+ "<td class='center'>" + toSymbol(data[i].active_rtp) + "</td>"
-							+ "<td class='center'>" + toSymbol(data[i].active_sip) + "</td>"
-							+ "<td class='center'>" + toSymbol(data[i].active_anonymous) + "</td>"
-							+ "<td class='center'>" + toSymbol(data[i].active_greeting) + "</td>"
-							+ "<td class='center hasClickPopup' data-html='" + data[i].missed_call_email + "'>" + emailToSymbol(data[i].missed_call_email) + "</td>"
-							+ "<td class='center hasClickPopup' data-html='" + data[i].recording_email + "'>" + emailToSymbol(data[i].recording_email) + "</td>"
-							+ "<td class='center hasClickPopup' data-html='" + data[i].voicemail_email + "'>" + emailToSymbol(data[i].voicemail_email, '🎧') + "</td>"
-							+ "<td class='center hasClickPopup' data-html='" + data[i].backup_number_email + "'>" + emailToSymbol(data[i].backup_number_email) + "</td>"
+		data: { user: APIuser, password: APIpass }
+	}).done(function(data) {
+		let outString = "";
+		for (let i = 0; i < data.length; i++) {
+			const item = data[i];
+			const touch = `ontouchstart="handleTouchStart(event)" ontouchend="handleTouchEnd(event)" ontouchcancel="handleTouchCancel(event)"`;
+			const ctx = `oncontextmenu="lineContextMenu(event, '${item.caller_id}', '${escapeJsString(item.name)}'); return false;"`;
+
+			outString += `<tr ${touch} ${ctx}>
+				<td class='center hasClickPopup' data-html='<b>SIP password:</b> ${escapeHtml(item.sip_password)}'>${item.id}</td>
+				<td class='hasClickPopup' data-html='${escapeHtml(item.name)}'>${escapeHtml(item.name)}</td>
+				<td class='hasClickPopup' data-html='${unifyPhoneNo(item.caller_id)}'>${unifyPhoneNo(item.caller_id)}</td>
+				<td class='center'>${toSymbol(item.public_name)}</td>
+				<td class='center'>${toSymbol(item.backup_number)}</td>
+				<td class='center'>${toSymbol(item.active_822)}</td>
+				<td class='center'>${toSymbol(item.active_cz_restriction)}</td>
+				<td class='center'>${toSymbol(item.active_iax)}</td>
+				<td class='center'>${toSymbol(item.active_password)}</td>
+				<td class='center'>${toSymbol(item.active_pin)}</td>
+				<td class='center'>${toSymbol(item.active_ping)}</td>
+				<td class='center'>${toSymbol(item.active_rtp)}</td>
+				<td class='center'>${toSymbol(item.active_sip)}</td>
+				<td class='center'>${toSymbol(item.active_anonymous)}</td>
+				<td class='center'>${toSymbol(item.active_greeting)}</td>
+				<td class='center hasClickPopup' data-html='${escapeHtml(item.missed_call_email)}'>${emailToSymbol(item.missed_call_email)}</td>
+				<td class='center hasClickPopup' data-html='${escapeHtml(item.recording_email)}'>${emailToSymbol(item.recording_email)}</td>
+				<td class='center hasClickPopup' data-html='${escapeHtml(item.voicemail_email)}'>${emailToSymbol(item.voicemail_email, '🎧')}</td>
+				<td class='center hasClickPopup' data-html='${escapeHtml(item.backup_number_email)}'>${emailToSymbol(item.backup_number_email)}</td>
+			</tr>`;
 		}
 		$("#lines").html(outString);
 		refreshCredit();
-
 		$(".hasClickPopup").popup({ on: "click" });
 	});
-
 	if ($(".ui.container").css("display") == "none") {
 		$("#loadingDimmer").dimmer("hide");
 		$("#loadingDimmer").remove();
-		$(".ui.container").transition("fade", setDuration + "ms");
+		$(".ui.container").transition("fade", `${setDuration}ms`);
 	}
 	$('#categorySelector').removeClass("loading");
 	$("section").hide();
@@ -1728,43 +1400,38 @@ function loadLines() {
 	$(".linesContent").show();
 }
 
-
 function loadSimCards() {
 	$.ajax({
 		url: 'https://www.odorik.cz/api/v1/sim_cards.json',
 		type: 'GET',
-		data: {
-			user: APIuser,
-			password: APIpass
-		}
-	}).done(function (data, textStatus, xhr) {
-		var outString = "";
-		for (var i = 0; i < data.length; i++) {
-
-			outString += "<tr>"
-							+ "<td class='center'>" + data[i].sim_number + "<br/><i>" + data[i].id + "</i></td>"
-							+ "<td class='center'>" + toSymbol(data[i].state) + "</td>"
-							+ "<td class='center'>" + data[i].changes_in_progress + "</td>"
-							+ "<td class='right'>" + toSymbol(data[i].data_package) + "<br/><i>" + toSymbol(data[i].data_package_for_next_month) + "</i></td>"
-							+ "<td class='number hasClickPopup' data-html='<b>Zbývá:</b> " + formatNumber((data[i].data_bought_total - data[i].data_used)/1024) + " kB'>" + formatNumber(data[i].data_bought_total/1048576) + "&nbsp;MB<br/><i>" + formatNumber(data[i].data_used/1048576) + "&nbsp;MB</i></td>"
-							+ "<td class='center'>" + toSymbol(data[i].voice_package) + "<br></i>" + toSymbol(data[i].voice_package_for_next_month) + "</i></td>"
-							+ "<td class='center'>" + toSymbol(data[i].package_delayed_billing) + "<br/><i>" + toSymbol(data[i].package_delayed_billing_for_next_month) + "</i></td>"
-							+ "<td class='center'>" + toSymbol(data[i].missed_calls_register) + "</td>"
-							+ "<td class='center'>" + toSymbol(data[i].mobile_data) + "</td>"
-							+ "<td class='center'>" + toSymbol(data[i].lte) + "<br/><i>" + toSymbol(data[i].lte_for_next_month) + "</i></td>"
-							+ "<td class='center'>" + data[i].roaming + "</td>"
-							+ "<td class='center'>" + toSymbol(data[i].premium_services) + "</td></tr>"
+		data: { user: APIuser, password: APIpass }
+	}).done(function(data) {
+		let outString = "";
+		for (let i = 0; i < data.length; i++) {
+			const item = data[i];
+			outString += `<tr>
+				<td class='center'>${item.sim_number}<br/><i>${item.id}</i></td>
+				<td class='center'>${toSymbol(item.state)}</td>
+				<td class='center'>${item.changes_in_progress}</td>
+				<td class='right'>${toSymbol(item.data_package)}<br/><i>${toSymbol(item.data_package_for_next_month)}</i></td>
+				<td class='number hasClickPopup' data-html='<b>Zbývá:</b> ${formatNumber((item.data_bought_total - item.data_used)/1024)} kB'>${formatNumber(item.data_bought_total/1048576)}&nbsp;MB<br/><i>${formatNumber(item.data_used/1048576)}&nbsp;MB</i></td>
+				<td class='center'>${toSymbol(item.voice_package)}<br></i>${toSymbol(item.voice_package_for_next_month)}</i></td>
+				<td class='center'>${toSymbol(item.package_delayed_billing)}<br/><i>${toSymbol(item.package_delayed_billing_for_next_month)}</i></td>
+				<td class='center'>${toSymbol(item.missed_calls_register)}</td>
+				<td class='center'>${toSymbol(item.mobile_data)}</td>
+				<td class='center'>${toSymbol(item.lte)}<br/><i>${toSymbol(item.lte_for_next_month)}</i></td>
+				<td class='center'>${item.roaming}</td>
+				<td class='center'>${toSymbol(item.premium_services)}</td>
+			</tr>`;
 		}
 		$("#simCards").html(outString);
 		refreshCredit();
-
 		$(".hasClickPopup").popup({ on: "click" });
 	});
-
 	if ($(".ui.container").css("display") == "none") {
 		$("#loadingDimmer").dimmer("hide");
 		$("#loadingDimmer").remove();
-		$(".ui.container").transition("fade", setDuration + "ms");
+		$(".ui.container").transition("fade", `${setDuration}ms`);
 	}
 	$('#categorySelector').removeClass("loading");
 	$("section").hide();
@@ -1772,38 +1439,33 @@ function loadSimCards() {
 	$(".simCardsContent").show();
 }
 
-
 function loadMobileData() {
 	$.ajax({
 		url: 'https://www.odorik.cz/api/v1/sim_cards/mobile_data.json',
 		type: 'GET',
-		data: {
-			user: APIuser,
-			password: APIpass,
-			from: fromDate,
-			to: toDate
-		}
-	}).done(function (data, textStatus, xhr) {
-		var outString = "";
-		for (var i = 0; i < data.length; i++) {
-			outString += '<tr>'
-							+ "<td class='center'>" + data[i].id + "</td>"
-							+ "<td>" + moment(data[i].date).format("DD.MM.YYYY H:mm:ss") + "</td>"
-							+ "<td class='number'>" + formatNumber(data[i].bytes_up) + "</td>"
-							+ "<td class='number'>" + formatNumber(data[i].bytes_down) + "</td>"
-							+ "<td class='number'>" + formatNumber(data[i].bytes_total) + "</td>"
-							+ "<td class='number'>" + formatNumber(data[i].price) + "</td>"
-							+ "<td class='number'>" + formatNumber(data[i].price_per_mb) + "</td>"
-							+ "<td>" + unifyPhoneNo(data[i].phone_number) + "</td></tr>"
+		data: { user: APIuser, password: APIpass, from: fromDate, to: toDate }
+	}).done(function(data) {
+		let outString = "";
+		for (let i = 0; i < data.length; i++) {
+			const item = data[i];
+			outString += `<tr>
+				<td class='center'>${item.id}</td>
+				<td>${moment(item.date).format("DD.MM.YYYY H:mm:ss")}</td>
+				<td class='number'>${formatNumber(item.bytes_up)}</td>
+				<td class='number'>${formatNumber(item.bytes_down)}</td>
+				<td class='number'>${formatNumber(item.bytes_total)}</td>
+				<td class='number'>${formatNumber(item.price)}</td>
+				<td class='number'>${formatNumber(item.price_per_mb)}</td>
+				<td>${unifyPhoneNo(item.phone_number)}</td>
+			</tr>`;
 		}
 		$("#mobileData").html(outString);
 		refreshCredit();
 	});
-
 	if ($(".ui.container").css("display") == "none") {
 		$("#loadingDimmer").dimmer("hide");
 		$("#loadingDimmer").remove();
-		$(".ui.container").transition("fade", setDuration + "ms");
+		$(".ui.container").transition("fade", `${setDuration}ms`);
 	}
 	$('#categorySelector').removeClass("loading");
 	$("section").hide();
@@ -1811,83 +1473,65 @@ function loadMobileData() {
 	$(".mobileDataContent").show();
 }
 
-
 function loadStatistics() {
-	var formatPrice = function (input) {
-		var price = parseFloat(input.toFixed(3));
-		if (price > 10) {
-			price = price.toFixed(2);
-		}
-		if (Math.round(price) == price) {
-			price = Math.round(price);
-		}
+	const formatPrice = (input) => {
+		let price = parseFloat(input.toFixed(3));
+		if (price > 10) price = price.toFixed(2);
+		if (Math.round(price) == price) price = Math.round(price);
 		return price;
 	};
-	var formatLength = function (input) {
-		var length = (input / 60).toFixed(1);
-		if (length > 5 || Math.round(length) == length) {
-			length = Math.round(length);
-		}
+	const formatLength = (input) => {
+		let length = (input / 60).toFixed(1);
+		if (length > 5 || Math.round(length) == length) length = Math.round(length);
 		return length;
 	};
-	var dataSet = {
-		user: APIuser,
-		password: APIpass,
-		from: fromDate,
-		to: toDate
-	};
-	if (statsLine != -10) {
-		dataSet.line = statsLine;
-	}
+	const dataSet = { user: APIuser, password: APIpass, from: fromDate, to: toDate };
+	if (statsLine != -10) dataSet.line = statsLine;
+
 	$.ajax({
 		url: 'https://www.odorik.cz/api/v1/call_statistics.json',
 		type: 'GET',
 		data: dataSet
-	}).done(function (data, textStatus, xhr) {
-
-		$("#totalStatistics").html(
-				"<tr>"
-				+ "<td><i class='sign in icon'></i>Příchozí hovory</td>"
-				+ "<td class='center'>" + data.incoming.count + "</td>"
-				+ "<td class='right'>" + formatLength(data.incoming.length) + "&nbsp;min</td>"
-				+ "<td class='right'>" + formatPrice(data.incoming.price) + "&nbsp;Kč</td>"
-				+ "</tr><tr>"
-				+ "<td><i class='sign out icon'></i>Odchozí hovory</td>"
-				+ "<td class='center'>" + data.outgoing.count + "</td>"
-				+ "<td class='right'>" + formatLength(data.outgoing.length) + "&nbsp;min</td>"
-				+ "<td class='right'>" + formatPrice(data.outgoing.price) + "&nbsp;Kč</td>"
-				+ "</tr><tr>"
-				+ "<td><i class='external share icon'></i>Přesměrované hovory</td>"
-				+ "<td class='center'>" + data.redirected.count + "</td>"
-				+ "<td class='right'>" + formatLength(data.redirected.length) + "&nbsp;min</td>"
-				+ "<td class='right'>" + formatPrice(data.redirected.price) + "&nbsp;Kč</td>"
-				+ "</tr>"
-			);
+	}).done(function(data) {
+		$("#totalStatistics").html(`
+			<tr>
+				<td><i class='sign in icon'></i>Příchozí hovory</td>
+				<td class='center'>${data.incoming.count}</td>
+				<td class='right'>${formatLength(data.incoming.length)}&nbsp;min</td>
+				<td class='right'>${formatPrice(data.incoming.price)}&nbsp;Kč</td>
+			</tr><tr>
+				<td><i class='sign out icon'></i>Odchozí hovory</td>
+				<td class='center'>${data.outgoing.count}</td>
+				<td class='right'>${formatLength(data.outgoing.length)}&nbsp;min</td>
+				<td class='right'>${formatPrice(data.outgoing.price)}&nbsp;Kč</td>
+			</tr><tr>
+				<td><i class='external share icon'></i>Přesměrované hovory</td>
+				<td class='center'>${data.redirected.count}</td>
+				<td class='right'>${formatLength(data.redirected.length)}&nbsp;min</td>
+				<td class='right'>${formatPrice(data.redirected.price)}&nbsp;Kč</td>
+			</tr>
+		`);
 	});
 
 	$.ajax({
 		url: 'https://www.odorik.cz/api/v1/call_statistics/by_destination.json',
 		type: 'GET',
 		data: dataSet
-	}).done(function (data, textStatus, xhr) {
-		//console.log(data);
-		var outString = "";
-		for (var i = 0; i < data.length; i++) {
-			var direction = "<i class='sign in icon'></i>Odchozí";
-			if (data[i].direction == "redirected") {
-				direction = "<i class='external share icon'></i>Přesměrované";
-			}
-			else if (data[i].direction == "in") {
-				direction = "<i class='sign out icon'></i>Příchozí";
-			}
-			outString += "<tr>"
-							+ "<td>" + direction + "</td>"
-							+ "<td>" + data[i].destination + "</td>"
-							+ "<td class='center'>" + data[i].count + "</td>"
-							+ "<td class='right'>" + formatLength(data[i].length) + "&nbsp;min</td>"
-							+ "<td class='right'>" + formatPrice(data[i].price) + "&nbsp;Kč</td>"
-							+ "<td class='right'>" + data[i].price_per_minute + "&nbsp;Kč</td>"
-							 + "</tr>";
+	}).done(function(data) {
+		let outString = "";
+		for (let i = 0; i < data.length; i++) {
+			let direction = "<i class='sign in icon'></i>Odchozí";
+			if (data[i].direction == "redirected") direction = "<i class='external share icon'></i>Přesměrované";
+			else if (data[i].direction == "in") direction = "<i class='sign out icon'></i>Příchozí";
+
+			outString += `<tr>
+				<td>${direction}</td>
+				<td>${escapeHtml(data[i].destination)}</td>
+				<td class='center'>${data[i].count}</td>
+				<td class='right'>${formatLength(data[i].length)}&nbsp;min</td>
+				<td class='right'>${formatPrice(data[i].price)}&nbsp;Kč</td>
+				<td class='right'>${data[i].price_per_minute}&nbsp;Kč</td>
+			</tr>`;
 		}
 		$("#destinationStatistics").html(outString);
 	});
@@ -1896,21 +1540,19 @@ function loadStatistics() {
 		url: 'https://www.odorik.cz/api/v1/call_statistics/missed_calls.json',
 		type: 'GET',
 		data: dataSet
-	}).done(function (data, textStatus, xhr) {
-		//console.log(data);
-		var outString = "";
-		for (var i = 0; i < data.length; i++) {
-			outString += "<tr><td>" + unifyPhoneNo(data[i].destination_number) + "</td><td class='center'>" + data[i].count + "</td></tr>"
+	}).done(function(data) {
+		let outString = "";
+		for (let i = 0; i < data.length; i++) {
+			outString += `<tr><td>${unifyPhoneNo(data[i].destination_number)}</td><td class='center'>${data[i].count}</td></tr>`;
 		}
 		$("#missedStatistics").html(outString);
 		refreshCredit();
 	});
 
-
 	if ($(".ui.container").css("display") == "none") {
 		$("#loadingDimmer").dimmer("hide");
 		$("#loadingDimmer").remove();
-		$(".ui.container").transition("fade", setDuration + "ms");
+		$(".ui.container").transition("fade", `${setDuration}ms`);
 	}
 	$('#categorySelector').removeClass("loading");
 	$("section").hide();
@@ -1920,7 +1562,7 @@ function loadStatistics() {
 
 
 function openDialog(dialog_id) {
-	var dialog = document.getElementById(dialog_id);
+	const dialog = document.getElementById(dialog_id);
 	dialog.showModal();
 	dialog.classList.remove('hide');
 	dialog.classList.add('show');
@@ -1929,22 +1571,21 @@ function openDialog(dialog_id) {
 		dialog.classList.remove('show');
 		dialog.classList.add('hide');
 	});
-};
-
+}
 
 document.addEventListener('click', (event) => {
 	const dialog = document.querySelector('dialog');
+	if (!dialog) return;
 	const dialogRect = dialog.getBoundingClientRect();
 	const clickX = event.clientX;
 	const clickY = event.clientY;
 	if (clickX < dialogRect.left || clickX > dialogRect.right || clickY < dialogRect.top || clickY > dialogRect.bottom) {
-			var openDlg = document.querySelector('dialog[open]');
-			if (event.target === openDlg) {
-				openDlg.close();
-			}
+		const openDlg = document.querySelector('dialog[open]');
+		if (event.target === openDlg) {
+			openDlg.close();
+		}
 	}
 });
-
 
 function copyToClipboard(text) {
 	const el = document.createElement('textarea');
@@ -1956,112 +1597,100 @@ function copyToClipboard(text) {
 }
 
 
-var touchStartTimestamp;
-var touchStartX;
-var touchStartY;
-var longPressDuration = 500; // Časový limit pro dlouhé stisknutí (v milisekundách)
-var longPressTimer;
+// --- TOUCH HANDLING ---
+
+let touchStartTimestamp;
+let touchStartX;
+let touchStartY;
+const longPressDuration = 500;
+let longPressTimer;
 
 function handleTouchStart(event) {
 	touchStartTimestamp = Date.now();
 	touchStartX = event.touches[0].clientX;
 	touchStartY = event.touches[0].clientY;
-
-	// Spustit časovač pro dlouhé stisknutí
 	longPressTimer = setTimeout(handleLongPress, longPressDuration, event);
 }
 
 function handleTouchEnd(event) {
-	// Zrušit časovač pro dlouhé stisknutí
-	clearTimeout(longPressTimer); //TODO
+	clearTimeout(longPressTimer);
 }
 
 function handleTouchCancel(event) {
-	// Zrušit časovač pro dlouhé stisknutí
-	clearTimeout(longPressTimer); //TODO
+	clearTimeout(longPressTimer);
 }
 
 function handleLongPress(event) {
-	var element = event.target;
-	var touchEndX = touchStartX;
-	var touchEndY = touchStartY;
-
-	var contextMenuEvent = new MouseEvent('contextmenu', {
+	const element = event.target;
+	const contextMenuEvent = new MouseEvent('contextmenu', {
 		bubbles: true,
 		cancelable: true,
 		view: window,
-		clientX: touchEndX,
-		clientY: touchEndY
+		clientX: touchStartX,
+		clientY: touchStartY
 	});
-
 	element.dispatchEvent(contextMenuEvent);
 }
 
-
-// Přidáme posluchač události 'contextmenu' na nadřazený element body
 document.body.addEventListener('contextmenu', function(event) {
-	// Zjistíme, zda je cílovým elementem formulářový element (INPUT nebo TEXTAREA)
-	var isFormElement = event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA';
-
-	// Pokud cílový element je formulářovým elementem, necháme výchozí chování (zobrazení kontextového menu)
-	if (isFormElement) {
-		return;
-	}
-
-	// Jinak zabráníme výchozímu zobrazení kontextového menu
+	const isFormElement = event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA';
+	if (isFormElement) return;
 	event.preventDefault();
 });
 
-
 if ('serviceWorker' in navigator) {
-	window.addEventListener('load', function () {
-		navigator.serviceWorker.register('service-worker.js').then(function (registration) {
+	window.addEventListener('load', function() {
+		navigator.serviceWorker.register('service-worker.js').then(function(registration) {
 			console.log('ServiceWorker registration successful with scope: ', registration.scope);
-		}, function (err) {
+		}, function(err) {
 			console.log('ServiceWorker registration failed: ', err);
 		});
 	});
+}
+
+
+// --- COUNTRY CODES ---
+
+const countryCodeToPhonePrefix = {
+	'AC': '247', 'AD': '376', 'AE': '971', 'AF': '93', 'AG': '1268', 'AI': '1264', 'AL': '355', 'AM': '374', 'AO': '244', 'AQ': '672', 'AR': '54', 'AS': '1684', 'AT': '43', 'AU': '61', 'AW': '297', 'AX': '35818', 'AZ': '994',
+	'BA': '387', 'BB': '1246', 'BD': '880', 'BE': '32', 'BF': '226', 'BG': '359', 'BH': '973', 'BI': '257', 'BJ': '229', 'BL': '590', 'BM': '1441', 'BN': '673', 'BO': '591', 'BQ': '599', 'BR': '55', 'BS': '1242', 'BT': '975', 'BW': '267', 'BY': '375', 'BZ': '501',
+	'CA': '1', 'CC': '61', 'CD': '243', 'CF': '236', 'CG': '242', 'CH': '41', 'CI': '225', 'CK': '682', 'CL': '56', 'CM': '237', 'CN': '86', 'CO': '57', 'CR': '506', 'CU': '53', 'CV': '238', 'CW': '599', 'CX': '61', 'CY': '357', 'CZ': '420',
+	'DE': '49', 'DJ': '253', 'DK': '45', 'DM': '1767', 'DO': '1809', 'DZ': '213', 'EC': '593', 'EE': '372', 'EG': '20', 'EH': '212', 'ER': '291', 'ES': '34', 'ET': '251',
+	'FI': '358', 'FJ': '679', 'FK': '500', 'FM': '691', 'FO': '298', 'FR': '33', 'GA': '241', 'GB': '44', 'GD': '1473', 'GE': '995', 'GF': '594', 'GG': '441481', 'GH': '233', 'GI': '350', 'GL': '299', 'GM': '220', 'GN': '224', 'GP': '590', 'GQ': '240', 'GR': '30', 'GT': '502', 'GU': '1671', 'GW': '245', 'GY': '592',
+	'HK': '852', 'HN': '504', 'HR': '385', 'HT': '509', 'HU': '36', 'ID': '62', 'IE': '353', 'IL': '972', 'IM': '441624', 'IN': '91', 'IO': '246', 'IQ': '964', 'IR': '98', 'IS': '354', 'IT': '39',
+	'JE': '441534', 'JM': '1876', 'JO': '962', 'JP': '81', 'KE': '254', 'KG': '996', 'KH': '855', 'KI': '686', 'KM': '269', 'KN': '1869', 'KP': '850', 'KR': '82', 'KW': '965', 'KY': '1345', 'KZ': '7',
+	'LA': '856', 'LB': '961', 'LC': '1758', 'LI': '423', 'LK': '94', 'LR': '231', 'LS': '266', 'LT': '370', 'LU': '352', 'LV': '371', 'LY': '218',
+	'MA': '212', 'MC': '377', 'MD': '373', 'ME': '382', 'MF': '590', 'MG': '261', 'MH': '692', 'MK': '389', 'ML': '223', 'MM': '95', 'MN': '976', 'MO': '853', 'MP': '1670', 'MQ': '596', 'MR': '222', 'MS': '1664', 'MT': '356', 'MU': '230', 'MV': '960', 'MW': '265', 'MX': '52', 'MY': '60', 'MZ': '258',
+	'NA': '264', 'NC': '687', 'NE': '227', 'NF': '672', 'NG': '234', 'NI': '505', 'NL': '31', 'NO': '47', 'NP': '977', 'NR': '674', 'NU': '683', 'NZ': '64',
+	'OM': '968', 'PA': '507', 'PE': '51', 'PF': '689', 'PG': '675', 'PH': '63', 'PK': '92', 'PL': '48', 'PM': '508', 'PR': '1787', 'PS': '970', 'PT': '351', 'PW': '680', 'PY': '595',
+	'QA': '974', 'RE': '262', 'RO': '40', 'RS': '381', 'RU': '7', 'RW': '250',
+	'SA': '966', 'SB': '677', 'SC': '248', 'SD': '249', 'SE': '46', 'SG': '65', 'SH': '290', 'SI': '386', 'SJ': '47', 'SK': '421', 'SL': '232', 'SM': '378', 'SN': '221', 'SO': '252', 'SR': '597', 'SS': '211', 'ST': '239', 'SV': '503', 'SX': '1721', 'SY': '963', 'SZ': '268',
+	'TA': '290', 'TC': '1649', 'TD': '235', 'TG': '228', 'TH': '66', 'TJ': '992', 'TK': '690', 'TL': '670', 'TM': '993', 'TN': '216', 'TO': '676', 'TR': '90', 'TT': '1868', 'TV': '688', 'TW': '886', 'TZ': '255',
+	'UA': '380', 'UG': '256', 'US': '1', 'UY': '598', 'UZ': '998', 'VA': '379', 'VC': '1784', 'VE': '58', 'VG': '1284', 'VI': '1340', 'VN': '84', 'VU': '678',
+	'WF': '681', 'WS': '685', 'XK': '383', 'YE': '967', 'YT': '262', 'ZA': '27', 'ZM': '260', 'ZW': '263'
 };
 
-
-
-const countryCodeToPhonePrefix = {'AC':'247','AD':'376','AE':'971','AF':'93','AG':'1268','AI':'1264','AL':'355','AM':'374','AO':'244','AQ':'672','AR':'54','AS':'1684','AT':'43','AU':'61','AW':'297','AX':'35818','AZ':'994','BA':'387','BB':'1246','BD':'880','BE':'32','BF':'226','BG':'359','BH':'973','BI':'257','BJ':'229','BL':'590','BM':'1441','BN':'673','BO':'591','BQ':'599','BR':'55','BS':'1242','BT':'975','BW':'267','BY':'375','BZ':'501','CA':'1','CC':'61','CD':'243','CF':'236','CG':'242','CH':'41','CI':'225','CK':'682','CL':'56','CM':'237','CN':'86','CO':'57','CR':'506','CU':'53','CV':'238','CW':'599','CX':'61','CY':'357','CZ':'420','DE':'49','DJ':'253','DK':'45','DM':'1767','DO':'1809','DZ':'213','EC':'593','EE':'372','EG':'20','EH':'212','ER':'291','ES':'34','ET':'251','FI':'358','FJ':'679','FK':'500','FM':'691','FO':'298','FR':'33','GA':'241','GB':'44','GD':'1473','GE':'995','GF':'594','GG':'441481','GH':'233','GI':'350','GL':'299','GM':'220','GN':'224','GP':'590','GQ':'240','GR':'30','GT':'502','GU':'1671','GW':'245','GY':'592','HK':'852','HN':'504','HR':'385','HT':'509','HU':'36','ID':'62','IE':'353','IL':'972','IM':'441624','IN':'91','IO':'246','IQ':'964','IR':'98','IS':'354','IT':'39','JE':'441534','JM':'1876','JO':'962','JP':'81','KE':'254','KG':'996','KH':'855','KI':'686','KM':'269','KN':'1869','KP':'850','KR':'82','KW':'965','KY':'1345','KZ':'7','LA':'856','LB':'961','LC':'1758','LI':'423','LK':'94','LR':'231','LS':'266','LT':'370','LU':'352','LV':'371','LY':'218','MA':'212','MC':'377','MD':'373','ME':'382','MF':'590','MG':'261','MH':'692','MK':'389','ML':'223','MM':'95','MN':'976','MO':'853','MP':'1670','MQ':'596','MR':'222','MS':'1664','MT':'356','MU':'230','MV':'960','MW':'265','MX':'52','MY':'60','MZ':'258','NA':'264','NC':'687','NE':'227','NF':'672','NG':'234','NI':'505','NL':'31','NO':'47','NP':'977','NR':'674','NU':'683','NZ':'64','OM':'968','PA':'507','PE':'51','PF':'689','PG':'675','PH':'63','PK':'92','PL':'48','PM':'508','PR':'1787','PS':'970','PT':'351','PW':'680','PY':'595','QA':'974','RE':'262','RO':'40','RS':'381','RU':'7','RW':'250','SA':'966','SB':'677','SC':'248','SD':'249','SE':'46','SG':'65','SH':'290','SI':'386','SJ':'47','SK':'421','SL':'232','SM':'378','SN':'221','SO':'252','SR':'597','SS':'211','ST':'239','SV':'503','SX':'1721','SY':'963','SZ':'268','TA':'290','TC':'1649','TD':'235','TG':'228','TH':'66','TJ':'992','TK':'690','TL':'670','TM':'993','TN':'216','TO':'676','TR':'90','TT':'1868','TV':'688','TW':'886','TZ':'255','UA':'380','UG':'256','US':'1','UY':'598','UZ':'998','VA':'379','VC':'1784','VE':'58','VG':'1284','VI':'1340','VN':'84','VU':'678','WF':'681','WS':'685','XK':'383','YE':'967','YT':'262','ZA':'27','ZM':'260','ZW':'263'};
-
-// Vytvoření obráceného mapování pro vyhledávání
 const phonePrefixToCountryCode = {};
 for (const [code, prefix] of Object.entries(countryCodeToPhonePrefix)) {
 	phonePrefixToCountryCode[prefix] = code;
 }
 
 function phonePrefixToFlag(prefix) {
-	// Najdeme kód země podle předvolby
 	const countryCode = phonePrefixToCountryCode[prefix];
-
-	if (!countryCode) {
-		return '🌐'; // Výchozí globus, pokud předvolbu neznáme
-	}
-
-	// Unicode regionální indikátory jsou kódy A-Z (U+1F1E6 až U+1F1FF)
-	// Vlajka se vytvoří kombinací dvou písmen kódu země
+	if (!countryCode) return '🌐';
 	const firstChar = countryCode.charCodeAt(0) - 0x41 + 0x1F1E6;
 	const secondChar = countryCode.charCodeAt(1) - 0x41 + 0x1F1E6;
-
 	return String.fromCodePoint(firstChar) + String.fromCodePoint(secondChar);
 }
 
 function getFlagFromPhoneNumber(phoneNumber) {
-	// Odstranění všech nečíselných znaků
 	const cleanNumber = phoneNumber.replace(/\D/g, '');
-
-	// Procházíme předvolby od nejdelších (aby se neshodovaly kratší náhodně)
-	const sortedPrefixes = Object.keys(phonePrefixToCountryCode)
-		.sort((a, b) => b.length - a.length);
+	const sortedPrefixes = Object.keys(phonePrefixToCountryCode).sort((a, b) => b.length - a.length);
 
 	for (const prefix of sortedPrefixes) {
 		if (cleanNumber.startsWith(prefix)) {
 			return phonePrefixToFlag(prefix);
 		}
 	}
-
-	return '🌐'; // Výchozí ikona
+	return '🌐';
 }
