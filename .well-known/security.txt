@@ -1,0 +1,5 @@
+# Security Policy for 80.cz
+Contact: mailto:security@80.cz
+Expires: 2027-06-25T08:00:00.000Z
+Preferred-Languages: en, cs, sk
+Canonical: https://odorik.80.cz/.well-known/security.txt
